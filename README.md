@@ -20,7 +20,8 @@ This repository hosts a comprehensive solution for the NASA Space Apps **Meteor 
 - JDK 17 or later
 - Maven 3.9+
 - Modern web browser (Chrome, Firefox, Safari, Edge)
-- (Optional) Set an environment variable `NASA_API_KEY` for the NeoWs feed. If not set, the app falls back to the limited `DEMO_KEY`.
+- Set an environment variable `NASA_API_KEY` for the NeoWs feed.
+    - If not set, the app falls back to the limited `DEMO_KEY`.
 
 ## Quick Start
 
