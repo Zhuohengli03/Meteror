@@ -559,15 +559,20 @@ function updateOverviewStats(approaches, fireballs, neos) {
         hazardous: hazardousCount
     });
     
+    // Format counts to show "20+" when at limit, exact number otherwise
+    const approachesDisplay = approachesCount >= 20 ? '20+' : approachesCount.toString();
+    const fireballsDisplay = fireballsCount >= 20 ? '20+' : fireballsCount.toString();
+    const hazardousDisplay = hazardousCount.toString(); // NEOs don't have a limit
+    
     // Update counts with animation
-    animateCount('close-approaches-count', approachesCount);
-    animateCount('fireballs-count', fireballsCount);
-    animateCount('hazardous-count', hazardousCount);
+    animateCount('close-approaches-count', approachesDisplay);
+    animateCount('fireballs-count', fireballsDisplay);
+    animateCount('hazardous-count', hazardousDisplay);
     
     // Also set directly to ensure immediate update
-    document.getElementById('close-approaches-count').textContent = approachesCount;
-    document.getElementById('fireballs-count').textContent = fireballsCount;
-    document.getElementById('hazardous-count').textContent = hazardousCount;
+    document.getElementById('close-approaches-count').textContent = approachesDisplay;
+    document.getElementById('fireballs-count').textContent = fireballsDisplay;
+    document.getElementById('hazardous-count').textContent = hazardousDisplay;
     
     // Update last updated time
     document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
@@ -580,6 +585,12 @@ function animateCount(elementId, targetValue) {
     const element = document.getElementById(elementId);
     if (!element) {
         console.warn('Element not found:', elementId);
+        return;
+    }
+    
+    // Handle string values like "20+" - set immediately without animation
+    if (typeof targetValue === 'string') {
+        element.textContent = targetValue;
         return;
     }
     
@@ -656,8 +667,9 @@ function updateDataSummary(approaches, fireballs, neos) {
         const avgDistance = approaches.reduce((sum, item) => sum + parseFloat(item.dist || 0), 0) / approaches.length;
         const minDistance = Math.min(...approaches.map(item => parseFloat(item.dist || Infinity)));
         const maxVelocity = Math.max(...approaches.map(item => parseFloat(item.v_rel || 0)));
+        const approachesDisplay = approaches.length >= 20 ? '20+' : approaches.length.toString();
         
-        summary += `<p><strong>Close Approaches:</strong> ${approaches.length} objects tracked with average distance of ${avgDistance.toFixed(3)} AU. Closest approach: ${minDistance.toFixed(3)} AU. Fastest velocity: ${maxVelocity.toFixed(1)} km/s.</p>`;
+        summary += `<p><strong>Close Approaches:</strong> ${approachesDisplay} objects tracked with average distance of ${avgDistance.toFixed(3)} AU. Closest approach: ${minDistance.toFixed(3)} AU. Fastest velocity: ${maxVelocity.toFixed(1)} km/s.</p>`;
     } else {
         summary += `<p><strong>Close Approaches:</strong> No recent close approaches detected.</p>`;
     }
@@ -668,8 +680,9 @@ function updateDataSummary(approaches, fireballs, neos) {
         const avgEnergy = totalEnergy / fireballs.length;
         const maxEnergy = Math.max(...fireballs.map(item => parseFloat(item.energy || 0)));
         const avgVelocity = fireballs.reduce((sum, item) => sum + parseFloat(item.vel || 0), 0) / fireballs.length;
+        const fireballsDisplay = fireballs.length >= 20 ? '20+' : fireballs.length.toString();
         
-        summary += `<p><strong>Fireball Events:</strong> ${fireballs.length} events recorded with total energy of ${(totalEnergy / 1e12).toFixed(2)} TJ. Average energy: ${(avgEnergy / 1e9).toFixed(1)} GJ. Most energetic event: ${(maxEnergy / 1e12).toFixed(2)} TJ. Average velocity: ${avgVelocity.toFixed(1)} km/s.</p>`;
+        summary += `<p><strong>Fireball Events:</strong> ${fireballsDisplay} events recorded with total energy of ${(totalEnergy / 1e12).toFixed(2)} TJ. Average energy: ${(avgEnergy / 1e9).toFixed(1)} GJ. Most energetic event: ${(maxEnergy / 1e12).toFixed(2)} TJ. Average velocity: ${avgVelocity.toFixed(1)} km/s.</p>`;
     } else {
         summary += `<p><strong>Fireball Events:</strong> No recent fireball events recorded.</p>`;
     }
@@ -688,6 +701,9 @@ function updateDataSummary(approaches, fireballs, neos) {
     
     // Data source info
     summary += `<p><strong>Data Sources:</strong> NASA CNEOS Close Approach Data, Fireball API, and NeoWs Feed. Data updated in real-time from NASA's databases.</p>`;
+    
+    // Add limits information
+    summary += `<p><strong>Data Limits:</strong> Close approaches and fireballs are limited to 20 items each for optimal performance. NEOs show all available data in the ±2 day range.</p>`;
     
     summaryElement.innerHTML = summary;
 }

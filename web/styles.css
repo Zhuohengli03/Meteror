@@ -227,6 +227,84 @@ body {
     color: #667eea;
 }
 
+/* Date ranges section */
+.date-ranges-section {
+    margin-bottom: 2rem;
+}
+
+.date-ranges-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.date-ranges-card h3 {
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-ranges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.date-range-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.date-range-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    font-size: 1.1rem;
+}
+
+.date-range-header i {
+    color: #667eea;
+    font-size: 1.2rem;
+}
+
+.date-range-details {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.date-range-details p {
+    margin-bottom: 0.4rem;
+}
+
+.date-range-details strong {
+    color: #4facfe;
+}
+
+.limits-note {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.limits-note i {
+    color: #667eea;
+    margin-right: 0.5rem;
+}
+
 /* Charts removed as requested */
 
 /* Controls */

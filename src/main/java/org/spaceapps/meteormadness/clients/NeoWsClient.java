@@ -17,8 +17,8 @@ public class NeoWsClient {
     private static final String BASE = "https://api.nasa.gov/neo/rest/v1/feed";
 
     private final String apiKey;
-    private final String backupApiKey;
-    private boolean usingBackupKey = false;
+    private final List<String> backupApiKeys;
+    private int currentBackupIndex = -1;
 
     public NeoWsClient() {
         String key = System.getenv("NASA_API_KEY");
