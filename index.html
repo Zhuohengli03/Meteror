@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌌 陨石冲击模拟器 - NASA真实数据</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #00ffff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #cccccc;
+            font-size: 1.2em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #00ffff;
+            padding-bottom: 10px;
+        }
+
+        .asteroid-list {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00ffff #333;
+        }
+
+        .asteroid-item {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .asteroid-item:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .asteroid-item.selected {
+            background: rgba(255, 0, 255, 0.2);
+            border-color: #ff00ff;
+        }
+
+        .asteroid-name {
+            font-weight: bold;
+            color: #00ffff;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .asteroid-details {
+            font-size: 0.9em;
+            color: #cccccc;
+            line-height: 1.4;
+        }
+
+        .diameter { color: #ff6b6b; }
+        .velocity { color: #4ecdc4; }
+        .orbit-class { color: #ffe66d; }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .control-group input, .control-group select {
+            padding: 10px;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 1em;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+        }
+
+        .simulate-btn {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .simulate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-label { color: #cccccc; }
+        .result-value { color: #00ffff; font-weight: bold; }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #00ffff;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid #4ecdc4;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ffff;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #cccccc;
+            font-size: 0.9em;
+        }
+
+        .visualization-container {
+            grid-column: 1 / -1;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #threejs-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .view-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+
+        .view-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .view-btn:hover, .view-btn.active {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+
+        .asteroid-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .asteroid-list::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .asteroid-list::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
+
+        .asteroid-list::-webkit-scrollbar-thumb:hover {
+            background: #ff00ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌌 陨石冲击模拟器</h1>
+        <p>基于NASA NEO API的实时小行星数据与3D可视化</p>
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="simulation">🎯 冲击模拟</div>
+            <div class="nav-tab" data-tab="visualization">🌍 3D可视化</div>
+            <div class="nav-tab" data-tab="data">📊 数据分析</div>
+            <div class="nav-tab" data-tab="about">ℹ️ 关于</div>
+        </div>
+    </div>
+
+    <!-- 冲击模拟标签页 -->
+    <div id="simulation-tab" class="tab-content">
+        <div class="container">
+            <div class="panel">
+                <h2>📡 实时小行星数据</h2>
+                <div id="loading" class="loading">正在加载NASA数据...</div>
+                <div id="asteroid-list" class="asteroid-list" style="display: none;">
+                    <!-- 小行星列表将在这里动态生成 -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🎯 冲击模拟控制台</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="selected-asteroid">选择小行星:</label>
+                        <select id="selected-asteroid">
+                            <option value="">请先加载数据</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="impact-velocity">冲击速度 (m/s):</label>
+                        <input type="range" id="impact-velocity" min="10000" max="50000" value="20000" step="1000">
+                        <span id="velocity-display">20,000 m/s</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="impact-angle">冲击角度 (度):</label>
+                        <input type="range" id="impact-angle" min="0" max="90" value="45" step="5">
+                        <span id="angle-display">45°</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="impactor-mass">撞击器质量 (kg):</label>
+                        <input type="number" id="impactor-mass" value="1000" min="100" max="10000" step="100">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="impactor-velocity">撞击器速度 (m/s):</label>
+                        <input type="number" id="impactor-velocity" value="10000" min="1000" max="50000" step="1000">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="lead-time">提前时间 (天):</label>
+                        <input type="number" id="lead-time" value="365" min="30" max="3650" step="30">
+                    </div>
+
+                    <button id="simulate-btn" class="simulate-btn">🚀 开始模拟</button>
+                </div>
+
+                <div id="simulation-results" class="results" style="display: none;">
+                    <h3>模拟结果</h3>
+                    <div id="results-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D可视化标签页 -->
+    <div id="visualization-tab" class="tab-content hidden">
+        <div class="container">
+            <div class="panel">
+                <h2>🌍 3D轨道可视化</h2>
+                <div class="visualization-container">
+                    <div id="threejs-container"></div>
+                    <div class="view-controls">
+                        <button class="view-btn active" data-view="orbit">轨道视图</button>
+                        <button class="view-btn" data-view="impact">冲击视图</button>
+                        <button class="view-btn" data-view="deflection">偏转视图</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🎮 可视化控制</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="animation-speed">动画速度:</label>
+                        <input type="range" id="animation-speed" min="0.1" max="3" value="1" step="0.1">
+                        <span id="speed-display">1.0x</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="show-trajectory">显示轨迹:</label>
+                        <input type="checkbox" id="show-trajectory" checked>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="show-particles">显示粒子效果:</label>
+                        <input type="checkbox" id="show-particles" checked>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="camera-distance">相机距离:</label>
+                        <input type="range" id="camera-distance" min="5" max="50" value="20" step="1">
+                        <span id="distance-display">20 AU</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据分析标签页 -->
+    <div id="data-tab" class="tab-content hidden">
+        <div class="container">
+            <div class="panel">
+                <h2>📊 数据统计</h2>
+                <div id="stats-grid" class="stats-grid">
+                    <!-- 统计信息将在这里动态生成 -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📈 轨道分析</h2>
+                <div id="orbit-analysis">
+                    <div class="success">
+                        <strong>✅ 数据来源:</strong> NASA NEO API (近地天体数据库)<br>
+                        <strong>🔑 API密钥:</strong> 来自API.py文件<br>
+                        <strong>📡 端点:</strong> /neo/browse (浏览所有小行星)<br>
+                        <strong>🔄 更新频率:</strong> 实时获取最新数据
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关于标签页 -->
+    <div id="about-tab" class="tab-content hidden">
+        <div class="container">
+            <div class="panel">
+                <h2>ℹ️ 关于项目</h2>
+                <div class="success">
+                    <strong>🎯 项目目标:</strong> 创建交互式陨石冲击模拟器<br>
+                    <strong>🔬 技术栈:</strong> FastAPI + Three.js + NASA NEO API<br>
+                    <strong>📊 数据源:</strong> 真实NASA小行星数据<br>
+                    <strong>🎮 功能:</strong> 3D可视化、物理模拟、数据分析
+                </div>
+                <div style="margin-top: 20px; color: #cccccc; line-height: 1.6;">
+                    <p><strong>轨道数据包含:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>偏心率 (eccentricity)</li>
+                        <li>半长轴 (semi_major_axis)</li>
+                        <li>倾角 (inclination)</li>
+                        <li>轨道周期 (orbital_period)</li>
+                        <li>近日点距离 (perihelion_distance)</li>
+                        <li>远日点距离 (aphelion_distance)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>🚀 使用方法</h2>
+                <div style="color: #cccccc; line-height: 1.6;">
+                    <p><strong>1. 启动后端:</strong></p>
+                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
+                        cd backend && python3 main.py
+                    </code>
+                    
+                    <p><strong>2. 启动前端:</strong></p>
+                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
+                        python3 -m http.server 3001
+                    </code>
+                    
+                    <p><strong>3. 访问界面:</strong></p>
+                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
+                        http://localhost:3001
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let asteroids = [];
+        let selectedAsteroid = null;
+        let scene, camera, renderer, controls;
+        let asteroidMesh, earthMesh, trajectoryLine;
+        let animationId;
+        let isAnimating = false;
+
+        // 页面加载时初始化
+        window.addEventListener('load', async () => {
+            await loadAsteroids();
+            setupEventListeners();
+            initThreeJS();
+        });
+
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // 移除所有标签的active类
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // 激活选中的标签
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // 如果是可视化标签页，启动动画
+            if (tabName === 'visualization') {
+                startAnimation();
+            } else {
+                stopAnimation();
+            }
+        }
+
+        // 加载小行星数据
+        async function loadAsteroids() {
+            try {
+                const response = await fetch('http://localhost:8000/asteroids/fetch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Fetch result:', result);
+
+                // 获取小行星列表
+                const asteroidsResponse = await fetch('http://localhost:8000/asteroids');
+                asteroids = await asteroidsResponse.json();
+                
+                console.log('Loaded asteroids:', asteroids);
+                displayAsteroids();
+                updateStats();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading asteroids:', error);
+                showError('加载小行星数据失败: ' + error.message);
+            }
+        }
+
+        // 显示小行星列表
+        function displayAsteroids() {
+            const asteroidList = document.getElementById('asteroid-list');
+            const asteroidSelect = document.getElementById('selected-asteroid');
+            
+            asteroidList.innerHTML = '';
+            asteroidSelect.innerHTML = '<option value="">选择小行星</option>';
+
+            asteroids.forEach((asteroid, index) => {
+                // 创建列表项
+                const item = document.createElement('div');
+                item.className = 'asteroid-item';
+                item.dataset.index = index;
+                
+                const diameter = (asteroid.diameter_min + asteroid.diameter_max) / 2;
+                const diameterKm = (diameter / 1000).toFixed(2);
+                
+                item.innerHTML = `
+                    <div class="asteroid-name">${asteroid.name}</div>
+                    <div class="asteroid-details">
+                        <div><span class="diameter">直径:</span> ${diameterKm} km</div>
+                        <div><span class="velocity">速度:</span> ${asteroid.velocity.toLocaleString()} m/s</div>
+                        <div><span class="orbit-class">轨道类型:</span> ${asteroid.orbital_data?.orbit_class?.orbit_class_type || 'N/A'}</div>
+                        <div>ID: ${asteroid.id}</div>
+                    </div>
+                `;
+
+                item.addEventListener('click', () => selectAsteroid(index));
+                asteroidList.appendChild(item);
+
+                // 添加到选择框
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${asteroid.name} (${diameterKm} km)`;
+                asteroidSelect.appendChild(option);
+            });
+
+            asteroidList.style.display = 'block';
+        }
+
+        // 选择小行星
+        function selectAsteroid(index) {
+            selectedAsteroid = asteroids[index];
+            
+            // 更新UI
+            document.querySelectorAll('.asteroid-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+            document.getElementById('selected-asteroid').value = index;
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const statsGrid = document.getElementById('stats-grid');
+            
+            const totalAsteroids = asteroids.length;
+            const avgDiameter = asteroids.reduce((sum, a) => sum + (a.diameter_min + a.diameter_max) / 2, 0) / totalAsteroids;
+            const maxDiameter = Math.max(...asteroids.map(a => (a.diameter_min + a.diameter_max) / 2));
+            const minDiameter = Math.min(...asteroids.map(a => (a.diameter_min + a.diameter_max) / 2));
+            
+            const orbitTypes = {};
+            asteroids.forEach(a => {
+                const type = a.orbital_data?.orbit_class?.orbit_class_type || 'Unknown';
+                orbitTypes[type] = (orbitTypes[type] || 0) + 1;
+            });
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalAsteroids}</div>
+                    <div class="stat-label">总小行星数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${(avgDiameter / 1000).toFixed(1)} km</div>
+                    <div class="stat-label">平均直径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${(maxDiameter / 1000).toFixed(1)} km</div>
+                    <div class="stat-label">最大直径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${(minDiameter / 1000).toFixed(1)} km</div>
+                    <div class="stat-label">最小直径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Object.keys(orbitTypes).length}</div>
+                    <div class="stat-label">轨道类型数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${orbitTypes.APO || 0}</div>
+                    <div class="stat-label">Apollo类型</div>
+                </div>
+            `;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 标签页切换
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+
+            // 速度滑块
+            document.getElementById('impact-velocity').addEventListener('input', (e) => {
+                document.getElementById('velocity-display').textContent = 
+                    parseInt(e.target.value).toLocaleString() + ' m/s';
+            });
+
+            // 角度滑块
+            document.getElementById('impact-angle').addEventListener('input', (e) => {
+                document.getElementById('angle-display').textContent = e.target.value + '°';
+            });
+
+            // 小行星选择
+            document.getElementById('selected-asteroid').addEventListener('change', (e) => {
+                if (e.target.value !== '') {
+                    selectAsteroid(parseInt(e.target.value));
+                }
+            });
+
+            // 模拟按钮
+            document.getElementById('simulate-btn').addEventListener('click', runSimulation);
+
+            // 3D可视化控制
+            document.getElementById('animation-speed').addEventListener('input', (e) => {
+                document.getElementById('speed-display').textContent = e.target.value + 'x';
+            });
+
+            document.getElementById('camera-distance').addEventListener('input', (e) => {
+                document.getElementById('distance-display').textContent = e.target.value + ' AU';
+                if (camera) {
+                    camera.position.set(0, 0, parseFloat(e.target.value));
+                    camera.lookAt(0, 0, 0);
+                }
+            });
+
+            // 视图切换
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    // 这里可以添加视图切换逻辑
+                });
+            });
+        }
+
+        // 运行模拟
+        async function runSimulation() {
+            if (!selectedAsteroid) {
+                showError('请先选择一个小行星');
+                return;
+            }
+
+            const simulationData = {
+                asteroid_id: selectedAsteroid.id,
+                impact_velocity: parseFloat(document.getElementById('impact-velocity').value),
+                impact_angle: parseFloat(document.getElementById('impact-angle').value),
+                impactor_mass: parseFloat(document.getElementById('impactor-mass').value),
+                impactor_velocity: parseFloat(document.getElementById('impactor-velocity').value),
+                lead_time_days: parseInt(document.getElementById('lead-time').value)
+            };
+
+            try {
+                const response = await fetch('http://localhost:8000/simulate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(simulationData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+            } catch (error) {
+                console.error('Simulation error:', error);
+                showError('模拟失败: ' + error.message);
+            }
+        }
+
+        // 显示模拟结果
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('simulation-results');
+            const contentDiv = document.getElementById('results-content');
+            
+            contentDiv.innerHTML = `
+                <div class="result-item">
+                    <span class="result-label">陨石坑直径:</span>
+                    <span class="result-value">${result.crater_diameter.toFixed(2)} km</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">冲击能量:</span>
+                    <span class="result-value">${(result.impact_energy / 1e15).toFixed(2)} × 10¹⁵ J</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">地震震级:</span>
+                    <span class="result-value">${result.seismic_magnitude.toFixed(1)} 级</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">海啸高度:</span>
+                    <span class="result-value">${result.tsunami_height.toFixed(1)} m</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">受影响人口:</span>
+                    <span class="result-value">${result.affected_population.toLocaleString()} 人</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">偏转成功:</span>
+                    <span class="result-value" style="color: ${result.deflection_success ? '#4ecdc4' : '#ff6b6b'}">
+                        ${result.deflection_success ? '✅ 是' : '❌ 否'}
+                    </span>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // 初始化Three.js
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+
+            // 相机
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 20);
+
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // 控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // 创建地球
+            const earthGeometry = new THREE.SphereGeometry(2, 32, 32);
+            const earthMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x4A90E2,
+                shininess: 100
+            });
+            earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earthMesh);
+
+            // 创建小行星
+            const asteroidGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const asteroidMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFF6B35,
+                shininess: 50
+            });
+            asteroidMesh = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
+            scene.add(asteroidMesh);
+
+            // 创建轨道
+            const orbitGeometry = new THREE.BufferGeometry();
+            const orbitPoints = [];
+            for (let i = 0; i <= 64; i++) {
+                const angle = (i / 64) * Math.PI * 2;
+                orbitPoints.push(new THREE.Vector3(
+                    Math.cos(angle) * 8,
+                    0,
+                    Math.sin(angle) * 8
+                ));
+            }
+            orbitGeometry.setFromPoints(orbitPoints);
+            const orbitMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
+            trajectoryLine = new THREE.Line(orbitGeometry, orbitMaterial);
+            scene.add(trajectoryLine);
+
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+
+            // 窗口大小调整
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // 开始动画
+        function startAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            animate();
+        }
+
+        // 停止动画
+        function stopAnimation() {
+            isAnimating = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            if (!isAnimating) return;
+            
+            animationId = requestAnimationFrame(animate);
+            
+            // 旋转小行星
+            if (asteroidMesh) {
+                asteroidMesh.rotation.y += 0.01;
+                asteroidMesh.rotation.x += 0.005;
+            }
+
+            // 旋转地球
+            if (earthMesh) {
+                earthMesh.rotation.y += 0.002;
+            }
+
+            // 更新控制器
+            controls.update();
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // 窗口大小调整
+        function onWindowResize() {
+            const container = document.getElementById('threejs-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // 显示错误
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
