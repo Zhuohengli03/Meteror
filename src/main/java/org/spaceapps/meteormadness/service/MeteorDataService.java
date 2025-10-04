@@ -48,4 +48,11 @@ public class MeteorDataService {
             throws IOException, InterruptedException {
         return eonetClient.fetchCategories();
     }
+    
+    /**
+     * Get the NeoWs client for API key status checking
+     */
+    public NeoWsClient getNeoWsClient() {
+        return neoWsClient;
+    }
 }

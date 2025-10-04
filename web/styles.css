@@ -40,6 +40,33 @@ body {
     opacity: 0.9;
 }
 
+.api-status {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-reset {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: translateY(-1px);
+}
+
 /* Navigation */
 .nav-tabs {
     display: flex;

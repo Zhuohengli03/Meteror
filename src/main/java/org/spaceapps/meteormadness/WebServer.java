@@ -42,6 +42,7 @@ public class WebServer {
         server.createContext("/api/natural-events", this::handleNaturalEvents);
         server.createContext("/api/event-categories", this::handleEventCategories);
         server.createContext("/api/test", this::handleTest);
+        server.createContext("/api/reset-key", this::handleResetKey);
         
         // Static file serving
         server.createContext("/", this::handleStaticFiles);
@@ -81,6 +82,8 @@ public class WebServer {
             handleEventCategories(exchange);
         } else if (path.equals("/api/test")) {
             handleTest(exchange);
+        } else if (path.equals("/api/reset-key")) {
+            handleResetKey(exchange);
         }
     }
     
@@ -198,7 +201,30 @@ public class WebServer {
             Map.of("name", "Test NEO 2", "hazardous", "no", "min", "0.05", "max", "0.15")
         ));
         
+        // Add API key status information
+        testData.put("api_key_status", Map.of(
+            "using_backup", meteorService.getNeoWsClient().isUsingBackupKey(),
+            "current_key", meteorService.getNeoWsClient().getCurrentApiKey().substring(0, 8) + "...",
+            "primary_key", meteorService.getNeoWsClient().getApiKey().substring(0, 8) + "..."
+        ));
+        
         sendJsonResponse(exchange, testData);
+    }
+    
+    private void handleResetKey(HttpExchange exchange) throws IOException {
+        try {
+            meteorService.getNeoWsClient().resetToPrimaryKey();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Reset to primary API key");
+            response.put("using_backup", meteorService.getNeoWsClient().isUsingBackupKey());
+            response.put("current_key", meteorService.getNeoWsClient().getCurrentApiKey().substring(0, 8) + "...");
+            
+            sendJsonResponse(exchange, response);
+        } catch (Exception e) {
+            sendErrorResponse(exchange, "Error resetting API key: " + e.getMessage());
+        }
     }
     
     private void handleStaticFiles(HttpExchange exchange) throws IOException {

@@ -136,6 +136,9 @@ function setupEventListeners() {
     if (mapControls) {
         mapControls.appendChild(debugButton);
     }
+    
+    // API key reset button
+    document.getElementById('reset-api-key')?.addEventListener('click', resetApiKey);
 }
 
 function setDefaultDates() {
@@ -199,6 +202,12 @@ async function testAPI() {
                 console.log('Using test endpoint demo data');
                 updateOverviewStats(data.demo_approaches, data.demo_fireballs, data.demo_neos);
                 updateDataSummary(data.demo_approaches, data.demo_fireballs, data.demo_neos);
+                
+                // Display API key status if available
+                if (data.api_key_status) {
+                    console.log('API Key Status:', data.api_key_status);
+                    updateApiKeyStatus(data.api_key_status);
+                }
             }
         } else {
             console.warn('API Test failed:', response.status);
@@ -935,4 +944,45 @@ function debugMap() {
     }, 1000);
     
     alert('Map debug info logged to console. Check browser developer tools.');
+}
+
+function updateApiKeyStatus(status) {
+    const statusElement = document.getElementById('api-status');
+    const statusText = document.getElementById('api-status-text');
+    const resetButton = document.getElementById('reset-api-key');
+    
+    if (statusElement && statusText) {
+        statusElement.style.display = 'block';
+        
+        if (status.using_backup) {
+            statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Using backup API key (rate limit reached)';
+            statusText.style.color = '#ff6b6b';
+            if (resetButton) {
+                resetButton.style.display = 'inline-block';
+            }
+        } else {
+            statusText.innerHTML = '<i class="fas fa-check-circle"></i> Using primary API key';
+            statusText.style.color = '#4facfe';
+            if (resetButton) {
+                resetButton.style.display = 'none';
+            }
+        }
+    }
+}
+
+async function resetApiKey() {
+    try {
+        const response = await fetch('/api/reset-key');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API key reset:', data);
+            updateApiKeyStatus(data);
+            alert('Reset to primary API key successfully');
+        } else {
+            alert('Failed to reset API key');
+        }
+    } catch (error) {
+        console.error('Error resetting API key:', error);
+        alert('Error resetting API key');
+    }
 }
