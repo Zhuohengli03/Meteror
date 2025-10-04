@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteor Madness Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-meteor"></i> Meteor Madness Dashboard</h1>
+                <p>Real-time visualization of NASA meteor and asteroid data</p>
+                <div id="api-status" class="api-status" style="display: none;">
+                    <span id="api-status-text"></span>
+                    <button id="reset-api-key" class="btn-reset" style="display: none;">
+                        <i class="fas fa-refresh"></i> Reset to Primary
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="overview">
+                <i class="fas fa-chart-pie"></i> Overview
+            </button>
+            <button class="nav-tab" data-tab="close-approaches">
+                <i class="fas fa-satellite"></i> Close Approaches
+            </button>
+            <button class="nav-tab" data-tab="fireballs">
+                <i class="fas fa-fire"></i> Fireballs
+            </button>
+            <button class="nav-tab" data-tab="near-earth">
+                <i class="fas fa-globe"></i> Near Earth Objects
+            </button>
+            <button class="nav-tab" data-tab="natural-events">
+                <i class="fas fa-globe-americas"></i> Natural Events
+            </button>
+            <button class="nav-tab" data-tab="map">
+                <i class="fas fa-map"></i> Interactive Map
+            </button>
+        </nav>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading meteor data...</p>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-satellite"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="close-approaches-count">-</h3>
+                        <p>Close Approaches</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="fireballs-count">-</h3>
+                        <p>Fireballs Detected</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="hazardous-count">-</h3>
+                        <p>Potentially Hazardous</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="last-updated">-</h3>
+                        <p>Last Updated</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <div class="summary-card">
+                    <h3><i class="fas fa-info-circle"></i> Data Summary</h3>
+                    <div id="data-summary">
+                        <p>Loading data summary...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="date-ranges-section">
+                <div class="date-ranges-card">
+                    <h3><i class="fas fa-calendar-alt"></i> Data Time Ranges</h3>
+                    <div class="date-ranges-grid">
+                        <div class="date-range-item">
+                            <div class="date-range-header">
+                                <i class="fas fa-satellite"></i>
+                                <strong>Close Approaches</strong>
+                            </div>
+                            <div class="date-range-details">
+                                <p><strong>Time Range:</strong> ±1 month (60 days)</p>
+                                <p><strong>Purpose:</strong> Upcoming & recent approaches</p>
+                                <p><strong>Limit:</strong> 20 objects maximum (shows 20+ if more available)</p>
+                                <p><strong>Distance:</strong> Within 0.05 AU</p>
+                            </div>
+                        </div>
+                        
+                        <div class="date-range-item">
+                            <div class="date-range-header">
+                                <i class="fas fa-fire"></i>
+                                <strong>Fireballs</strong>
+                            </div>
+                            <div class="date-range-details">
+                                <p><strong>Time Range:</strong> Past 1 year (365 days)</p>
+                                <p><strong>Purpose:</strong> Historical fireball events</p>
+                                <p><strong>Limit:</strong> 20 events maximum (shows 20+ if more available)</p>
+                                <p><strong>Data:</strong> Energy, velocity, location</p>
+                            </div>
+                        </div>
+                        
+                        <div class="date-range-item">
+                            <div class="date-range-header">
+                                <i class="fas fa-globe"></i>
+                                <strong>Near Earth Objects</strong>
+                            </div>
+                            <div class="date-range-details">
+                                <p><strong>Time Range:</strong> ±2 days (4 days)</p>
+                                <p><strong>Purpose:</strong> Recent & upcoming NEOs</p>
+                                <p><strong>Limit:</strong> All available in range</p>
+                                <p><strong>Focus:</strong> Hazard assessment</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="limits-note">
+                        <p><i class="fas fa-info-circle"></i> <strong>Note:</strong> Close approaches and fireballs are both limited to 20 items to ensure optimal performance and focus on the most significant events. When exactly 20 items are shown, the display shows "20+" to indicate there may be more data available.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Close Approaches Tab -->
+        <div id="close-approaches" class="tab-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="date-range">Date Range:</label>
+                    <input type="date" id="date-min" />
+                    <span>to</span>
+                    <input type="date" id="date-max" />
+                </div>
+                <div class="control-group">
+                    <label for="distance-max">Max Distance (AU):</label>
+                    <input type="number" id="distance-max" value="0.05" step="0.01" min="0.001" max="1" />
+                </div>
+                <div class="control-group">
+                    <label for="limit">Limit:</label>
+                    <input type="number" id="limit" value="15" min="1" max="100" />
+                </div>
+                <button id="fetch-approaches" class="btn-primary">
+                    <i class="fas fa-search"></i> Fetch Data
+                </button>
+            </div>
+            <div class="data-table-container">
+                <table id="approaches-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Object</th>
+                            <th>Closest Time</th>
+                            <th>Distance (AU)</th>
+                            <th>Velocity (km/s)</th>
+                            <th>Magnitude</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fireballs Tab -->
+        <div id="fireballs" class="tab-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="fireball-since">Since Date:</label>
+                    <input type="date" id="fireball-since" />
+                </div>
+                <div class="control-group">
+                    <label for="fireball-limit">Limit:</label>
+                    <input type="number" id="fireball-limit" value="15" min="1" max="100" />
+                </div>
+                <button id="fetch-fireballs" class="btn-primary">
+                    <i class="fas fa-fire"></i> Fetch Fireballs
+                </button>
+            </div>
+            <div class="data-table-container">
+                <table id="fireballs-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Energy (J)</th>
+                            <th>Velocity (km/s)</th>
+                            <th>Altitude (km)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Near Earth Objects Tab -->
+        <div id="near-earth" class="tab-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="neo-start">Start Date:</label>
+                    <input type="date" id="neo-start" />
+                </div>
+                <div class="control-group">
+                    <label for="neo-end">End Date:</label>
+                    <input type="date" id="neo-end" />
+                </div>
+                <button id="fetch-neos" class="btn-primary">
+                    <i class="fas fa-globe"></i> Fetch NEOs
+                </button>
+            </div>
+            <div class="data-table-container">
+                <table id="neos-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Hazardous</th>
+                            <th>Min Diameter (km)</th>
+                            <th>Max Diameter (km)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Natural Events Tab -->
+        <div id="natural-events" class="tab-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="event-days">Days Back:</label>
+                    <input type="number" id="event-days" value="30" min="1" max="365" />
+                </div>
+                <div class="control-group">
+                    <label for="event-limit">Limit:</label>
+                    <input type="number" id="event-limit" value="50" min="1" max="200" />
+                </div>
+                <div class="control-group">
+                    <label for="event-status">Status:</label>
+                    <select id="event-status">
+                        <option value="all">All Events</option>
+                        <option value="open">Open Events</option>
+                        <option value="closed">Closed Events</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="event-category">Category:</label>
+                    <select id="event-category">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <button id="fetch-natural-events" class="btn-primary">
+                    <i class="fas fa-globe-americas"></i> Fetch Events
+                </button>
+            </div>
+            <div class="data-table-container">
+                <table id="natural-events-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>GIBS Layers</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Interactive Map Tab -->
+        <div id="map" class="tab-content">
+            <div class="map-controls">
+                <button id="show-natural-events-map" class="btn-secondary">
+                    <i class="fas fa-globe-americas"></i> Show Natural Events
+                </button>
+                <button id="show-fireballs-map" class="btn-secondary">
+                    <i class="fas fa-fire"></i> Show Fireballs
+                </button>
+                <button id="show-approaches-map" class="btn-secondary">
+                    <i class="fas fa-satellite"></i> Show Approaches
+                </button>
+                <button id="clear-map" class="btn-secondary">
+                    <i class="fas fa-trash"></i> Clear Map
+                </button>
+            </div>
+            <div id="map-container" class="map-container"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
