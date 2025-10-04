@@ -10,7 +10,7 @@ This repository hosts a Java-only starter for the NASA Space Apps **Meteor Madne
 ## Requirements
 - JDK 17 or later
 - Maven 3.9+
-- Set an environment variable `NASA_API_KEY` for the NeoWs feed **or** edit `src/main/resources/nasa-api.properties`. The repository ships with a ready-to-use key for quick testing.
+- (Optional) Set an environment variable `NASA_API_KEY` for the NeoWs feed. If not set, the app falls back to the limited `DEMO_KEY`.
 
 ## Build & Run
 ```bash
