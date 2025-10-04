@@ -41,6 +41,7 @@ public class WebServer {
         server.createContext("/api/neo-feed", this::handleNeoFeed);
         server.createContext("/api/natural-events", this::handleNaturalEvents);
         server.createContext("/api/event-categories", this::handleEventCategories);
+        server.createContext("/api/test", this::handleTest);
         
         // Static file serving
         server.createContext("/", this::handleStaticFiles);
@@ -78,6 +79,8 @@ public class WebServer {
             handleNaturalEvents(exchange);
         } else if (path.equals("/api/event-categories")) {
             handleEventCategories(exchange);
+        } else if (path.equals("/api/test")) {
+            handleTest(exchange);
         }
     }
     
@@ -175,6 +178,27 @@ public class WebServer {
         } catch (Exception e) {
             sendErrorResponse(exchange, "Error fetching event categories: " + e.getMessage());
         }
+    }
+    
+    private void handleTest(HttpExchange exchange) throws IOException {
+        Map<String, Object> testData = new HashMap<>();
+        testData.put("status", "success");
+        testData.put("message", "API is working");
+        testData.put("timestamp", System.currentTimeMillis());
+        testData.put("demo_approaches", List.of(
+            Map.of("object", "Test Object 1", "dist", "0.02", "v_rel", "15.5"),
+            Map.of("object", "Test Object 2", "dist", "0.03", "v_rel", "12.3")
+        ));
+        testData.put("demo_fireballs", List.of(
+            Map.of("date", "2024-01-10", "energy", "1.2e12", "vel", "15.2"),
+            Map.of("date", "2024-01-11", "energy", "8.5e11", "vel", "12.8")
+        ));
+        testData.put("demo_neos", List.of(
+            Map.of("name", "Test NEO 1", "hazardous", "yes", "min", "0.1", "max", "0.3"),
+            Map.of("name", "Test NEO 2", "hazardous", "no", "min", "0.05", "max", "0.15")
+        ));
+        
+        sendJsonResponse(exchange, testData);
     }
     
     private void handleStaticFiles(HttpExchange exchange) throws IOException {

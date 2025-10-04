@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setDefaultDates();
     loadEventCategories();
+    testAPI();
     loadOverviewData();
 });
 
@@ -183,6 +184,27 @@ async function loadEventCategories() {
         }
     } catch (error) {
         console.warn('Failed to load event categories:', error);
+    }
+}
+
+async function testAPI() {
+    try {
+        const response = await fetch('/api/test');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Test successful:', data);
+            
+            // If API is working, use the demo data from the test endpoint
+            if (data.demo_approaches && data.demo_fireballs && data.demo_neos) {
+                console.log('Using test endpoint demo data');
+                updateOverviewStats(data.demo_approaches, data.demo_fireballs, data.demo_neos);
+                updateDataSummary(data.demo_approaches, data.demo_fireballs, data.demo_neos);
+            }
+        } else {
+            console.warn('API Test failed:', response.status);
+        }
+    } catch (error) {
+        console.warn('API Test error:', error);
     }
 }
 
@@ -381,7 +403,31 @@ async function loadOverviewData() {
         if (approaches.length === 0 && fireballs.length === 0 && neos.length === 0) {
             console.log('No data loaded from APIs, showing demo data');
             showDemoData();
+        } else {
+            console.log('Data loaded successfully:', {
+                approaches: approaches.length,
+                fireballs: fireballs.length,
+                neos: neos.length
+            });
         }
+        
+        // Force a final update to ensure stats are displayed
+        setTimeout(() => {
+            const approachesCount = approaches.length;
+            const fireballsCount = fireballs.length;
+            const hazardousCount = neos.filter(item => item.hazardous === 'yes').length;
+            
+            // Force update if still showing zeros
+            if (document.getElementById('close-approaches-count').textContent === '0' && approachesCount > 0) {
+                document.getElementById('close-approaches-count').textContent = approachesCount;
+            }
+            if (document.getElementById('fireballs-count').textContent === '0' && fireballsCount > 0) {
+                document.getElementById('fireballs-count').textContent = fireballsCount;
+            }
+            if (document.getElementById('hazardous-count').textContent === '0' && hazardousCount > 0) {
+                document.getElementById('hazardous-count').textContent = hazardousCount;
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('Error loading overview data:', error);
@@ -498,10 +544,21 @@ function updateOverviewStats(approaches, fireballs, neos) {
     const fireballsCount = fireballs.length;
     const hazardousCount = neos.filter(item => item.hazardous === 'yes').length;
     
+    console.log('Updating stats:', {
+        approaches: approachesCount,
+        fireballs: fireballsCount,
+        hazardous: hazardousCount
+    });
+    
     // Update counts with animation
     animateCount('close-approaches-count', approachesCount);
     animateCount('fireballs-count', fireballsCount);
     animateCount('hazardous-count', hazardousCount);
+    
+    // Also set directly to ensure immediate update
+    document.getElementById('close-approaches-count').textContent = approachesCount;
+    document.getElementById('fireballs-count').textContent = fireballsCount;
+    document.getElementById('hazardous-count').textContent = hazardousCount;
     
     // Update last updated time
     document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
@@ -512,9 +569,20 @@ function updateOverviewStats(approaches, fireballs, neos) {
 
 function animateCount(elementId, targetValue) {
     const element = document.getElementById(elementId);
-    if (!element) return;
+    if (!element) {
+        console.warn('Element not found:', elementId);
+        return;
+    }
     
     const currentValue = parseInt(element.textContent) || 0;
+    console.log(`Animating ${elementId}: ${currentValue} -> ${targetValue}`);
+    
+    // If target is 0, set immediately
+    if (targetValue === 0) {
+        element.textContent = '0';
+        return;
+    }
+    
     const increment = (targetValue - currentValue) / 10;
     let current = currentValue;
     
