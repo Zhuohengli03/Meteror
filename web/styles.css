@@ -543,7 +543,7 @@ i.fas, i.fa {
     text-align: center;
     margin-bottom: 2rem;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, rgba(255, 69, 0, 0.1) 100%);
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -569,7 +569,7 @@ i.fas, i.fa {
 }
 
 .simulation-section h3 {
-    color: #667eea;
+    color: #ff8c00;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
     display: flex;
@@ -581,7 +581,7 @@ i.fas, i.fa {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 1.5rem;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #ff8c00;
 }
 
 .purpose-content h4 {
@@ -610,12 +610,12 @@ i.fas, i.fa {
 }
 
 .simulation-table th {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(255, 140, 0, 0.2);
     color: #ffffff;
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    border-bottom: 2px solid rgba(255, 140, 0, 0.3);
 }
 
 .simulation-table td {
@@ -629,11 +629,11 @@ i.fas, i.fa {
 }
 
 .simulation-table code {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(255, 140, 0, 0.2);
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
-    color: #667eea;
+    color: #ff8c00;
 }
 
 .simulation-note {
@@ -641,7 +641,7 @@ i.fas, i.fa {
     border-radius: 8px;
     padding: 1rem;
     margin-top: 1rem;
-    border-left: 4px solid #4facfe;
+    border-left: 4px solid #ff8c00;
 }
 
 .simulation-note p {
@@ -662,11 +662,11 @@ i.fas, i.fa {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     padding: 1.5rem;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #ff8c00;
 }
 
 .step-number {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ff8c00 0%, #ff4500 100%);
     color: white;
     width: 40px;
     height: 40px;
@@ -704,11 +704,11 @@ i.fas, i.fa {
 }
 
 .equation code {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(255, 140, 0, 0.2);
     padding: 0.5rem 1rem;
     border-radius: 6px;
     display: block;
-    color: #667eea;
+    color: #ff8c00;
     font-size: 1.1rem;
 }
 
@@ -733,10 +733,10 @@ i.fas, i.fa {
 }
 
 .result-card h4 {
-    color: #667eea;
+    color: #ff8c00;
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
-    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    border-bottom: 2px solid rgba(255, 140, 0, 0.3);
     padding-bottom: 0.5rem;
 }
 
@@ -759,11 +759,11 @@ i.fas, i.fa {
 }
 
 .conclusion {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(255, 140, 0, 0.1);
     border-radius: 8px;
     padding: 1rem;
     margin-top: 1rem;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #ff8c00;
     font-style: italic;
     color: #ffffff !important;
 }
