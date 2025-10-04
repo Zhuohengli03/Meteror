@@ -331,6 +331,9 @@ async function loadOverviewData() {
             const response = await fetch(`/api/close-approaches?dateMin=${formatDate(oneMonthAgo)}&dateMax=${formatDate(oneMonthFromNow)}&distMax=0.05&limit=20`);
             if (response.ok) {
                 approaches = await response.json();
+                console.log('Loaded approaches:', approaches.length);
+            } else {
+                console.warn('Approaches API returned:', response.status);
             }
         } catch (e) {
             console.warn('Failed to load approaches data:', e);
@@ -345,6 +348,9 @@ async function loadOverviewData() {
             const response = await fetch(`/api/fireballs?sinceDate=${formatDate(oneYearAgo)}&limit=20`);
             if (response.ok) {
                 fireballs = await response.json();
+                console.log('Loaded fireballs:', fireballs.length);
+            } else {
+                console.warn('Fireballs API returned:', response.status);
             }
         } catch (e) {
             console.warn('Failed to load fireballs data:', e);
@@ -359,6 +365,9 @@ async function loadOverviewData() {
             const response = await fetch(`/api/neo-feed?startDate=${formatDate(twoDaysAgo)}&endDate=${formatDate(twoDaysFromNow)}`);
             if (response.ok) {
                 neos = await response.json();
+                console.log('Loaded NEOs:', neos.length);
+            } else {
+                console.warn('NEOs API returned:', response.status);
             }
         } catch (e) {
             console.warn('Failed to load NEOs data:', e);
@@ -368,10 +377,11 @@ async function loadOverviewData() {
         updateOverviewStats(approaches, fireballs, neos);
         updateDataSummary(approaches, fireballs, neos);
         
-        // Create charts with a small delay to ensure smooth rendering
-        setTimeout(() => {
-            createOverviewCharts(approaches, fireballs);
-        }, 100);
+        // If no data was loaded, show demo data
+        if (approaches.length === 0 && fireballs.length === 0 && neos.length === 0) {
+            console.log('No data loaded from APIs, showing demo data');
+            showDemoData();
+        }
         
     } catch (error) {
         console.error('Error loading overview data:', error);
@@ -384,12 +394,26 @@ async function loadOverviewData() {
 
 function showDemoData() {
     // Demo data for when API is not available
-    updateOverviewStats(
-        [{ object: 'Demo Object 1', cd: '2024-01-15', dist: '0.02', v_rel: '15.5', h: '20.1' }],
-        [{ date: '2024-01-10', lat: '40.7128', lon: '-74.0060', energy: '1.2e12', vel: '15.2', alt: '45.3' }],
-        [{ date: '2024-01-15', name: 'Demo NEO', hazardous: 'no', min: '0.1', max: '0.3' }]
-    );
-    createDemoCharts();
+    const demoApproaches = [
+        { object: '2024 AB1', cd: '2024-01-15', dist: '0.02', v_rel: '15.5', h: '20.1' },
+        { object: '2024 CD2', cd: '2024-01-16', dist: '0.03', v_rel: '12.3', h: '18.5' },
+        { object: '2024 EF3', cd: '2024-01-17', dist: '0.04', v_rel: '18.7', h: '22.1' }
+    ];
+    
+    const demoFireballs = [
+        { date: '2024-01-10', lat: '40.7128', lon: '-74.0060', energy: '1.2e12', vel: '15.2', alt: '45.3' },
+        { date: '2024-01-11', lat: '34.0522', lon: '-118.2437', energy: '8.5e11', vel: '12.8', alt: '38.7' },
+        { date: '2024-01-12', lat: '41.8781', lon: '-87.6298', energy: '2.1e12', vel: '16.4', alt: '42.1' }
+    ];
+    
+    const demoNeos = [
+        { date: '2024-01-15', name: '2024 AB1', hazardous: 'yes', min: '0.1', max: '0.3' },
+        { date: '2024-01-16', name: '2024 CD2', hazardous: 'no', min: '0.05', max: '0.15' },
+        { date: '2024-01-17', name: '2024 EF3', hazardous: 'yes', min: '0.2', max: '0.4' }
+    ];
+    
+    updateOverviewStats(demoApproaches, demoFireballs, demoNeos);
+    updateDataSummary(demoApproaches, demoFireballs, demoNeos);
 }
 
 // Display functions
@@ -603,143 +627,7 @@ function updateHazardousCount(count) {
     document.getElementById('hazardous-count').textContent = count;
 }
 
-// Chart creation functions
-function createOverviewCharts(approaches, fireballs) {
-    createApproachesChart(approaches);
-    createEnergyChart(fireballs);
-}
-
-function createApproachesChart(approaches) {
-    const ctx = document.getElementById('approachesChart');
-    if (!ctx) return;
-
-    if (approachesChart) {
-        approachesChart.destroy();
-    }
-
-    // Group approaches by date
-    const dateGroups = {};
-    approaches.forEach(approach => {
-        const date = approach.cd ? approach.cd.split(' ')[0] : 'Unknown';
-        dateGroups[date] = (dateGroups[date] || 0) + 1;
-    });
-
-    approachesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: Object.keys(dateGroups).sort(),
-            datasets: [{
-                label: 'Close Approaches',
-                data: Object.values(dateGroups),
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#ffffff'
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: '#ffffff'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: '#ffffff'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function createEnergyChart(fireballs) {
-    const ctx = document.getElementById('energyChart');
-    if (!ctx) return;
-
-    if (energyChart) {
-        energyChart.destroy();
-    }
-
-    // Create energy distribution
-    const energyRanges = ['< 1e10', '1e10-1e11', '1e11-1e12', '1e12-1e13', '> 1e13'];
-    const energyCounts = [0, 0, 0, 0, 0];
-
-    fireballs.forEach(fireball => {
-        const energy = parseFloat(fireball.energy);
-        if (energy < 1e10) energyCounts[0]++;
-        else if (energy < 1e11) energyCounts[1]++;
-        else if (energy < 1e12) energyCounts[2]++;
-        else if (energy < 1e13) energyCounts[3]++;
-        else energyCounts[4]++;
-    });
-
-    energyChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: energyRanges,
-            datasets: [{
-                data: energyCounts,
-                backgroundColor: [
-                    '#667eea',
-                    '#764ba2',
-                    '#f093fb',
-                    '#f5576c',
-                    '#4facfe'
-                ],
-                borderWidth: 2,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#ffffff'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function createDemoCharts() {
-    // Demo data for charts
-    const demoApproaches = [
-        { cd: '2024-01-15' },
-        { cd: '2024-01-16' },
-        { cd: '2024-01-17' },
-        { cd: '2024-01-18' }
-    ];
-    
-    const demoFireballs = [
-        { energy: '5e10' },
-        { energy: '1.2e11' },
-        { energy: '8e12' },
-        { energy: '2e13' }
-    ];
-
-    createApproachesChart(demoApproaches);
-    createEnergyChart(demoFireballs);
-}
+// Chart functions removed as requested
 
 // Map functions
 async function showNaturalEventsOnMap() {
