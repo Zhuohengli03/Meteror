@@ -3,10 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌌 陨石冲击模拟器 - NASA真实数据</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <title>小行星撞击地球模拟</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // 确保Three.js和OrbitControls加载完成
+        window.addEventListener('load', function() {
+            console.log('Three.js loaded:', typeof THREE !== 'undefined');
+            console.log('OrbitControls loaded:', typeof THREE.OrbitControls !== 'undefined');
+        });
+    </script>
     <style>
         * {
             margin: 0;
@@ -15,845 +23,1427 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
-            color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #00ffff;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #00ffff, #ff00ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            color: #cccccc;
-            font-size: 1.2em;
-        }
-
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 15px;
-        }
-
-        .nav-tab {
-            padding: 10px 20px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #00ffff;
-            font-weight: bold;
-        }
-
-        .nav-tab:hover, .nav-tab.active {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow: hidden;
         }
 
         .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
         }
 
-        .panel {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            border: 2px solid #333;
+        }
+
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-        .panel h2 {
-            color: #00ffff;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #00ffff;
-            padding-bottom: 10px;
-        }
-
-        .asteroid-list {
-            max-height: 400px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #00ffff #333;
-        }
-
-        .asteroid-item {
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .asteroid-item:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .asteroid-item.selected {
-            background: rgba(255, 0, 255, 0.2);
-            border-color: #ff00ff;
-        }
-
-        .asteroid-name {
+        .title {
+            font-size: 18px;
             font-weight: bold;
-            color: #00ffff;
-            font-size: 1.1em;
-            margin-bottom: 5px;
+            margin-bottom: 15px;
+            color: #00ff88;
+            text-align: center;
         }
 
-        .asteroid-details {
-            font-size: 0.9em;
-            color: #cccccc;
+        .instruction {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 20px;
+            text-align: center;
             line-height: 1.4;
         }
 
-        .diameter { color: #ff6b6b; }
-        .velocity { color: #4ecdc4; }
-        .orbit-class { color: #ffe66d; }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            color: #00ffff;
-            font-weight: bold;
-        }
-
-        .control-group input, .control-group select {
+        .step {
+            margin-bottom: 15px;
             padding: 10px;
-            border: 1px solid #00ffff;
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 1em;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #00ff88;
         }
 
-        .control-group input:focus, .control-group select:focus {
+        .step-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .step-content {
+            font-size: 14px;
+            color: white;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        select:focus {
             outline: none;
-            border-color: #ff00ff;
-            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            border-color: #00ff88;
         }
 
-        .simulate-btn {
-            background: linear-gradient(45deg, #00ffff, #ff00ff);
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
+        select option {
+            background: #1a1a1a;
             color: white;
-            font-size: 1.2em;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-top: 10px;
         }
 
-        .simulate-btn:hover {
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .results {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .result-label { color: #cccccc; }
-        .result-value { color: #00ffff; font-weight: bold; }
-
-        .loading {
-            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
             padding: 20px;
-            color: #00ffff;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            max-height: 50vh;
+            min-height: 200px;
+            overflow-y: auto;
+            resize: vertical;
         }
 
-        .error {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid #ff6b6b;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
+        .results-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ff4444;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px 0;
+            margin: -20px -20px 15px -20px;
+            border-radius: 15px 15px 0 0;
+            z-index: 10;
         }
 
-        .success {
-            color: #4ecdc4;
-            background: rgba(78, 205, 196, 0.1);
-            border: 1px solid #4ecdc4;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(to right, #4A90E2, #00aaff);
+            cursor: ns-resize;
+            border-radius: 0 0 15px 15px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
         }
 
-        .stats-grid {
+        .resize-handle:hover {
+            opacity: 1;
+        }
+
+        .trajectory-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #4A90E2;
+            border-radius: 4px;
+            margin-right: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background: #4A90E2;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .impact-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
             padding: 15px;
+            border-radius: 10px;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat-value {
-            font-size: 2em;
+            font-size: 24px;
             font-weight: bold;
-            color: #00ffff;
+            color: #00ff88;
             margin-bottom: 5px;
         }
 
         .stat-label {
-            color: #cccccc;
-            font-size: 0.9em;
+            font-size: 12px;
+            color: #888;
         }
 
-        .visualization-container {
-            grid-column: 1 / -1;
-            height: 500px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            position: relative;
-            overflow: hidden;
+        .cities-section {
+            margin-top: 15px;
         }
 
-        #threejs-container {
+        .cities-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+
+        .cities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .city-item {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #ff6b6b;
+            font-size: 12px;
+        }
+
+        .city-name {
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .city-info {
+            color: #ccc;
+            font-size: 11px;
+        }
+
+        .error {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 3px solid #ff4444;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-ready { color: #00ff88; }
+        .status-selected { color: #ffaa00; }
+        .status-simulating { color: #00aaff; }
+        .status-error { color: #ff4444; }
+
+        /* 动态演示样式 */
+        .demo-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            pointer-events: none;
+            z-index: 1000;
         }
 
-        .view-controls {
+        .asteroid-trail {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 100;
+            width: 4px;
+            height: 4px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff6b6b;
+            animation: asteroidMove 3s ease-in-out forwards;
         }
 
-        .view-btn {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #00ffff;
-            color: #00ffff;
-            padding: 8px 12px;
+        .impact-flash {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #ffff00, #ff4444);
+            border-radius: 50%;
+            animation: impactFlash 0.5s ease-out;
+        }
+
+        .orbit-path {
+            position: absolute;
+            border: 2px dashed #00aaff;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: orbitPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes asteroidMove {
+            0% {
+                transform: translate(0, 0) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--target-x), var(--target-y)) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes impactFlash {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(10);
+                opacity: 0;
+            }
+        }
+
+        @keyframes orbitPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .map-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff88;
+            font-size: 18px;
+            z-index: 1001;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .map-controls button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 10px;
             margin: 2px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 11px;
+            transition: all 0.3s;
         }
 
-        .view-btn:hover, .view-btn.active {
-            background: rgba(0, 255, 255, 0.2);
+        .map-controls button:hover {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
         }
 
-        .hidden {
-            display: none;
+        .map-controls button.active {
+            background: #00ff88;
+            color: #000;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .nav-tabs {
-                flex-wrap: wrap;
-                gap: 10px;
-            }
+        .layer-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 200px;
         }
 
-        .asteroid-list::-webkit-scrollbar {
-            width: 8px;
+        .layer-controls h4 {
+            color: #00ff88;
+            margin: 0 0 10px 0;
+            font-size: 14px;
         }
 
-        .asteroid-list::-webkit-scrollbar-track {
-            background: #333;
-            border-radius: 4px;
+        .layer-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
         }
 
-        .asteroid-list::-webkit-scrollbar-thumb {
-            background: #00ffff;
-            border-radius: 4px;
+        .layer-item input[type="checkbox"] {
+            margin-right: 8px;
         }
 
-        .asteroid-list::-webkit-scrollbar-thumb:hover {
-            background: #ff00ff;
+        .layer-item label {
+            color: white;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .layer-opacity {
+            width: 60px;
+            margin-left: 10px;
+        }
+
+        .real-time-indicator {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            z-index: 1000;
+            border: 1px solid #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🌌 陨石冲击模拟器</h1>
-        <p>基于NASA NEO API的实时小行星数据与3D可视化</p>
-        <div class="nav-tabs">
-            <div class="nav-tab active" data-tab="simulation">🎯 冲击模拟</div>
-            <div class="nav-tab" data-tab="visualization">🌍 3D可视化</div>
-            <div class="nav-tab" data-tab="data">📊 数据分析</div>
-            <div class="nav-tab" data-tab="about">ℹ️ 关于</div>
-        </div>
-    </div>
-
-    <!-- 冲击模拟标签页 -->
-    <div id="simulation-tab" class="tab-content">
         <div class="container">
-            <div class="panel">
-                <h2>📡 实时小行星数据</h2>
-                <div id="loading" class="loading">正在加载NASA数据...</div>
-                <div id="asteroid-list" class="asteroid-list" style="display: none;">
-                    <!-- 小行星列表将在这里动态生成 -->
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>🎯 冲击模拟控制台</h2>
-                <div class="controls">
-                    <div class="control-group">
-                        <label for="selected-asteroid">选择小行星:</label>
-                        <select id="selected-asteroid">
-                            <option value="">请先加载数据</option>
-                        </select>
+        <div id="map"></div>
+        <div class="map-loading" id="map-loading">🌍 正在加载地图...</div>
+        
+        <div class="control-panel">
+            <div class="title">🌍 小行星撞击地球模拟</div>
+            <div class="instruction">
+                点击地图选择撞击地点 → 选择小行星 → 运行模拟
                     </div>
 
-                    <div class="control-group">
-                        <label for="impact-velocity">冲击速度 (m/s):</label>
-                        <input type="range" id="impact-velocity" min="10000" max="50000" value="20000" step="1000">
-                        <span id="velocity-display">20,000 m/s</span>
+            <div class="step">
+                <div class="step-label">步骤 1: 选择撞击地点</div>
+                <div class="step-content" id="location-status">点击地图上的任意位置</div>
                     </div>
 
-                    <div class="control-group">
-                        <label for="impact-angle">冲击角度 (度):</label>
-                        <input type="range" id="impact-angle" min="0" max="90" value="45" step="5">
-                        <span id="angle-display">45°</span>
+            <div class="step">
+                <div class="step-label">步骤 2: 选择小行星</div>
+                <select id="asteroid-select">
+                    <option value="">请先选择撞击地点</option>
+                </select>
                     </div>
 
-                    <div class="control-group">
-                        <label for="impactor-mass">撞击器质量 (kg):</label>
-                        <input type="number" id="impactor-mass" value="1000" min="100" max="10000" step="100">
-                    </div>
-
-                    <div class="control-group">
-                        <label for="impactor-velocity">撞击器速度 (m/s):</label>
-                        <input type="number" id="impactor-velocity" value="10000" min="1000" max="50000" step="1000">
-                    </div>
-
-                    <div class="control-group">
-                        <label for="lead-time">提前时间 (天):</label>
-                        <input type="number" id="lead-time" value="365" min="30" max="3650" step="30">
-                    </div>
-
-                    <button id="simulate-btn" class="simulate-btn">🚀 开始模拟</button>
-                </div>
-
-                <div id="simulation-results" class="results" style="display: none;">
-                    <h3>模拟结果</h3>
-                    <div id="results-content"></div>
-                </div>
+        <div class="step">
+            <div class="step-label">步骤 3: 轨迹设置</div>
+            <div class="trajectory-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="show-trajectory" checked>
+                    <span class="checkmark"></span>
+                    显示降落轨迹
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="show-3d-effect" checked>
+                    <span class="checkmark"></span>
+                    立体地图效果
+                </label>
             </div>
         </div>
-    </div>
 
-    <!-- 3D可视化标签页 -->
-    <div id="visualization-tab" class="tab-content hidden">
-        <div class="container">
-            <div class="panel">
-                <h2>🌍 3D轨道可视化</h2>
-                <div class="visualization-container">
-                    <div id="threejs-container"></div>
-                    <div class="view-controls">
-                        <button class="view-btn active" data-view="orbit">轨道视图</button>
-                        <button class="view-btn" data-view="impact">冲击视图</button>
-                        <button class="view-btn" data-view="deflection">偏转视图</button>
-                        <button class="view-btn" onclick="initThreeJS()" style="background: #ff6b6b;">🔧 重新初始化3D</button>
+            <button class="btn" id="simulate-btn" onclick="runSimulation()" disabled>
+                🚀 运行撞击模拟
+            </button>
+            
+            <div class="error" id="error" style="display: none;"></div>
                     </div>
-                </div>
+
+        <div class="status-indicator" id="status">
+            <span class="status-ready">● 准备就绪</span>
+        </div>
+
+        <div class="real-time-indicator">
+            🛰️ NASA小行星数据
+        </div>
+
+        <div class="layer-controls">
+            <h4>🗺️ 地图图层</h4>
+            <div class="layer-item">
+                <input type="radio" name="map-layer" id="osm-layer" checked>
+                <label for="osm-layer">OpenStreetMap</label>
             </div>
-
-            <div class="panel">
-                <h2>🎮 可视化控制</h2>
-                <div class="controls">
-                    <div class="control-group">
-                        <label for="animation-speed">动画速度:</label>
-                        <input type="range" id="animation-speed" min="0.1" max="3" value="1" step="0.1">
-                        <span id="speed-display">1.0x</span>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="show-trajectory">显示轨迹:</label>
-                        <input type="checkbox" id="show-trajectory" checked>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="show-particles">显示粒子效果:</label>
-                        <input type="checkbox" id="show-particles" checked>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="camera-distance">相机距离:</label>
-                        <input type="range" id="camera-distance" min="5" max="50" value="20" step="1">
-                        <span id="distance-display">20 AU</span>
-                    </div>
-                </div>
+            <div class="layer-item">
+                <input type="radio" name="map-layer" id="terrain-layer">
+                <label for="terrain-layer">地形图</label>
+            </div>
+            <div class="layer-item">
+                <input type="radio" name="map-layer" id="dark-layer">
+                <label for="dark-layer">深色主题</label>
+            </div>
+            <div class="layer-item">
+                <input type="radio" name="map-layer" id="esri-layer">
+                <label for="esri-layer">Esri地图</label>
+            </div>
+            <div class="layer-item">
+                <input type="radio" name="map-layer" id="imagery-layer">
+                <label for="imagery-layer">卫星影像</label>
             </div>
         </div>
+
+        <div class="results" id="results">
+            <div class="results-header">💥 撞击影响分析</div>
+            
+            <div class="impact-stats" id="impact-stats">
+                <!-- 统计数据将在这里显示 -->
     </div>
 
-    <!-- 数据分析标签页 -->
-    <div id="data-tab" class="tab-content hidden">
-        <div class="container">
-            <div class="panel">
-                <h2>📊 数据统计</h2>
-                <div id="stats-grid" class="stats-grid">
-                    <!-- 统计信息将在这里动态生成 -->
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>📈 轨道分析</h2>
-                <div id="orbit-analysis">
-                    <div class="success">
-                        <strong>✅ 数据来源:</strong> NASA NEO API (近地天体数据库)<br>
-                        <strong>🔑 API密钥:</strong> 来自API.py文件<br>
-                        <strong>📡 端点:</strong> /neo/browse (浏览所有小行星)<br>
-                        <strong>🔄 更新频率:</strong> 实时获取最新数据
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 关于标签页 -->
-    <div id="about-tab" class="tab-content hidden">
-        <div class="container">
-            <div class="panel">
-                <h2>ℹ️ 关于项目</h2>
-                <div class="success">
-                    <strong>🎯 项目目标:</strong> 创建交互式陨石冲击模拟器<br>
-                    <strong>🔬 技术栈:</strong> FastAPI + Three.js + NASA NEO API<br>
-                    <strong>📊 数据源:</strong> 真实NASA小行星数据<br>
-                    <strong>🎮 功能:</strong> 3D可视化、物理模拟、数据分析
-                </div>
-                <div style="margin-top: 20px; color: #cccccc; line-height: 1.6;">
-                    <p><strong>轨道数据包含:</strong></p>
-                    <ul style="margin-left: 20px; margin-top: 10px;">
-                        <li>偏心率 (eccentricity)</li>
-                        <li>半长轴 (semi_major_axis)</li>
-                        <li>倾角 (inclination)</li>
-                        <li>轨道周期 (orbital_period)</li>
-                        <li>近日点距离 (perihelion_distance)</li>
-                        <li>远日点距离 (aphelion_distance)</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>🚀 使用方法</h2>
-                <div style="color: #cccccc; line-height: 1.6;">
-                    <p><strong>1. 启动后端:</strong></p>
-                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
-                        cd backend && python3 main.py
-                    </code>
-                    
-                    <p><strong>2. 启动前端:</strong></p>
-                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
-                        python3 -m http.server 3001
-                    </code>
-                    
-                    <p><strong>3. 访问界面:</strong></p>
-                    <code style="background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px; display: block; margin: 5px 0;">
-                        http://localhost:3001
-                    </code>
+            <div class="cities-section">
+                <div class="cities-title">🏙️ 受影响城市</div>
+                <div class="cities-grid" id="affected-cities">
+                    <!-- 城市列表将在这里显示 -->
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 全局变量
-        let asteroids = [];
-        let selectedAsteroid = null;
-        let scene, camera, renderer, controls;
-        let asteroidMesh, earthMesh, trajectoryLine;
-        let animationId;
-        let isAnimating = false;
+        let map;
+        let impactMarker;
+        let impactCircle;
+        let cityMarkers = [];
+        let selectedLocation = null;
+        let currentImpactData = null;
+        let activeLayers = {};
 
-        // 页面加载时初始化
-        window.addEventListener('load', async () => {
-            await loadAsteroids();
-            setupEventListeners();
-            initThreeJS();
-        });
+        // 主要城市数据（简化版）
+        const majorCities = [
+            { name: "北京", lat: 39.9042, lng: 116.4074, population: 21540000, country: "中国" },
+            { name: "上海", lat: 31.2304, lng: 121.4737, population: 24280000, country: "中国" },
+            { name: "广州", lat: 23.1291, lng: 113.2644, population: 15300000, country: "中国" },
+            { name: "深圳", lat: 22.5431, lng: 114.0579, population: 17560000, country: "中国" },
+            { name: "成都", lat: 30.5728, lng: 104.0668, population: 16580000, country: "中国" },
+            { name: "重庆", lat: 29.4316, lng: 106.9123, population: 32050000, country: "中国" },
+            { name: "天津", lat: 39.3434, lng: 117.3616, population: 13870000, country: "中国" },
+            { name: "武汉", lat: 30.5928, lng: 114.3055, population: 12320000, country: "中国" },
+            { name: "西安", lat: 34.3416, lng: 108.9398, population: 12950000, country: "中国" },
+            { name: "杭州", lat: 30.2741, lng: 120.1551, population: 11930000, country: "中国" },
+            { name: "南京", lat: 32.0603, lng: 118.7969, population: 9315000, country: "中国" },
+            { name: "青岛", lat: 36.0986, lng: 120.3719, population: 10070000, country: "中国" },
+            { name: "大连", lat: 38.9140, lng: 121.6147, population: 7450000, country: "中国" },
+            { name: "厦门", lat: 24.4798, lng: 118.0819, population: 4110000, country: "中国" },
+            { name: "苏州", lat: 31.2989, lng: 120.5853, population: 12750000, country: "中国" },
+            { name: "宁波", lat: 29.8683, lng: 121.5440, population: 8542000, country: "中国" },
+            { name: "长沙", lat: 28.2278, lng: 112.9388, population: 10050000, country: "中国" },
+            { name: "郑州", lat: 34.7466, lng: 113.6254, population: 12600000, country: "中国" },
+            { name: "济南", lat: 36.6512, lng: 117.1201, population: 9200000, country: "中国" },
+            { name: "福州", lat: 26.0745, lng: 119.2965, population: 8290000, country: "中国" },
+            { name: "石家庄", lat: 38.0428, lng: 114.5149, population: 11200000, country: "中国" },
+            { name: "合肥", lat: 31.8206, lng: 117.2272, population: 9465000, country: "中国" },
+            { name: "南昌", lat: 28.6820, lng: 115.8579, population: 6255000, country: "中国" },
+            { name: "昆明", lat: 25.0389, lng: 102.7183, population: 8460000, country: "中国" },
+            { name: "贵阳", lat: 26.6470, lng: 106.6302, population: 6100000, country: "中国" },
+            { name: "兰州", lat: 36.0611, lng: 103.8343, population: 4350000, country: "中国" },
+            { name: "银川", lat: 38.4872, lng: 106.2309, population: 2850000, country: "中国" },
+            { name: "西宁", lat: 36.6232, lng: 101.7782, population: 2460000, country: "中国" },
+            { name: "乌鲁木齐", lat: 43.8256, lng: 87.6168, population: 4050000, country: "中国" },
+            { name: "拉萨", lat: 29.6465, lng: 91.1172, population: 867000, country: "中国" },
+            { name: "台北", lat: 25.0330, lng: 121.5654, population: 2600000, country: "中国台湾" },
+            { name: "高雄", lat: 22.6273, lng: 120.3014, population: 2700000, country: "中国台湾" },
+            { name: "香港", lat: 22.3193, lng: 114.1694, population: 7500000, country: "中国香港" },
+            { name: "澳门", lat: 22.1987, lng: 113.5439, population: 680000, country: "中国澳门" },
+            // 国际主要城市
+            { name: "东京", lat: 35.6762, lng: 139.6503, population: 37400000, country: "日本" },
+            { name: "首尔", lat: 37.5665, lng: 126.9780, population: 9720000, country: "韩国" },
+            { name: "新加坡", lat: 1.3521, lng: 103.8198, population: 5450000, country: "新加坡" },
+            { name: "曼谷", lat: 13.7563, lng: 100.5018, population: 10540000, country: "泰国" },
+            { name: "雅加达", lat: -6.2088, lng: 106.8456, population: 10560000, country: "印度尼西亚" },
+            { name: "马尼拉", lat: 14.5995, lng: 120.9842, population: 13480000, country: "菲律宾" },
+            { name: "胡志明市", lat: 10.8231, lng: 106.6297, population: 8993000, country: "越南" },
+            { name: "吉隆坡", lat: 3.1390, lng: 101.6869, population: 1588000, country: "马来西亚" },
+            { name: "新德里", lat: 28.6139, lng: 77.2090, population: 32900000, country: "印度" },
+            { name: "孟买", lat: 19.0760, lng: 72.8777, population: 20000000, country: "印度" },
+            { name: "加尔各答", lat: 22.5726, lng: 88.3639, population: 14900000, country: "印度" },
+            { name: "班加罗尔", lat: 12.9716, lng: 77.5946, population: 12400000, country: "印度" },
+            { name: "悉尼", lat: -33.8688, lng: 151.2093, population: 5312000, country: "澳大利亚" },
+            { name: "墨尔本", lat: -37.8136, lng: 144.9631, population: 5078000, country: "澳大利亚" },
+            { name: "纽约", lat: 40.7128, lng: -74.0060, population: 8336000, country: "美国" },
+            { name: "洛杉矶", lat: 34.0522, lng: -118.2437, population: 3972000, country: "美国" },
+            { name: "芝加哥", lat: 41.8781, lng: -87.6298, population: 2694000, country: "美国" },
+            { name: "休斯顿", lat: 29.7604, lng: -95.3698, population: 2320000, country: "美国" },
+            { name: "伦敦", lat: 51.5074, lng: -0.1278, population: 8982000, country: "英国" },
+            { name: "巴黎", lat: 48.8566, lng: 2.3522, population: 2161000, country: "法国" },
+            { name: "柏林", lat: 52.5200, lng: 13.4050, population: 3669000, country: "德国" },
+            { name: "罗马", lat: 41.9028, lng: 12.4964, population: 2873000, country: "意大利" },
+            { name: "莫斯科", lat: 55.7558, lng: 37.6176, population: 12500000, country: "俄罗斯" },
+            { name: "圣彼得堡", lat: 59.9311, lng: 30.3609, population: 5384000, country: "俄罗斯" },
+            { name: "开罗", lat: 30.0444, lng: 31.2357, population: 20480000, country: "埃及" },
+            { name: "拉各斯", lat: 6.5244, lng: 3.3792, population: 15388000, country: "尼日利亚" },
+            { name: "约翰内斯堡", lat: -26.2041, lng: 28.0473, population: 5635000, country: "南非" },
+            { name: "开普敦", lat: -33.9249, lng: 18.4241, population: 4618000, country: "南非" },
+            { name: "圣保罗", lat: -23.5505, lng: -46.6333, population: 12300000, country: "巴西" },
+            { name: "里约热内卢", lat: -22.9068, lng: -43.1729, population: 6748000, country: "巴西" },
+            { name: "布宜诺斯艾利斯", lat: -34.6118, lng: -58.3960, population: 15590000, country: "阿根廷" },
+            { name: "墨西哥城", lat: 19.4326, lng: -99.1332, population: 21800000, country: "墨西哥" },
+            { name: "多伦多", lat: 43.6532, lng: -79.3832, population: 2930000, country: "加拿大" },
+            { name: "温哥华", lat: 49.2827, lng: -123.1207, population: 675000, country: "加拿大" }
+        ];
 
-        // 标签页切换
-        function switchTab(tabName) {
-            // 隐藏所有标签页
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-            });
-            
-            // 移除所有标签的active类
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // 显示选中的标签页
-            document.getElementById(tabName + '-tab').classList.remove('hidden');
-            
-            // 激活选中的标签
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-            
-            // 如果是可视化标签页，启动动画
-            if (tabName === 'visualization') {
-                startAnimation();
-            } else {
-                stopAnimation();
+        // 初始化地图
+        function initMap() {
+            try {
+                map = L.map('map', {
+                    zoomControl: true,
+                    attributionControl: false
+                }).setView([20, 0], 2);  // 使用标准坐标系
+                
+                // 使用可靠的地图服务
+                const mapLayers = [
+                    // OpenStreetMap (最可靠)
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 19
+                    }),
+                    // 备用1: OpenTopoMap 地形图
+                    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)',
+                        subdomains: 'abc',
+                        maxZoom: 17
+                    }),
+                    // 备用2: CartoDB 深色主题
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '© OpenStreetMap contributors © CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 19
+                    }),
+                    // 备用3: Esri 世界地图
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri',
+                        maxZoom: 19
+                    }),
+                    // 备用4: Esri 世界影像
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri',
+                        maxZoom: 19
+                    })
+                ];
+
+                // 初始化图层
+                activeLayers = {
+                    osm: mapLayers[0],
+                    terrain: mapLayers[1],
+                    dark: mapLayers[2],
+                    esri: mapLayers[3],
+                    imagery: mapLayers[4]
+                };
+
+                // 默认显示OpenStreetMap
+                activeLayers.osm.addTo(map);
+
+                // 设置图层控制事件
+                setupLayerControls();
+
+                // 地图加载成功后隐藏加载提示
+                map.on('load', function() {
+                    document.getElementById('map-loading').style.display = 'none';
+                });
+
+                // 如果地图加载失败，尝试备用服务
+                activeLayers.osm.on('tileerror', function() {
+                    console.log('OpenStreetMap加载失败，尝试备用服务...');
+                    map.removeLayer(activeLayers.osm);
+                    activeLayers.dark.addTo(map);
+                });
+
+                // 设置超时，如果5秒后还在加载，强制隐藏加载提示
+                setTimeout(function() {
+                    document.getElementById('map-loading').style.display = 'none';
+                }, 5000);
+
+                // 添加城市标记
+                addCityMarkers();
+
+                // 地图点击事件
+                map.on('click', function(e) {
+                    selectImpactLocation(e.latlng);
+                });
+
+                // 加载小行星数据
+                loadAsteroids();
+
+            } catch (error) {
+                console.error('地图初始化失败:', error);
+                showError('地图初始化失败: ' + error.message);
             }
+        }
+
+        // 添加城市标记
+        function addCityMarkers() {
+            majorCities.forEach(city => {
+                const marker = L.circleMarker([city.lat, city.lng], {
+                    radius: 3,
+                    fillColor: '#ff6b6b',
+                    color: 'white',
+                    weight: 1,
+                    opacity: 0.8,
+                    fillOpacity: 0.6
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="text-align: center; color: #333;">
+                        <h4 style="margin: 0 0 5px 0;">${city.name}</h4>
+                        <p style="margin: 0; font-size: 12px;">${city.country}</p>
+                        <p style="margin: 0; font-size: 11px; color: #666;">人口: ${city.population.toLocaleString()}</p>
+                    </div>
+                `);
+
+                cityMarkers.push(marker);
+            });
+        }
+
+        // 选择撞击地点
+        function selectImpactLocation(latlng) {
+            selectedLocation = latlng;
+            
+            // 移除之前的撞击标记
+            if (impactMarker) {
+                map.removeLayer(impactMarker);
+            }
+            if (impactCircle) {
+                map.removeLayer(impactCircle);
+            }
+
+            // 添加新的撞击标记
+            impactMarker = L.circleMarker(latlng, {
+                radius: 8,
+                fillColor: '#ff4444',
+                color: 'white',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            impactMarker.bindPopup(`
+                <div style="text-align: center; color: #333;">
+                    <h4 style="margin: 0 0 5px 0;">🎯 撞击地点</h4>
+                    <p style="margin: 0; font-size: 12px;">纬度: ${latlng.lat.toFixed(4)}°</p>
+                    <p style="margin: 0; font-size: 12px;">经度: ${latlng.lng.toFixed(4)}°</p>
+                </div>
+            `);
+
+            // 更新状态
+            updateStatus('selected', '已选择撞击地点');
+            document.getElementById('location-status').textContent = 
+                `已选择: ${latlng.lat.toFixed(2)}°, ${latlng.lng.toFixed(2)}°`;
+            
+            // 启用小行星选择
+            document.getElementById('asteroid-select').disabled = false;
+            document.getElementById('asteroid-select').innerHTML = '<option value="">加载小行星数据...</option>';
+            
+            // 重新加载小行星数据
+            loadAsteroids();
         }
 
         // 加载小行星数据
         async function loadAsteroids() {
             try {
-                const response = await fetch('http://localhost:8000/asteroids/fetch', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                const response = await fetch('http://localhost:8000/asteroids');
+                const asteroids = await response.json();
+                
+                const select = document.getElementById('asteroid-select');
+                select.innerHTML = '<option value="">选择小行星...</option>';
+                
+                asteroids.forEach(asteroid => {
+                    const option = document.createElement('option');
+                    option.value = asteroid.id;
+                    option.textContent = `${asteroid.name} (直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)}km)`;
+                    select.appendChild(option);
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('Fetch result:', result);
-
-                // 获取小行星列表
-                const asteroidsResponse = await fetch('http://localhost:8000/asteroids');
-                asteroids = await asteroidsResponse.json();
+                // 启用模拟按钮
+                document.getElementById('simulate-btn').disabled = false;
                 
-                console.log('Loaded asteroids:', asteroids);
-                displayAsteroids();
-                updateStats();
-                hideLoading();
             } catch (error) {
-                console.error('Error loading asteroids:', error);
-                showError('加载小行星数据失败: ' + error.message);
+                console.error('加载小行星数据失败:', error);
+                showError('无法加载小行星数据，请检查后端服务');
             }
         }
 
-        // 显示小行星列表
-        function displayAsteroids() {
-            const asteroidList = document.getElementById('asteroid-list');
-            const asteroidSelect = document.getElementById('selected-asteroid');
-            
-            asteroidList.innerHTML = '';
-            asteroidSelect.innerHTML = '<option value="">选择小行星</option>';
-
-            asteroids.forEach((asteroid, index) => {
-                // 创建列表项
-                const item = document.createElement('div');
-                item.className = 'asteroid-item';
-                item.dataset.index = index;
-                
-                const diameter = (asteroid.diameter_min + asteroid.diameter_max) / 2;
-                const diameterKm = (diameter / 1000).toFixed(2);
-                
-                item.innerHTML = `
-                    <div class="asteroid-name">${asteroid.name}</div>
-                    <div class="asteroid-details">
-                        <div><span class="diameter">直径:</span> ${diameterKm} km</div>
-                        <div><span class="velocity">速度:</span> ${asteroid.velocity.toLocaleString()} m/s</div>
-                        <div><span class="orbit-class">轨道类型:</span> ${asteroid.orbital_data?.orbit_class?.orbit_class_type || 'N/A'}</div>
-                        <div>ID: ${asteroid.id}</div>
-                    </div>
-                `;
-
-                item.addEventListener('click', () => selectAsteroid(index));
-                asteroidList.appendChild(item);
-
-                // 添加到选择框
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${asteroid.name} (${diameterKm} km)`;
-                asteroidSelect.appendChild(option);
-            });
-
-            asteroidList.style.display = 'block';
-        }
-
-        // 选择小行星
-        function selectAsteroid(index) {
-            selectedAsteroid = asteroids[index];
-            
-            // 更新UI
-            document.querySelectorAll('.asteroid-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            document.querySelector(`[data-index="${index}"]`).classList.add('selected');
-            document.getElementById('selected-asteroid').value = index;
-        }
-
-        // 更新统计信息
-        function updateStats() {
-            const statsGrid = document.getElementById('stats-grid');
-            
-            const totalAsteroids = asteroids.length;
-            const avgDiameter = asteroids.reduce((sum, a) => sum + (a.diameter_min + a.diameter_max) / 2, 0) / totalAsteroids;
-            const maxDiameter = Math.max(...asteroids.map(a => (a.diameter_min + a.diameter_max) / 2));
-            const minDiameter = Math.min(...asteroids.map(a => (a.diameter_min + a.diameter_max) / 2));
-            
-            const orbitTypes = {};
-            asteroids.forEach(a => {
-                const type = a.orbital_data?.orbit_class?.orbit_class_type || 'Unknown';
-                orbitTypes[type] = (orbitTypes[type] || 0) + 1;
-            });
-
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value">${totalAsteroids}</div>
-                    <div class="stat-label">总小行星数</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${(avgDiameter / 1000).toFixed(1)} km</div>
-                    <div class="stat-label">平均直径</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${(maxDiameter / 1000).toFixed(1)} km</div>
-                    <div class="stat-label">最大直径</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${(minDiameter / 1000).toFixed(1)} km</div>
-                    <div class="stat-label">最小直径</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${Object.keys(orbitTypes).length}</div>
-                    <div class="stat-label">轨道类型数</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${orbitTypes.APO || 0}</div>
-                    <div class="stat-label">Apollo类型</div>
-                </div>
-            `;
-        }
-
-        // 设置事件监听器
-        function setupEventListeners() {
-            // 标签页切换
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    switchTab(tab.dataset.tab);
-                });
-            });
-
-            // 速度滑块
-            document.getElementById('impact-velocity').addEventListener('input', (e) => {
-                document.getElementById('velocity-display').textContent = 
-                    parseInt(e.target.value).toLocaleString() + ' m/s';
-            });
-
-            // 角度滑块
-            document.getElementById('impact-angle').addEventListener('input', (e) => {
-                document.getElementById('angle-display').textContent = e.target.value + '°';
-            });
-
-            // 小行星选择
-            document.getElementById('selected-asteroid').addEventListener('change', (e) => {
-                if (e.target.value !== '') {
-                    selectAsteroid(parseInt(e.target.value));
-                }
-            });
-
-            // 模拟按钮
-            document.getElementById('simulate-btn').addEventListener('click', runSimulation);
-
-            // 3D可视化控制
-            document.getElementById('animation-speed').addEventListener('input', (e) => {
-                document.getElementById('speed-display').textContent = e.target.value + 'x';
-            });
-
-            document.getElementById('camera-distance').addEventListener('input', (e) => {
-                document.getElementById('distance-display').textContent = e.target.value + ' AU';
-                if (camera) {
-                    camera.position.set(0, 0, parseFloat(e.target.value));
-                    camera.lookAt(0, 0, 0);
-                }
-            });
-
-            // 视图切换
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    // 这里可以添加视图切换逻辑
-                });
-            });
-        }
-
-        // 运行模拟
+        // 运行撞击模拟
         async function runSimulation() {
-            if (!selectedAsteroid) {
-                showError('请先选择一个小行星');
+            const asteroidSelect = document.getElementById('asteroid-select');
+            const asteroidId = asteroidSelect.value;
+            
+            if (!asteroidId) {
+                showError('请选择一个小行星');
                 return;
             }
 
-            const simulationData = {
-                asteroid_id: selectedAsteroid.id,
-                impact_velocity: parseFloat(document.getElementById('impact-velocity').value),
-                impact_angle: parseFloat(document.getElementById('impact-angle').value),
-                impactor_mass: parseFloat(document.getElementById('impactor-mass').value),
-                impactor_velocity: parseFloat(document.getElementById('impactor-velocity').value),
-                lead_time_days: parseInt(document.getElementById('lead-time').value)
-            };
+            if (!selectedLocation) {
+                showError('请在地图上点击选择撞击地点');
+                return;
+            }
+
+            await runStaticSimulation(asteroidId);
+        }
+
+        async function runStaticSimulation(asteroidId) {
+            hideError();
 
             try {
+                // 检查是否显示轨迹
+                const showTrajectory = document.getElementById('show-trajectory').checked;
+                const show3DEffect = document.getElementById('show-3d-effect').checked;
+                
+                if (showTrajectory) {
+                    updateStatus('simulating', '正在显示降落轨迹...');
+                    // 显示降落轨迹动画
+                    await showImpactTrajectory(asteroidId, show3DEffect);
+                }
+                
+                // 更新状态
+                updateStatus('simulating', '正在计算撞击影响...');
+
+                // 获取小行星数据以获取真实速度
+                const asteroidResponse = await fetch('http://localhost:8000/asteroids');
+                const asteroids = await asteroidResponse.json();
+                const asteroid = asteroids.find(a => a.id === asteroidId);
+                
+                // 使用API中的真实速度，如果没有则使用默认值
+                let impactVelocity = 20000; // 默认20km/s
+                
+                if (asteroid && asteroid.close_approach_data && asteroid.close_approach_data.length > 0) {
+                    // 从多个接近数据中选择一个速度（选择最近的或随机的）
+                    const approachData = asteroid.close_approach_data[0]; // 使用最近的接近数据
+                    const velocityStr = approachData.relative_velocity.kilometers_per_second;
+                    const velocity = parseFloat(velocityStr);
+                    if (!isNaN(velocity) && velocity > 0) {
+                        impactVelocity = velocity * 1000; // 转换为m/s
+                    }
+                } else if (asteroid && asteroid.velocity) {
+                    // 使用存储的平均速度
+                    impactVelocity = asteroid.velocity;
+                }
+                
+                console.log('撞击速度:', impactVelocity, 'm/s');
+                console.log('小行星接近数据:', asteroid.close_approach_data?.length || 0, '条记录');
+                
                 const response = await fetch('http://localhost:8000/simulate', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(simulationData)
+                    body: JSON.stringify({
+                        asteroid_id: asteroidId,
+                        impact_angle: 45,
+                        impact_velocity: impactVelocity,
+                        target_density: 3000,
+                        target_type: 'continental_crust',
+                        impact_latitude: selectedLocation.lat,
+                        impact_longitude: selectedLocation.lng
+                    })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
                 const result = await response.json();
-                displayResults(result);
+                currentImpactData = result;
+                
+                // 显示结果（不显示范围圆圈）
+                displayResults(result, 0);
+                
+                // 延迟显示撞击范围，模拟撞击后的效果
+                setTimeout(() => {
+                    showImpactArea(result);
+                }, 1000);
+                
+                updateStatus('ready', '模拟完成');
+                
             } catch (error) {
-                console.error('Simulation error:', error);
+                console.error('模拟失败:', error);
                 showError('模拟失败: ' + error.message);
+                updateStatus('error', '模拟失败');
             }
         }
 
-        // 显示模拟结果
-        function displayResults(result) {
-            const resultsDiv = document.getElementById('simulation-results');
-            const contentDiv = document.getElementById('results-content');
+        // 显示撞击范围
+        function showImpactArea(result) {
+            const craterRadius = result.crater_diameter / 2;
+            const impactRadius = craterRadius * 50; // 影响范围是陨石坑的50倍
             
-            contentDiv.innerHTML = `
-                <div class="result-item">
-                    <span class="result-label">陨石坑直径:</span>
-                    <span class="result-value">${result.crater_diameter.toFixed(2)} km</span>
+            // 清除之前的影响范围圆圈
+            if (impactCircle) {
+                map.removeLayer(impactCircle);
+            }
+            
+            // 添加撞击点标记
+            if (currentImpactMarker) {
+                map.removeLayer(currentImpactMarker);
+            }
+            
+            currentImpactMarker = L.circleMarker([selectedLocation.lat, selectedLocation.lng], {
+                radius: 8,
+                color: '#ff0000',
+                fillColor: '#ff0000',
+                fillOpacity: 0.8,
+                weight: 2
+            }).addTo(map);
+            
+            // 添加影响范围圆圈（带动画效果）
+            impactCircle = L.circle(selectedLocation, {
+                radius: impactRadius * 1000, // 转换为米
+                color: '#ff4444',
+                weight: 2,
+                opacity: 0.6,
+                fillOpacity: 0.1,
+                dashArray: '5, 5'
+            }).addTo(map);
+            
+            // 添加冲击波动画
+            const shockwave = L.circle(selectedLocation, {
+                radius: 0,
+                color: '#ffaa00',
+                weight: 3,
+                opacity: 0.8,
+                fillOpacity: 0
+            }).addTo(map);
+            
+            // 冲击波扩散动画
+            let currentRadius = 0;
+            const maxRadius = impactRadius * 1000;
+            const animation = setInterval(() => {
+                currentRadius += maxRadius / 20;
+                shockwave.setRadius(currentRadius);
+                shockwave.setStyle({
+                    opacity: 0.8 * (1 - currentRadius / maxRadius)
+                });
+                
+                if (currentRadius >= maxRadius) {
+                    clearInterval(animation);
+                    map.removeLayer(shockwave);
+                }
+            }, 50);
+            
+            // 更新城市影响状态
+            updateCityImpactStatus(selectedLocation, impactRadius);
+        }
+
+        // 更新城市影响状态
+        function updateCityImpactStatus(impactPoint, radius) {
+            cityMarkers.forEach((marker, index) => {
+                const city = majorCities[index];
+                const distance = impactPoint.distanceTo([city.lat, city.lng]);
+                
+                if (distance <= radius) {
+                    marker.setStyle({
+                        fillColor: '#ff6b6b',
+                        color: '#ff4444',
+                        weight: 2,
+                        radius: 5
+                    });
+                } else {
+                    marker.setStyle({
+                        fillColor: '#ff6b6b',
+                        color: 'white',
+                        weight: 1,
+                        radius: 3
+                    });
+                }
+            });
+        }
+
+        // 格式化经济损失显示
+        function formatEconomicLoss(loss) {
+            if (loss >= 1000000) {
+                return (loss / 1000000).toFixed(1) + 'T'; // 万亿
+            } else if (loss >= 1000) {
+                return (loss / 1000).toFixed(1) + 'B'; // 十亿
+            } else if (loss >= 1) {
+                return loss.toFixed(1) + 'M'; // 百万
+            } else {
+                return (loss * 1000).toFixed(1) + 'K'; // 千
+            }
+        }
+
+        // 格式化撞击速度显示
+        function formatImpactVelocity(velocity) {
+            if (!velocity || isNaN(velocity) || velocity <= 0) {
+                return 'N/A';
+            }
+            return (velocity / 1000).toFixed(1) + 'km/s';
+        }
+
+        // 显示结果
+        function displayResults(result, impactRadius) {
+            const resultsDiv = document.getElementById('results');
+            const statsDiv = document.getElementById('impact-stats');
+            const citiesDiv = document.getElementById('affected-cities');
+
+            // 添加调整手柄（如果不存在）
+            if (!document.querySelector('.resize-handle')) {
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+                resultsDiv.appendChild(resizeHandle);
+            }
+
+            // 更新统计数据
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(result.crater_diameter/1000)}km</div>
+                    <div class="stat-label">陨石坑直径</div>
                 </div>
-                <div class="result-item">
-                    <span class="result-label">冲击能量:</span>
-                    <span class="result-value">${(result.impact_energy / 1e15).toFixed(2)} × 10¹⁵ J</span>
+                <div class="stat-card">
+                    <div class="stat-value">${formatImpactVelocity(result.impact_velocity)}</div>
+                    <div class="stat-label">撞击速度</div>
                 </div>
-                <div class="result-item">
-                    <span class="result-label">地震震级:</span>
-                    <span class="result-value">${result.seismic_magnitude.toFixed(1)} 级</span>
+                <div class="stat-card">
+                    <div class="stat-value">${result.seismic_magnitude.toFixed(1)}</div>
+                    <div class="stat-label">地震震级</div>
                 </div>
-                <div class="result-item">
-                    <span class="result-label">海啸高度:</span>
-                    <span class="result-value">${result.tsunami_height.toFixed(1)} m</span>
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(result.tsunami_height)}m</div>
+                    <div class="stat-label">海啸高度</div>
                 </div>
-                <div class="result-item">
-                    <span class="result-label">受影响人口:</span>
-                    <span class="result-value">${result.affected_population.toLocaleString()} 人</span>
+                <div class="stat-card">
+                    <div class="stat-value">${(result.impact_energy / 1e21).toFixed(1)}EJ</div>
+                    <div class="stat-label">冲击能量</div>
                 </div>
-                <div class="result-item">
-                    <span class="result-label">偏转成功:</span>
-                    <span class="result-value" style="color: ${result.deflection_success ? '#4ecdc4' : '#ff6b6b'}">
-                        ${result.deflection_success ? '✅ 是' : '❌ 否'}
-                    </span>
+                <div class="stat-card">
+                    <div class="stat-value">${result.population_loss.toLocaleString()}</div>
+                    <div class="stat-label">人口损失</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${formatEconomicLoss(result.building_loss)}</div>
+                    <div class="stat-label">建筑损失</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${formatEconomicLoss(result.total_economic_loss)}</div>
+                    <div class="stat-label">总经济损失</div>
                 </div>
             `;
             
+            // 计算受影响城市
+            const affectedCities = [];
+            const impactPoint = selectedLocation;
+            
+            console.log(`影响半径: ${impactRadius/1000}km`); // 调试信息
+            
+            majorCities.forEach(city => {
+                const distance = impactPoint.distanceTo([city.lat, city.lng]);
+                console.log(`${city.name}: 距离 ${distance/1000}km`); // 调试信息
+                
+                if (distance <= impactRadius) {
+                    affectedCities.push({
+                        ...city,
+                        distance: Math.round(distance / 1000)
+                    });
+                }
+            });
+            
+            console.log(`受影响城市数量: ${affectedCities.length}`); // 调试信息
+
+            // 按距离排序
+            affectedCities.sort((a, b) => a.distance - b.distance);
+
+            // 显示受影响城市
+            if (affectedCities.length === 0) {
+                // 如果没有城市在影响范围内，显示最近的城市
+                const nearestCities = majorCities.map(city => ({
+                    ...city,
+                    distance: Math.round(impactPoint.distanceTo([city.lat, city.lng]) / 1000)
+                })).sort((a, b) => a.distance - b.distance).slice(0, 10);
+                
+                citiesDiv.innerHTML = `
+                    <div style="color: #ffaa00; margin-bottom: 10px;">
+                        ⚠️ 影响范围内暂无城市，显示最近的城市：
+                    </div>
+                    ${nearestCities.map(city => `
+                        <div class="city-item">
+                            <div class="city-name">${city.name}</div>
+                            <div class="city-info">${city.country} | ${city.distance}km | ${city.population.toLocaleString()}人</div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                citiesDiv.innerHTML = affectedCities.map(city => `
+                    <div class="city-item">
+                        <div class="city-name">${city.name}</div>
+                        <div class="city-info">${city.country} | ${city.distance}km | ${city.population.toLocaleString()}人</div>
+                    </div>
+                `).join('');
+            }
+
             resultsDiv.style.display = 'block';
         }
 
-        // 初始化Three.js
-        function initThreeJS() {
-            const container = document.getElementById('threejs-container');
+        // 更新状态指示器
+        function updateStatus(type, message) {
+            const statusEl = document.getElementById('status');
+            const statusMap = {
+                'ready': { class: 'status-ready', text: '● 准备就绪' },
+                'selected': { class: 'status-selected', text: '● 已选择地点' },
+                'simulating': { class: 'status-simulating', text: '● 计算中...' },
+                'error': { class: 'status-error', text: '● 错误' }
+            };
             
-            // 调试信息
-            console.log('初始化Three.js...');
-            console.log('容器元素:', container);
-            console.log('Three.js版本:', THREE.REVISION);
+            const status = statusMap[type];
+            statusEl.innerHTML = `<span class="${status.class}">${status.text}</span>`;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // 设置图层控制
+        function setupLayerControls() {
+            // OpenStreetMap控制
+            document.getElementById('osm-layer').addEventListener('change', function() {
+                if (this.checked) {
+                    // 移除所有图层
+                    Object.values(activeLayers).forEach(layer => map.removeLayer(layer));
+                    // 添加OSM图层
+                    activeLayers.osm.addTo(map);
+                }
+            });
+
+            // 地形图控制
+            document.getElementById('terrain-layer').addEventListener('change', function() {
+                if (this.checked) {
+                    // 移除所有图层
+                    Object.values(activeLayers).forEach(layer => map.removeLayer(layer));
+                    // 添加地形图层
+                    activeLayers.terrain.addTo(map);
+                }
+            });
+
+            // 深色主题控制
+            document.getElementById('dark-layer').addEventListener('change', function() {
+                if (this.checked) {
+                    // 移除所有图层
+                    Object.values(activeLayers).forEach(layer => map.removeLayer(layer));
+                    // 添加深色图层
+                    activeLayers.dark.addTo(map);
+                }
+            });
+
+            // Esri地图控制
+            document.getElementById('esri-layer').addEventListener('change', function() {
+                if (this.checked) {
+                    // 移除所有图层
+                    Object.values(activeLayers).forEach(layer => map.removeLayer(layer));
+                    // 添加Esri图层
+                    activeLayers.esri.addTo(map);
+                }
+            });
+
+            // 卫星影像控制
+            document.getElementById('imagery-layer').addEventListener('change', function() {
+                if (this.checked) {
+                    // 移除所有图层
+                    Object.values(activeLayers).forEach(layer => map.removeLayer(layer));
+                    // 添加卫星影像图层
+                    activeLayers.imagery.addTo(map);
+                }
+            });
+        }
+
+        async function runDynamicDemo(asteroidId, mode) {
+            updateStatus('simulating', '正在准备动态演示...');
+            hideError();
+
+            try {
+                // 获取小行星数据
+                const response = await fetch('http://localhost:8000/asteroids');
+                const asteroids = await response.json();
+                const asteroid = asteroids.find(a => a.id === asteroidId);
+                
+                if (!asteroid) {
+                    showError('小行星数据未找到');
+                    return;
+                }
+
+                // 创建演示容器
+                createDemoContainer();
+                
+                if (mode === 'orbit') {
+                    await showOrbitDemo(asteroid);
+                } else if (mode === '3d') {
+                    await show3DOrbitDemo(asteroid);
+                } else if (mode === 'simple-3d') {
+                    await showSimple3DDemo(asteroid);
+                } else {
+                    await showImpactDemo(asteroid);
+                }
+
+                // 运行静态模拟获取结果
+                await runStaticSimulation(asteroidId);
+
+            } catch (error) {
+                console.error('Demo error:', error);
+                showError('演示失败，请检查后端服务');
+                updateStatus('error', '演示失败');
+            }
+        }
+
+        function createDemoContainer() {
+            // 移除现有的演示容器
+            const existing = document.getElementById('demo-container');
+            if (existing) {
+                existing.remove();
+            }
+
+            // 创建新的演示容器
+            const container = document.createElement('div');
+            container.id = 'demo-container';
+            container.className = 'demo-container';
+            document.getElementById('map').appendChild(container);
+        }
+
+        async function showOrbitDemo(asteroid) {
+            const container = document.getElementById('demo-container');
             
-            if (!container) {
-                console.error('找不到threejs-container元素');
+            // 显示轨道路径
+            const orbitPath = document.createElement('div');
+            orbitPath.className = 'orbit-path';
+            orbitPath.style.left = '50%';
+            orbitPath.style.top = '50%';
+            orbitPath.style.width = '200px';
+            orbitPath.style.height = '200px';
+            orbitPath.style.marginLeft = '-100px';
+            orbitPath.style.marginTop = '-100px';
+            container.appendChild(orbitPath);
+
+            // 显示小行星在轨道上移动
+            const asteroidElement = document.createElement('div');
+            asteroidElement.className = 'asteroid-trail';
+            asteroidElement.style.left = '50%';
+            asteroidElement.style.top = '50%';
+            asteroidElement.style.marginLeft = '-2px';
+            asteroidElement.style.marginTop = '-2px';
+            container.appendChild(asteroidElement);
+
+            // 添加轨道信息
+            const info = document.createElement('div');
+            info.style.position = 'absolute';
+            info.style.top = '20px';
+            info.style.left = '20px';
+            info.style.background = 'rgba(0, 0, 0, 0.8)';
+            info.style.color = 'white';
+            info.style.padding = '10px';
+            info.style.borderRadius = '5px';
+            info.style.fontSize = '12px';
+            info.innerHTML = `
+                <div><strong>🛰️ ${asteroid.name}</strong></div>
+                <div>直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)} km</div>
+                <div>速度: ${Math.round(asteroid.velocity/1000)} km/s</div>
+                <div>轨道类型: 近地轨道</div>
+            `;
+            container.appendChild(info);
+
+            // 3秒后清理
+            setTimeout(() => {
+                container.remove();
+            }, 5000);
+        }
+
+        async function showImpactDemo(asteroid) {
+            const container = document.getElementById('demo-container');
+            
+            // 获取地图容器和选中的撞击位置
+            const mapContainer = document.getElementById('map');
+            const mapRect = mapContainer.getBoundingClientRect();
+            
+            // 将选中的经纬度转换为屏幕坐标
+            const mapBounds = map.getBounds();
+            const mapSize = map.getSize();
+            
+            // 计算撞击点在屏幕上的位置
+            const impactPoint = L.latLng(selectedLocation.lat, selectedLocation.lng);
+            const impactPixel = map.latLngToContainerPoint(impactPoint);
+            
+            // 计算轨迹起点（从屏幕边缘随机位置）
+            const startX = Math.random() * (mapRect.width - 100) + 50;
+            const startY = 50;
+            const endX = impactPixel.x;
+            const endY = impactPixel.y;
+
+            // 创建小行星轨迹
+            const asteroidElement = document.createElement('div');
+            asteroidElement.className = 'asteroid-trail';
+            asteroidElement.style.left = startX + 'px';
+            asteroidElement.style.top = startY + 'px';
+            asteroidElement.style.setProperty('--target-x', (endX - startX) + 'px');
+            asteroidElement.style.setProperty('--target-y', (endY - startY) + 'px');
+            container.appendChild(asteroidElement);
+
+            // 添加小行星信息
+            const info = document.createElement('div');
+            info.style.position = 'absolute';
+            info.style.top = '20px';
+            info.style.right = '20px';
+            info.style.background = 'rgba(0, 0, 0, 0.8)';
+            info.style.color = 'white';
+            info.style.padding = '10px';
+            info.style.borderRadius = '5px';
+            info.style.fontSize = '12px';
+            info.innerHTML = `
+                <div><strong>🚀 ${asteroid.name}</strong></div>
+                <div>直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)} km</div>
+                <div>撞击速度: 20,000 m/s</div>
+                <div>撞击角度: 45°</div>
+            `;
+            container.appendChild(info);
+
+            // 撞击瞬间效果
+            setTimeout(() => {
+                const impactFlash = document.createElement('div');
+                impactFlash.className = 'impact-flash';
+                impactFlash.style.left = endX + 'px';
+                impactFlash.style.top = endY + 'px';
+                impactFlash.style.marginLeft = '-10px';
+                impactFlash.style.marginTop = '-10px';
+                container.appendChild(impactFlash);
+
+                // 添加撞击信息
+                const impactInfo = document.createElement('div');
+                impactInfo.style.position = 'absolute';
+                impactInfo.style.bottom = '20px';
+                impactInfo.style.left = '50%';
+                impactInfo.style.transform = 'translateX(-50%)';
+                impactInfo.style.background = 'rgba(255, 0, 0, 0.9)';
+                impactInfo.style.color = 'white';
+                impactInfo.style.padding = '15px';
+                impactInfo.style.borderRadius = '10px';
+                impactInfo.style.fontSize = '14px';
+                impactInfo.style.fontWeight = 'bold';
+                impactInfo.style.textAlign = 'center';
+                impactInfo.innerHTML = '💥 撞击发生！';
+                container.appendChild(impactInfo);
+            }, 2500);
+
+            // 5秒后清理
+            setTimeout(() => {
+                container.remove();
+            }, 5000);
+        }
+
+        async function show3DOrbitDemo(asteroid) {
+            const container = document.getElementById('demo-container');
+            
+            // 检查Three.js是否加载
+            if (typeof THREE === 'undefined') {
+                showError('Three.js库未加载，请刷新页面重试');
                 return;
             }
             
-            if (!window.THREE) {
-                console.error('Three.js库未加载');
-                return;
-            }
-            
-            // 场景
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x000011);
+            try {
+                // 创建3D场景
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ alpha: true });
+                
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                renderer.setClearColor(0x000000, 0);
+                container.appendChild(renderer.domElement);
 
-            // 相机
-            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 20);
-
-            // 渲染器
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
-
-            // 控制器
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
+                // 添加轨道控制器（如果可用）
+                let controls = null;
+                if (typeof THREE.OrbitControls !== 'undefined') {
+                    controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.05;
+                }
 
             // 创建地球
             const earthGeometry = new THREE.SphereGeometry(2, 32, 32);
@@ -861,114 +1451,484 @@
                 color: 0x4A90E2,
                 shininess: 100
             });
-            earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
-            scene.add(earthMesh);
+            const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earth);
 
             // 创建小行星
-            const asteroidGeometry = new THREE.SphereGeometry(0.3, 16, 16);
-            const asteroidMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xFF6B35,
-                shininess: 50
-            });
-            asteroidMesh = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
+            const asteroidGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const asteroidMaterial = new THREE.MeshPhongMaterial({ color: 0xff6b6b });
+            const asteroidMesh = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
             scene.add(asteroidMesh);
 
-            // 创建轨道
-            const orbitGeometry = new THREE.BufferGeometry();
-            const orbitPoints = [];
-            for (let i = 0; i <= 64; i++) {
-                const angle = (i / 64) * Math.PI * 2;
-                orbitPoints.push(new THREE.Vector3(
-                    Math.cos(angle) * 8,
-                    0,
-                    Math.sin(angle) * 8
-                ));
-            }
-            orbitGeometry.setFromPoints(orbitPoints);
-            const orbitMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
-            trajectoryLine = new THREE.Line(orbitGeometry, orbitMaterial);
-            scene.add(trajectoryLine);
+            // 创建轨道路径
+            const orbitGeometry = new THREE.RingGeometry(3, 3.1, 64);
+            const orbitMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00aaff, 
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.3
+            });
+            const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
 
-            // 添加光源
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            // 添加光照
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
             scene.add(ambientLight);
-
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 10, 5);
+            directionalLight.position.set(5, 5, 5);
             scene.add(directionalLight);
 
-            // 窗口大小调整
-            window.addEventListener('resize', onWindowResize);
-        }
+            // 设置相机位置
+            camera.position.set(8, 4, 8);
+            controls.target.set(0, 0, 0);
 
-        // 开始动画
-        function startAnimation() {
-            if (isAnimating) return;
-            isAnimating = true;
-            animate();
-        }
+            // 添加信息面板
+            const info = document.createElement('div');
+            info.style.position = 'absolute';
+            info.style.top = '20px';
+            info.style.left = '20px';
+            info.style.background = 'rgba(0, 0, 0, 0.8)';
+            info.style.color = 'white';
+            info.style.padding = '15px';
+            info.style.borderRadius = '8px';
+            info.style.fontSize = '14px';
+            info.style.zIndex = '1000';
+            info.innerHTML = `
+                <div><strong>🛰️ ${asteroid.name}</strong></div>
+                <div>直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)} km</div>
+                <div>速度: ${Math.round(asteroid.velocity/1000)} km/s</div>
+                <div>轨道类型: 近地轨道</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #ccc;">
+                    使用鼠标拖拽旋转视角，滚轮缩放
+                </div>
+            `;
+            container.appendChild(info);
 
-        // 停止动画
-        function stopAnimation() {
-            isAnimating = false;
-            if (animationId) {
-                cancelAnimationFrame(animationId);
+            // 添加关闭按钮
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕ 关闭3D视图';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '20px';
+            closeBtn.style.right = '20px';
+            closeBtn.style.background = 'rgba(255, 0, 0, 0.8)';
+            closeBtn.style.color = 'white';
+            closeBtn.style.border = 'none';
+            closeBtn.style.padding = '10px 15px';
+            closeBtn.style.borderRadius = '5px';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.zIndex = '1000';
+            closeBtn.onclick = () => {
+                container.remove();
+            };
+            container.appendChild(closeBtn);
+
+                // 动画循环
+                let angle = 0;
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    // 小行星轨道运动
+                    angle += 0.02;
+                    asteroidMesh.position.x = Math.cos(angle) * 3;
+                    asteroidMesh.position.z = Math.sin(angle) * 3;
+                    asteroidMesh.position.y = Math.sin(angle * 2) * 0.5;
+
+                    // 地球自转
+                    earth.rotation.y += 0.01;
+
+                    // 更新控制器（如果可用）
+                    if (controls) {
+                        controls.update();
+                    }
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                // 10秒后自动关闭
+                setTimeout(() => {
+                    if (container.parentNode) {
+                        container.remove();
+                    }
+                }, 10000);
+                
+            } catch (error) {
+                console.error('3D演示错误:', error);
+                showError('3D演示初始化失败: ' + error.message);
+                // 清理容器
+                if (container.parentNode) {
+                    container.remove();
+                }
             }
         }
 
-        // 动画循环
-        function animate() {
-            if (!isAnimating) return;
+        async function showSimple3DDemo(asteroid) {
+            const container = document.getElementById('demo-container');
             
-            animationId = requestAnimationFrame(animate);
+            // 创建简化的3D演示（使用CSS 3D变换）
+            const earth = document.createElement('div');
+            earth.style.width = '100px';
+            earth.style.height = '100px';
+            earth.style.borderRadius = '50%';
+            earth.style.background = 'radial-gradient(circle at 30% 30%, #4A90E2, #2E5BBA)';
+            earth.style.position = 'absolute';
+            earth.style.left = '50%';
+            earth.style.top = '50%';
+            earth.style.marginLeft = '-50px';
+            earth.style.marginTop = '-50px';
+            earth.style.boxShadow = '0 0 20px rgba(74, 144, 226, 0.5)';
+            earth.style.animation = 'earthRotate 10s linear infinite';
+            container.appendChild(earth);
+
+            // 创建小行星
+            const asteroidElement = document.createElement('div');
+            asteroidElement.style.width = '8px';
+            asteroidElement.style.height = '8px';
+            asteroidElement.style.borderRadius = '50%';
+            asteroidElement.style.background = '#ff6b6b';
+            asteroidElement.style.position = 'absolute';
+            asteroidElement.style.left = '50%';
+            asteroidElement.style.top = '50%';
+            asteroidElement.style.marginLeft = '-4px';
+            asteroidElement.style.marginTop = '-4px';
+            asteroidElement.style.boxShadow = '0 0 10px #ff6b6b';
+            asteroidElement.style.animation = 'asteroidOrbit 5s linear infinite';
+            container.appendChild(asteroidElement);
+
+            // 创建轨道路径
+            const orbit = document.createElement('div');
+            orbit.style.width = '200px';
+            orbit.style.height = '200px';
+            orbit.style.border = '2px dashed #00aaff';
+            orbit.style.borderRadius = '50%';
+            orbit.style.position = 'absolute';
+            orbit.style.left = '50%';
+            orbit.style.top = '50%';
+            orbit.style.marginLeft = '-100px';
+            orbit.style.marginTop = '-100px';
+            orbit.style.opacity = '0.5';
+            container.appendChild(orbit);
+
+            // 添加信息面板
+            const info = document.createElement('div');
+            info.style.position = 'absolute';
+            info.style.top = '20px';
+            info.style.left = '20px';
+            info.style.background = 'rgba(0, 0, 0, 0.8)';
+            info.style.color = 'white';
+            info.style.padding = '15px';
+            info.style.borderRadius = '8px';
+            info.style.fontSize = '14px';
+            info.style.zIndex = '1000';
+            info.innerHTML = `
+                <div><strong>🛰️ ${asteroid.name}</strong></div>
+                <div>直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)} km</div>
+                <div>速度: ${Math.round(asteroid.velocity/1000)} km/s</div>
+                <div>轨道类型: 近地轨道</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #ccc;">
+                    简化3D演示 - 使用CSS动画
+                </div>
+            `;
+            container.appendChild(info);
+
+            // 添加关闭按钮
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕ 关闭演示';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '20px';
+            closeBtn.style.right = '20px';
+            closeBtn.style.background = 'rgba(255, 0, 0, 0.8)';
+            closeBtn.style.color = 'white';
+            closeBtn.style.border = 'none';
+            closeBtn.style.padding = '10px 15px';
+            closeBtn.style.borderRadius = '5px';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.zIndex = '1000';
+            closeBtn.onclick = () => {
+                container.remove();
+            };
+            container.appendChild(closeBtn);
+
+            // 添加CSS动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes earthRotate {
+                    from { transform: rotateY(0deg); }
+                    to { transform: rotateY(360deg); }
+                }
+                @keyframes asteroidOrbit {
+                    from { 
+                        transform: rotate(0deg) translateX(100px) rotate(0deg);
+                    }
+                    to { 
+                        transform: rotate(360deg) translateX(100px) rotate(-360deg);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 8秒后自动关闭
+            setTimeout(() => {
+                if (container.parentNode) {
+                    container.remove();
+                }
+                document.head.removeChild(style);
+            }, 8000);
+        }
+
+        async function showImpactTrajectory(asteroidId, show3DEffect = true) {
+            // 获取小行星数据
+            const response = await fetch('http://localhost:8000/asteroids');
+            const asteroids = await response.json();
+            const asteroid = asteroids.find(a => a.id === asteroidId);
             
-            // 旋转小行星
-            if (asteroidMesh) {
-                asteroidMesh.rotation.y += 0.01;
-                asteroidMesh.rotation.x += 0.005;
+            if (!asteroid) return;
+
+            // 创建轨迹容器
+            const container = document.createElement('div');
+            container.id = 'trajectory-container';
+            container.style.position = 'absolute';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '1000';
+            document.getElementById('map').appendChild(container);
+
+            // 计算撞击点在屏幕上的位置
+            const impactPoint = L.latLng(selectedLocation.lat, selectedLocation.lng);
+            const impactPixel = map.latLngToContainerPoint(impactPoint);
+
+            // 创建轨迹效果
+            await create3DTrajectory(container, impactPixel, asteroid, show3DEffect);
+
+            // 3秒后清理
+            setTimeout(() => {
+                if (container.parentNode) {
+                    container.remove();
+                }
+            }, 3000);
+        }
+
+        async function create3DTrajectory(container, impactPixel, asteroid, show3DEffect = true) {
+            // 创建轨迹路径
+            const trajectory = document.createElement('div');
+            trajectory.style.position = 'absolute';
+            trajectory.style.left = '50%';
+            trajectory.style.top = '10%';
+            trajectory.style.width = '4px';
+            trajectory.style.height = '2px';
+            trajectory.style.background = 'linear-gradient(45deg, #ff6b6b, #ffaa00)';
+            trajectory.style.borderRadius = '2px';
+            trajectory.style.boxShadow = '0 0 20px #ff6b6b';
+            trajectory.style.transformOrigin = 'left center';
+            trajectory.style.animation = 'trajectoryFall 2.5s ease-in forwards';
+            container.appendChild(trajectory);
+
+            // 创建小行星
+            const asteroidElement = document.createElement('div');
+            asteroidElement.style.position = 'absolute';
+            asteroidElement.style.left = '50%';
+            asteroidElement.style.top = '10%';
+            asteroidElement.style.width = '12px';
+            asteroidElement.style.height = '12px';
+            asteroidElement.style.background = 'radial-gradient(circle, #ff6b6b, #cc0000)';
+            asteroidElement.style.borderRadius = '50%';
+            asteroidElement.style.boxShadow = '0 0 15px #ff6b6b, 0 0 30px rgba(255, 107, 107, 0.5)';
+            asteroidElement.style.animation = 'asteroidFall 2.5s ease-in forwards';
+            container.appendChild(asteroidElement);
+
+            // 创建尾迹效果
+            const trail = document.createElement('div');
+            trail.style.position = 'absolute';
+            trail.style.left = '50%';
+            trail.style.top = '10%';
+            trail.style.width = '2px';
+            trail.style.height = '0px';
+            trail.style.background = 'linear-gradient(to bottom, transparent, #ffaa00, #ff6b6b)';
+            trail.style.animation = 'trailGrow 2.5s ease-in forwards';
+            container.appendChild(trail);
+
+            // 添加立体地图效果（如果启用）
+            if (show3DEffect) {
+                add3DMapEffect(container);
             }
 
-            // 旋转地球
-            if (earthMesh) {
-                earthMesh.rotation.y += 0.002;
-            }
+            // 添加CSS动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes trajectoryFall {
+                    0% {
+                        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: translate(-50%, -50%) rotate(15deg) scale(1.2);
+                        opacity: 0.8;
+                    }
+                    100% {
+                        transform: translate(${impactPixel.x - window.innerWidth/2}px, ${impactPixel.y - window.innerHeight/10}px) rotate(45deg) scale(1.5);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes asteroidFall {
+                    0% {
+                        transform: translate(-50%, -50%) scale(0.5);
+                        opacity: 1;
+                    }
+                    50% {
+                        transform: translate(-50%, -50%) scale(1);
+                        opacity: 0.9;
+                    }
+                    100% {
+                        transform: translate(${impactPixel.x - window.innerWidth/2}px, ${impactPixel.y - window.innerHeight/10}px) scale(1.2);
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes trailGrow {
+                    0% {
+                        height: 0px;
+                        opacity: 0;
+                    }
+                    50% {
+                        height: 100px;
+                        opacity: 0.7;
+                    }
+                    100% {
+                        height: 200px;
+                        opacity: 0;
+                    }
+                }
+                
+                @keyframes mapShake {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    10% { transform: translate(-2px, -1px) rotate(-0.5deg); }
+                    20% { transform: translate(2px, 1px) rotate(0.5deg); }
+                    30% { transform: translate(-1px, 2px) rotate(-0.3deg); }
+                    40% { transform: translate(1px, -2px) rotate(0.3deg); }
+                    50% { transform: translate(-2px, 1px) rotate(-0.2deg); }
+                    60% { transform: translate(2px, -1px) rotate(0.2deg); }
+                    70% { transform: translate(-1px, -2px) rotate(-0.1deg); }
+                    80% { transform: translate(1px, 2px) rotate(0.1deg); }
+                    90% { transform: translate(-2px, -1px) rotate(-0.05deg); }
+                }
+            `;
+            document.head.appendChild(style);
 
-            // 更新控制器
-            controls.update();
-            
-            // 渲染场景
-            renderer.render(scene, camera);
-            
-            console.log('Three.js初始化完成');
-            console.log('场景对象:', scene);
-            console.log('相机对象:', camera);
-            console.log('渲染器对象:', renderer);
+            // 撞击瞬间效果
+            setTimeout(() => {
+                // 地图震动效果
+                const mapElement = document.getElementById('map');
+                mapElement.style.animation = 'mapShake 0.5s ease-out';
+
+                // 撞击闪光
+                const flash = document.createElement('div');
+                flash.style.position = 'absolute';
+                flash.style.left = impactPixel.x + 'px';
+                flash.style.top = impactPixel.y + 'px';
+                flash.style.width = '20px';
+                flash.style.height = '20px';
+                flash.style.background = 'radial-gradient(circle, #ffff00, #ff4444)';
+                flash.style.borderRadius = '50%';
+                flash.style.transform = 'translate(-50%, -50%)';
+                flash.style.animation = 'impactFlash 0.5s ease-out';
+                container.appendChild(flash);
+
+                // 冲击波
+                const shockwave = document.createElement('div');
+                shockwave.style.position = 'absolute';
+                shockwave.style.left = impactPixel.x + 'px';
+                shockwave.style.top = impactPixel.y + 'px';
+                shockwave.style.width = '0px';
+                shockwave.style.height = '0px';
+                shockwave.style.border = '3px solid #ffaa00';
+                shockwave.style.borderRadius = '50%';
+                shockwave.style.transform = 'translate(-50%, -50%)';
+                shockwave.style.animation = 'shockwaveExpand 1s ease-out';
+                container.appendChild(shockwave);
+
+                // 添加冲击波动画
+                const shockwaveStyle = document.createElement('style');
+                shockwaveStyle.textContent = `
+                    @keyframes impactFlash {
+                        0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+                        100% { transform: translate(-50%, -50%) scale(10); opacity: 0; }
+                    }
+                    
+                    @keyframes shockwaveExpand {
+                        0% { 
+                            width: 0px; 
+                            height: 0px; 
+                            opacity: 1; 
+                        }
+                        100% { 
+                            width: 200px; 
+                            height: 200px; 
+                            opacity: 0; 
+                        }
+                    }
+                `;
+                document.head.appendChild(shockwaveStyle);
+
+                // 清理动画样式
+                setTimeout(() => {
+                    document.head.removeChild(style);
+                    document.head.removeChild(shockwaveStyle);
+                    mapElement.style.animation = '';
+                }, 3000);
+
+            }, 2500);
         }
 
-        // 窗口大小调整
-        function onWindowResize() {
-            const container = document.getElementById('threejs-container');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+        function add3DMapEffect(container) {
+            // 添加立体地图效果
+            const mapElement = document.getElementById('map');
+            
+            // 添加3D变换
+            mapElement.style.transform = 'perspective(1000px) rotateX(5deg)';
+            mapElement.style.transition = 'transform 0.3s ease';
+            
+            // 添加阴影效果
+            const shadow = document.createElement('div');
+            shadow.style.position = 'absolute';
+            shadow.style.bottom = '-20px';
+            shadow.style.left = '20px';
+            shadow.style.right = '20px';
+            shadow.style.height = '20px';
+            shadow.style.background = 'radial-gradient(ellipse, rgba(0,0,0,0.3), transparent)';
+            shadow.style.borderRadius = '50%';
+            shadow.style.transform = 'scale(1.2)';
+            container.appendChild(shadow);
+
+            // 添加深度指示器
+            const depthIndicator = document.createElement('div');
+            depthIndicator.style.position = 'absolute';
+            depthIndicator.style.top = '20px';
+            depthIndicator.style.right = '20px';
+            depthIndicator.style.background = 'rgba(0, 0, 0, 0.8)';
+            depthIndicator.style.color = 'white';
+            depthIndicator.style.padding = '10px';
+            depthIndicator.style.borderRadius = '5px';
+            depthIndicator.style.fontSize = '12px';
+            depthIndicator.innerHTML = `
+                <div>🌍 立体地图视图</div>
+                <div>📐 3D轨迹显示</div>
+            `;
+            container.appendChild(depthIndicator);
+
+            // 3秒后恢复地图
+            setTimeout(() => {
+                mapElement.style.transform = 'perspective(1000px) rotateX(0deg)';
+            }, 3000);
         }
 
-        // 显示错误
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.textContent = message;
-            
-            const container = document.querySelector('.container');
-            container.insertBefore(errorDiv, container.firstChild);
-            
-            setTimeout(() => errorDiv.remove(), 5000);
-        }
-
-        // 隐藏加载状态
-        function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-        }
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+        });
     </script>
 </body>
 </html>
