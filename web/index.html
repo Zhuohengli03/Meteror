@@ -42,6 +42,9 @@
             <button class="nav-tab" data-tab="natural-events">
                 <i class="fas fa-globe-americas"></i> Natural Events
             </button>
+            <button class="nav-tab" data-tab="simulation">
+                <i class="fas fa-calculator"></i> Simulation
+            </button>
             <button class="nav-tab" data-tab="map">
                 <i class="fas fa-map"></i> Interactive Map
             </button>
@@ -298,6 +301,249 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Simulation Tab -->
+        <div id="simulation" class="tab-content">
+            <div class="simulation-header">
+                <h2><i class="fas fa-calculator"></i> Asteroid Impact & Deflection Simulation</h2>
+                <p class="simulation-subtitle">Monte Carlo Process and Results Summary</p>
+            </div>
+
+            <!-- Simulation Purpose -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-bullseye"></i> 1. Simulation Purpose</h3>
+                <div class="purpose-card">
+                    <div class="purpose-content">
+                        <h4>Goal:</h4>
+                        <p>To estimate how uncertainty in asteroid parameters (size, velocity) and defense actions (Δv, lead time) affects the impact location and Earth-hit probability.</p>
+                        <p><strong>Methodology:</strong> Through random sampling and propagation calculations, we evaluate how uncertainties in asteroid physical parameters and defense strategies affect the final impact location and collision probability.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Setup -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-cogs"></i> 2. Simulation Setup</h3>
+                <div class="setup-table-container">
+                    <table class="simulation-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Distribution</th>
+                                <th>Range / Mean</th>
+                                <th>Unit</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>diameter_m</code></td>
+                                <td>Uniform</td>
+                                <td>800 - 1400</td>
+                                <td>m</td>
+                                <td>Asteroid diameter</td>
+                            </tr>
+                            <tr>
+                                <td><code>velocity_m_s</code></td>
+                                <td>Normal</td>
+                                <td>μ = 18000, σ = 2000</td>
+                                <td>m/s</td>
+                                <td>Incident velocity</td>
+                            </tr>
+                            <tr>
+                                <td><code>delta_v_m_s</code></td>
+                                <td>Normal</td>
+                                <td>μ = 0.002, σ = 5e-4</td>
+                                <td>m/s</td>
+                                <td>Defense deflection velocity (Δv)</td>
+                            </tr>
+                            <tr>
+                                <td><code>lead_years</code></td>
+                                <td>Uniform</td>
+                                <td>3 - 10</td>
+                                <td>years</td>
+                                <td>Defense lead time</td>
+                            </tr>
+                            <tr>
+                                <td><code>noise</code></td>
+                                <td>2D Gaussian</td>
+                                <td>σx = 3, σy = 2</td>
+                                <td>km</td>
+                                <td>Observation and process noise</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="simulation-note">
+                    <p><strong>Simulation size:</strong> N = 4000 runs → Each run represents a possible "asteroid defense scenario".</p>
+                </div>
+            </div>
+
+            <!-- Monte Carlo Process -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-random"></i> 3. Monte Carlo Process</h3>
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Generate random inputs</h4>
+                            <p>Generate random values for diameter (d), velocity (v), Δv, and lead time (L).</p>
+                            <p><strong>Generate random inputs (diameter d, velocity v, Δv, lead time L)</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Add random noise</h4>
+                            <p>Add random noise to represent observation & orbital perturbations.</p>
+                            <p><strong>Add random noise to represent observation and orbital perturbations</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Compute impact point</h4>
+                            <p>Calculate impact coordinates using simplified solver:</p>
+                            <div class="equations">
+                                <div class="equation">
+                                    <code>x = 120 + 0.015d - 0.002v + 1.8×10⁵ Δv L + 1.5n₁</code>
+                                </div>
+                                <div class="equation">
+                                    <code>y = -60 + 0.008d + 0.001v + 1.2×10⁵ Δv L + 1.2n₂</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Store results</h4>
+                            <p>Store all (x, y) results as Impact Cloud.</p>
+                            <p><strong>Store all (x, y) results as Impact Cloud</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Statistical analysis</h4>
+                            <p>Perform 4000 iterations to obtain statistical distribution.</p>
+                            <p><strong>Perform 4000 iterations to obtain statistical distribution</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-chart-line"></i> 4. Results Summary</h3>
+                
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h4>① Maximum Likelihood Estimation (MLE)</h4>
+                        <div class="result-data">
+                            <p><strong>Mean (x, y) [km]:</strong> (2444.0, 1489.4)</p>
+                            <p><strong>Covariance Σ:</strong> [[897668, 598340], [598340, 398839]]</p>
+                            <p class="conclusion">→ Impact points are concentrated in an area approximately 2860 km from the reference origin.</p>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h4>② Bayesian Update</h4>
+                        <div class="result-data">
+                            <p><strong>Posterior Mean (x, y) [km]:</strong> (2443.8, 1489.4)</p>
+                            <p><strong>Posterior Covariance Σ:</strong> [[0.002, 0.000], [0.000, 0.001]]</p>
+                            <p><strong>Posterior P(hit Earth):</strong> ≈ 1.000000</p>
+                            <p class="conclusion">→ Almost all posterior samples are within the Earth's radius of 6371 km.</p>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h4>③ Linear Regression Analysis (Sensitivity Analysis)</h4>
+                        <div class="result-data">
+                            <p><strong>Model:</strong> r km = β₀ + β₁d + β₂v + β₃Δv + β₄L</p>
+                            <div class="coefficients">
+                                <p><strong>Intercept:</strong> -2763 (p < 2e-16)</p>
+                                <p><strong>diameter_m:</strong> 0.004 (p = 0.825)</p>
+                                <p><strong>velocity_m_s:</strong> 0.0018 (p = 0.293)</p>
+                                <p><strong>Δv:</strong> 1.405×10⁶ (p < 2e-16)</p>
+                                <p><strong>lead_years:</strong> 430.4 (p < 2e-16)</p>
+                            </div>
+                            <p><strong>R² Value:</strong> 0.964</p>
+                            <p class="conclusion">→ The model explains 96.4% of the impact point variation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interpretation -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-lightbulb"></i> 5. Interpretation</h3>
+                <div class="interpretation-table">
+                    <table class="simulation-table">
+                        <thead>
+                            <tr>
+                                <th>Factor</th>
+                                <th>Impact Direction</th>
+                                <th>Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="positive-correlation">
+                                <td>Δv (Deflection Velocity)</td>
+                                <td>Positive correlation ↑</td>
+                                <td>The greater the deflection velocity, the farther the impact point shifts</td>
+                            </tr>
+                            <tr class="positive-correlation">
+                                <td>Lead time</td>
+                                <td>Positive correlation ↑</td>
+                                <td>The earlier the defense is implemented, the more obvious the orbital change</td>
+                            </tr>
+                            <tr class="weak-correlation">
+                                <td>Velocity</td>
+                                <td>Weak correlation ↓</td>
+                                <td>High-speed asteroids are more difficult to deflect</td>
+                            </tr>
+                            <tr class="no-impact">
+                                <td>Diameter</td>
+                                <td>Almost no impact</td>
+                                <td>Affects energy but not trajectory geometry</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Key Takeaways -->
+            <div class="simulation-section">
+                <h3><i class="fas fa-key"></i> 6. Key Takeaways</h3>
+                <div class="takeaways-list">
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">🎯</div>
+                        <div class="takeaway-content">
+                            <p><strong>Monte Carlo simulation (4000 runs)</strong> successfully constructed the impact probability distribution.</p>
+                        </div>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">📊</div>
+                        <div class="takeaway-content">
+                            <p><strong>Bayesian update</strong> significantly reduced uncertainty (prior → posterior).</p>
+                        </div>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">⚡</div>
+                        <div class="takeaway-content">
+                            <p><strong>Deflection velocity Δv</strong> and <strong>lead time</strong> are key variables.</p>
+                        </div>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">🚀</div>
+                        <div class="takeaway-content">
+                            <p>The model provides a stable analytical framework for future integration with the <strong>NASA NeoWs API</strong>.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
