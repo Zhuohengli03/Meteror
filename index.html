@@ -419,6 +419,7 @@
                         <button class="view-btn active" data-view="orbit">轨道视图</button>
                         <button class="view-btn" data-view="impact">冲击视图</button>
                         <button class="view-btn" data-view="deflection">偏转视图</button>
+                        <button class="view-btn" onclick="initThreeJS()" style="background: #ff6b6b;">🔧 重新初始化3D</button>
                     </div>
                 </div>
             </div>
@@ -821,6 +822,21 @@
         function initThreeJS() {
             const container = document.getElementById('threejs-container');
             
+            // 调试信息
+            console.log('初始化Three.js...');
+            console.log('容器元素:', container);
+            console.log('Three.js版本:', THREE.REVISION);
+            
+            if (!container) {
+                console.error('找不到threejs-container元素');
+                return;
+            }
+            
+            if (!window.THREE) {
+                console.error('Three.js库未加载');
+                return;
+            }
+            
             // 场景
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000011);
@@ -922,6 +938,11 @@
             
             // 渲染场景
             renderer.render(scene, camera);
+            
+            console.log('Three.js初始化完成');
+            console.log('场景对象:', scene);
+            console.log('相机对象:', camera);
+            console.log('渲染器对象:', renderer);
         }
 
         // 窗口大小调整
