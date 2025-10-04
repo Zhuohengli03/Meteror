@@ -1,9 +1,5 @@
 package org.spaceapps.meteormadness.util;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -11,22 +7,18 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- * Minimal HTTP helper built on Java 11+ HttpClient with optional insecure mode
- * for environments that lack the necessary CA certificates.
+ * Minimal HTTP helper built on Java 11+ HttpClient.
  */
 public final class HttpUtil {
 
-    private static final boolean INSECURE_HTTP = detectInsecureMode();
-
-    private static final HttpClient CLIENT = buildClient();
+    private static final HttpClient CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .build();
 
     private HttpUtil() {
     }
@@ -62,72 +54,7 @@ public final class HttpUtil {
         return baseUrl + (baseUrl.contains("?") ? "&" : "?") + joiner;
     }
 
-    private static HttpClient buildClient() {
-        HttpClient.Builder builder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15));
-
-        if (INSECURE_HTTP) {
-            try {
-                SSLContext context = trustAllContext();
-                builder.sslContext(context);
-                SSLParameters params = new SSLParameters();
-                params.setEndpointIdentificationAlgorithm(null);
-                builder.sslParameters(params);
-                System.err.println("[WARN] Insecure HTTPS mode enabled. Certificates and hostnames will NOT be validated.");
-            } catch (GeneralSecurityException ex) {
-                throw new IllegalStateException("Failed to initialize insecure SSL context", ex);
-            }
-        } else {
-            System.err.println("[INFO] HTTPS certificate validation enabled (default).");
-        }
-
-        return builder.build();
-    }
-
     private static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
-    }
-
-    private static boolean detectInsecureMode() {
-        String envFlag = System.getenv("NASA_HTTP_INSECURE");
-        if (isTrue(envFlag)) {
-            return true;
-        }
-        String sysProp = System.getProperty("NASA_HTTP_INSECURE");
-        if (isTrue(sysProp)) {
-            return true;
-        }
-        String genericProp = System.getProperty("http.insecure");
-        if (isTrue(genericProp)) {
-            return true;
-        }
-        String configFlag = Config.get("http.insecure");
-        return isTrue(configFlag);
-    }
-
-    private static boolean isTrue(String value) {
-        return value != null && value.trim().equalsIgnoreCase("true");
-    }
-
-    private static SSLContext trustAllContext() throws GeneralSecurityException {
-        TrustManager[] trustAll = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-        };
-        SSLContext context = SSLContext.getInstance("TLS");
-        context.init(null, trustAll, new SecureRandom());
-        return context;
     }
 }

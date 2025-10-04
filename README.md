@@ -10,7 +10,7 @@ This repository hosts a Java-only starter for the NASA Space Apps **Meteor Madne
 ## Requirements
 - JDK 17 or later
 - Maven 3.9+
-- Set an environment variable `NASA_API_KEY` (or JVM system property of the same name) for the NeoWs feed **or** edit `src/main/resources/nasa-api.properties`. The repository ships with a ready-to-use key for quick testing.
+- (Optional) Set an environment variable `NASA_API_KEY` for the NeoWs feed. If not set, the app falls back to the limited `DEMO_KEY`.
 
 ## Build & Run
 ```bash
@@ -24,12 +24,3 @@ The `--demo` flag triggers three sample queries:
 3. NeoWs daily feed spanning ±2 days around today (first 20 objects printed).
 
 Modify `src/main/java/org/spaceapps/meteormadness/Main.java` to adjust the filters, export formats, or connect the data to downstream visualizations.
-
-## Troubleshooting
-
-### SSLHandshakeException or certificate path errors
-
-Some macOS and corporate environments ship custom trust stores that may not include the NASA/JPL certificate chain, resulting in an error similar to `PKIX path building failed`. There are two ways to proceed:
-
-1. **Recommended:** import the missing CA into your Java trust store (see the [Java documentation](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) for using `keytool -importcert`).
-2. **Temporary hackathon fallback:** set the environment variable `NASA_HTTP_INSECURE=true`, add the JVM flag `-DNASA_HTTP_INSECURE=true` (or `-Dhttp.insecure=true`), **or** change `http.insecure=true` inside `src/main/resources/nasa-api.properties`. This disables certificate and hostname validation for all outbound NASA API calls. Use this only if you trust your network because it downgrades HTTPS security.
