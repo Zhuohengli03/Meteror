@@ -1,7 +1,6 @@
 package org.spaceapps.meteormadness.clients;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.spaceapps.meteormadness.util.Config;
 import org.spaceapps.meteormadness.util.HttpUtil;
 import org.spaceapps.meteormadness.util.JsonUtil;
 
@@ -21,9 +20,6 @@ public class NeoWsClient {
 
     public NeoWsClient() {
         String key = System.getenv("NASA_API_KEY");
-        if (key == null || key.isBlank()) {
-            key = Config.get("api.nasa.key");
-        }
         if (key == null || key.isBlank()) {
             key = "DEMO_KEY";
             System.err.println("[WARN] NASA_API_KEY not set. Using DEMO_KEY (rate-limited).");
