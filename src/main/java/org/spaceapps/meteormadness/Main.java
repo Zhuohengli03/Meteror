@@ -60,12 +60,12 @@ public class Main {
         List<List<String>> table = new ArrayList<>();
         for (Map<String, String> row : rows) {
             table.add(List.of(
-                    row.get("date"),
-                    row.get("lat"),
-                    row.get("lon"),
-                    row.get("energy"),
-                    row.get("vel"),
-                    row.get("alt")
+                    row.get("date") != null ? row.get("date") : "",
+                    row.get("lat") != null ? row.get("lat") : "",
+                    row.get("lon") != null ? row.get("lon") : "",
+                    row.get("energy") != null ? row.get("energy") : "",
+                    row.get("vel") != null ? row.get("vel") : "",
+                    row.get("alt") != null ? row.get("alt") : ""
             ));
         }
         TablePrinter.printTable(headers, table);
