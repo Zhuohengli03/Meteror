@@ -31,7 +31,8 @@ public class NeoWsClient {
         this.apiKey = key;
         this.backupApiKeys = Arrays.asList(
             "GYC4tXK4gKMM3nqVKGeFBsKIsb4rwdWf5MiYf5vW",
-            "10F7HUB7A6YIQJOH3maRtYLpQ7juI6klyxsqx4Ww"
+            "10F7HUB7A6YIQJOH3maRtYLpQ7juI6klyxsqx4Ww",
+            "dBPer9QXUj1Ng3N0Ih43napxv9aNYfdrBmhbyQvO"
         );
     }
 
