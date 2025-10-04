@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+    background: linear-gradient(to bottom, #000000 0%, #8B0000 100%);
     color: #ffffff;
     min-height: 100vh;
     line-height: 1.6;
@@ -21,7 +21,7 @@ body {
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #000000;
     padding: 2rem 0;
     text-align: center;
     margin-bottom: 2rem;
@@ -40,6 +40,10 @@ body {
     opacity: 0.9;
 }
 
+.header-content h1 i.fa-meteor {
+    color: #ff0000;
+}
+
 .api-status {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
@@ -49,6 +53,7 @@ body {
     align-items: center;
     gap: 1rem;
     font-size: 0.9rem;
+    color: #ffffff;
 }
 
 .btn-reset {
@@ -99,9 +104,9 @@ body {
 }
 
 .nav-tab.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #666666;
     border-color: #ffffff;
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 20px rgba(85, 85, 85, 0.4);
 }
 
 /* Tab content */
@@ -134,7 +139,7 @@ body {
     width: 50px;
     height: 50px;
     border: 4px solid rgba(255, 255, 255, 0.1);
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #666666;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
@@ -172,7 +177,7 @@ body {
 
 .stat-icon {
     font-size: 2rem;
-    color: #667eea;
+    color: #ff0000;
 }
 
 .stat-content h3 {
@@ -224,7 +229,7 @@ body {
 }
 
 #data-summary strong {
-    color: #667eea;
+    color: #ffffff;
 }
 
 /* Date ranges section */
@@ -272,7 +277,7 @@ body {
 }
 
 .date-range-header i {
-    color: #667eea;
+    color: #ff0000;
     font-size: 1.2rem;
 }
 
@@ -287,12 +292,12 @@ body {
 }
 
 .date-range-details strong {
-    color: #4facfe;
+    color: #ffffff;
 }
 
 .limits-note {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
+    background: rgba(136, 136, 136, 0.1);
+    border: 1px solid rgba(136, 136, 136, 0.3);
     border-radius: 8px;
     padding: 1rem;
     color: rgba(255, 255, 255, 0.9);
@@ -301,7 +306,7 @@ body {
 }
 
 .limits-note i {
-    color: #667eea;
+    color: #ff0000;
     margin-right: 0.5rem;
 }
 
@@ -345,8 +350,8 @@ body {
 
 .control-group input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    border-color: #888888;
+    box-shadow: 0 0 0 2px rgba(136, 136, 136, 0.2);
 }
 
 .control-group input::placeholder {
@@ -364,18 +369,18 @@ body {
 
 .control-group select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    border-color: #888888;
+    box-shadow: 0 0 0 2px rgba(136, 136, 136, 0.2);
 }
 
 .control-group select option {
-    background: #1a1a2e;
+    background: #2d2d2d;
     color: #ffffff;
 }
 
 /* Buttons */
 .btn-primary, .btn-secondary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #666666;
     border: none;
     color: #ffffff;
     padding: 10px 20px;
@@ -421,7 +426,7 @@ body {
 }
 
 .data-table th {
-    background: rgba(102, 126, 234, 0.3);
+    background: rgba(136, 136, 136, 0.3);
     padding: 12px;
     text-align: left;
     font-weight: 600;
@@ -520,10 +525,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(102, 126, 234, 0.5);
+    background: rgba(136, 136, 136, 0.5);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(102, 126, 234, 0.7);
+    background: rgba(136, 136, 136, 0.7);
+}
+
+/* Make all icons red */
+i.fas, i.fa {
+    color: #ff0000 !important;
 }
