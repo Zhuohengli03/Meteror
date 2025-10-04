@@ -5,7 +5,9 @@ import org.spaceapps.meteormadness.util.HttpUtil;
 import org.spaceapps.meteormadness.util.JsonUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,7 +29,10 @@ public class NeoWsClient {
             System.err.println("[WARN] NASA_API_KEY not set. Using DEMO_KEY (rate-limited).");
         }
         this.apiKey = key;
-        this.backupApiKey = "GYC4tXK4gKMM3nqVKGeFBsKIsb4rwdWf5MiYf5vW";
+        this.backupApiKeys = Arrays.asList(
+            "GYC4tXK4gKMM3nqVKGeFBsKIsb4rwdWf5MiYf5vW",
+            "10F7HUB7A6YIQJOH3maRtYLpQ7juI6klyxsqx4Ww"
+        );
     }
 
     public JsonNode fetchFeed(String startDate, String endDate) throws IOException, InterruptedException {
@@ -36,7 +41,7 @@ public class NeoWsClient {
         query.put("end_date", endDate);
         
         // Use current API key (primary or backup)
-        String currentKey = usingBackupKey ? backupApiKey : apiKey;
+        String currentKey = getCurrentApiKey();
         query.put("api_key", currentKey);
 
         try {
@@ -45,23 +50,23 @@ public class NeoWsClient {
             
             // Check if we got a rate limit error
             if (result.has("error") && result.get("error").asText().contains("rate limit")) {
-                if (!usingBackupKey) {
-                    System.out.println("[INFO] Primary API key rate limited, switching to backup key");
-                    usingBackupKey = true;
-                    return fetchFeed(startDate, endDate); // Retry with backup key
+                if (tryNextBackupKey()) {
+                    System.out.println("[INFO] API key rate limited, switching to backup key #" + (currentBackupIndex + 1));
+                    return fetchFeed(startDate, endDate); // Retry with next backup key
                 } else {
-                    System.err.println("[ERROR] Both API keys have reached rate limits");
-                    throw new IOException("Rate limit exceeded for both API keys");
+                    System.err.println("[ERROR] All API keys have reached rate limits");
+                    throw new IOException("Rate limit exceeded for all API keys");
                 }
             }
             
             return result;
         } catch (IOException e) {
             // If we get an error and we're not using backup key, try backup
-            if (!usingBackupKey && (e.getMessage().contains("rate limit") || e.getMessage().contains("429"))) {
-                System.out.println("[INFO] Primary API key failed, switching to backup key");
-                usingBackupKey = true;
-                return fetchFeed(startDate, endDate); // Retry with backup key
+            if (currentBackupIndex == -1 && (e.getMessage().contains("rate limit") || e.getMessage().contains("429"))) {
+                if (tryNextBackupKey()) {
+                    System.out.println("[INFO] Primary API key failed, switching to backup key #" + (currentBackupIndex + 1));
+                    return fetchFeed(startDate, endDate); // Retry with backup key
+                }
             }
             throw e;
         }
@@ -78,21 +83,48 @@ public class NeoWsClient {
      * Get the currently active API key
      */
     public String getCurrentApiKey() {
-        return usingBackupKey ? backupApiKey : apiKey;
+        if (currentBackupIndex == -1) {
+            return apiKey;
+        } else {
+            return backupApiKeys.get(currentBackupIndex);
+        }
     }
     
     /**
      * Check if currently using backup key
      */
     public boolean isUsingBackupKey() {
-        return usingBackupKey;
+        return currentBackupIndex != -1;
+    }
+    
+    /**
+     * Try to switch to the next backup key
+     * @return true if a backup key is available, false if all are exhausted
+     */
+    private boolean tryNextBackupKey() {
+        currentBackupIndex++;
+        return currentBackupIndex < backupApiKeys.size();
+    }
+    
+    /**
+     * Get the number of backup keys available
+     */
+    public int getBackupKeyCount() {
+        return backupApiKeys.size();
+    }
+    
+    /**
+     * Get the current backup key index (0-based, -1 means using primary)
+     */
+    public int getCurrentBackupIndex() {
+        return currentBackupIndex;
     }
     
     /**
      * Reset to primary API key (useful for testing or after rate limit reset)
      */
     public void resetToPrimaryKey() {
-        usingBackupKey = false;
+        currentBackupIndex = -1;
         System.out.println("[INFO] Reset to primary API key");
     }
 }

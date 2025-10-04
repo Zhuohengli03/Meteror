@@ -3,6 +3,7 @@ package org.spaceapps.meteormadness;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.spaceapps.meteormadness.service.MeteorDataService;
+import org.spaceapps.meteormadness.clients.NeoWsClient;
 import org.spaceapps.meteormadness.util.JsonUtil;
 
 import java.io.*;
@@ -202,10 +203,24 @@ public class WebServer {
         ));
         
         // Add API key status information
+        NeoWsClient neoWsClient = meteorService.getNeoWsClient();
+        String currentKey = neoWsClient.getCurrentApiKey();
+        String keyStatus;
+        if (neoWsClient.isUsingBackupKey()) {
+            int backupIndex = neoWsClient.getCurrentBackupIndex();
+            keyStatus = String.format("Using backup key #%d of %d", 
+                backupIndex + 1, neoWsClient.getBackupKeyCount());
+        } else {
+            keyStatus = "Using primary key";
+        }
+        
         testData.put("api_key_status", Map.of(
-            "using_backup", meteorService.getNeoWsClient().isUsingBackupKey(),
-            "current_key", meteorService.getNeoWsClient().getCurrentApiKey().substring(0, 8) + "...",
-            "primary_key", meteorService.getNeoWsClient().getApiKey().substring(0, 8) + "..."
+            "status", keyStatus,
+            "using_backup", neoWsClient.isUsingBackupKey(),
+            "current_key", currentKey.substring(0, Math.min(8, currentKey.length())) + "...",
+            "primary_key", neoWsClient.getApiKey().substring(0, Math.min(8, neoWsClient.getApiKey().length())) + "...",
+            "backup_keys_available", neoWsClient.getBackupKeyCount(),
+            "current_backup_index", neoWsClient.getCurrentBackupIndex()
         ));
         
         sendJsonResponse(exchange, testData);

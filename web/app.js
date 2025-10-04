@@ -5,6 +5,7 @@ let map = null;
 let fireballMarkers = [];
 let approachMarkers = [];
 let naturalEventMarkers = [];
+let isLoadingOverview = false;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -135,6 +136,18 @@ function setupEventListeners() {
     const mapControls = document.querySelector('.map-controls');
     if (mapControls) {
         mapControls.appendChild(debugButton);
+        
+        // Add loading debug button
+        const loadingDebugButton = document.createElement('button');
+        loadingDebugButton.className = 'btn-secondary';
+        loadingDebugButton.innerHTML = '<i class="fas fa-stop"></i> Hide Loading';
+        loadingDebugButton.style.marginLeft = '10px';
+        loadingDebugButton.addEventListener('click', () => {
+            console.log('Manually hiding loading indicator');
+            hideLoading();
+            isLoadingOverview = false;
+        });
+        mapControls.appendChild(loadingDebugButton);
     }
     
     // API key reset button
@@ -236,7 +249,10 @@ function switchTab(tabName) {
 
     // Load data for specific tabs
     if (tabName === 'overview') {
-        loadOverviewData();
+        // Only load if not already loading
+        if (!isLoadingOverview) {
+            loadOverviewData();
+        }
     } else if (tabName === 'map') {
         // Refresh map when switching to map tab
         setTimeout(() => {
@@ -249,10 +265,12 @@ function switchTab(tabName) {
 }
 
 function showLoading() {
+    console.log('Showing loading indicator');
     document.getElementById('loading').classList.add('show');
 }
 
 function hideLoading() {
+    console.log('Hiding loading indicator');
     document.getElementById('loading').classList.remove('show');
 }
 
@@ -342,7 +360,21 @@ async function fetchNaturalEvents() {
 }
 
 async function loadOverviewData() {
+    // Prevent multiple simultaneous calls
+    if (isLoadingOverview) {
+        console.log('Overview data already loading, skipping...');
+        return;
+    }
+    
+    isLoadingOverview = true;
     showLoading();
+    
+    // Safety timeout to ensure loading is hidden
+    const loadingTimeout = setTimeout(() => {
+        console.warn('Loading timeout reached, hiding loading indicator');
+        hideLoading();
+        isLoadingOverview = false;
+    }, 30000); // 30 second timeout
     
     // Show initial loading state
     updateOverviewStats([], [], []);
@@ -443,7 +475,9 @@ async function loadOverviewData() {
         // Show demo data if API is not available
         showDemoData();
     } finally {
+        clearTimeout(loadingTimeout);
         hideLoading();
+        isLoadingOverview = false;
     }
 }
 
@@ -971,7 +1005,9 @@ function updateApiKeyStatus(status) {
         statusElement.style.display = 'block';
         
         if (status.using_backup) {
-            statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Using backup API key (rate limit reached)';
+            const backupIndex = status.current_backup_index || 0;
+            const totalBackups = status.backup_keys_available || 1;
+            statusText.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Using backup API key #${backupIndex + 1} of ${totalBackups} (rate limit reached)`;
             statusText.style.color = '#ff6b6b';
             if (resetButton) {
                 resetButton.style.display = 'inline-block';
