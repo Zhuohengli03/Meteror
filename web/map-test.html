@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        #map { height: 400px; width: 100%; border: 1px solid #ccc; }
+        .info { margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h3>Map Tile Loading Test</h3>
+        <p>This is a simple test to verify that map tiles are loading correctly.</p>
+        <button onclick="testMap()">Test Map</button>
+        <button onclick="switchLayer()">Switch Layer</button>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let currentLayer = 0;
+        const layers = [
+            {
+                name: 'OpenStreetMap',
+                layer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                })
+            },
+            {
+                name: 'CartoDB Light',
+                layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap contributors © CARTO',
+                    maxZoom: 19
+                })
+            },
+            {
+                name: 'Esri World Imagery',
+                layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '© Esri',
+                    maxZoom: 19
+                })
+            }
+        ];
+
+        function testMap() {
+            if (map) {
+                map.remove();
+            }
+            
+            map = L.map('map').setView([20, 0], 2);
+            
+            // Add the first layer
+            layers[currentLayer].layer.addTo(map);
+            
+            console.log('Map initialized with', layers[currentLayer].name);
+            
+            // Add some test markers
+            L.marker([20, 0]).addTo(map).bindPopup('Test marker');
+            L.marker([40, -100]).addTo(map).bindPopup('Another test marker');
+        }
+
+        function switchLayer() {
+            if (!map) {
+                alert('Please initialize the map first');
+                return;
+            }
+            
+            // Remove current layer
+            map.eachLayer(layer => {
+                if (layer instanceof L.TileLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // Switch to next layer
+            currentLayer = (currentLayer + 1) % layers.length;
+            layers[currentLayer].layer.addTo(map);
+            
+            console.log('Switched to', layers[currentLayer].name);
+        }
+
+        // Initialize map on page load
+        window.onload = function() {
+            testMap();
+        };
+    </script>
+</body>
+</html>

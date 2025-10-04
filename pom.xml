@@ -51,7 +51,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>org.spaceapps.meteormadness.Main</mainClass>
+              <mainClass>org.spaceapps.meteormadness.WebServer</mainClass>
             </manifest>
           </archive>
         </configuration>

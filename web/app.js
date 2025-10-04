@@ -1,0 +1,982 @@
+// Global variables
+let approachesChart = null;
+let energyChart = null;
+let map = null;
+let fireballMarkers = [];
+let approachMarkers = [];
+let naturalEventMarkers = [];
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+    setupEventListeners();
+    setDefaultDates();
+    loadEventCategories();
+    loadOverviewData();
+});
+
+function initializeApp() {
+    // Initialize Leaflet map
+    if (document.getElementById('map-container')) {
+        map = L.map('map-container', {
+            center: [20, 0],
+            zoom: 2,
+            zoomControl: true,
+            attributionControl: true,
+            preferCanvas: false,
+            renderer: L.canvas()
+        });
+        
+        // Create multiple tile layers with better error handling
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c'],
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+            crossOrigin: true
+        });
+        
+        const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c', 'd'],
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+            crossOrigin: true
+        });
+        
+        const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri',
+            maxZoom: 19,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+            crossOrigin: true
+        });
+        
+        // Try to add the first layer, with fallbacks
+        let layerAdded = false;
+        
+        // Try OpenStreetMap first
+        osmLayer.on('tileerror', function() {
+            if (!layerAdded) {
+                console.log('OSM tiles failed, trying CartoDB...');
+                map.removeLayer(osmLayer);
+                cartoLayer.addTo(map);
+                layerAdded = true;
+            }
+        });
+        
+        osmLayer.on('load', function() {
+            layerAdded = true;
+        });
+        
+        // Add default layer
+        osmLayer.addTo(map);
+        
+        // Add layer control with multiple options
+        const baseMaps = {
+            "OpenStreetMap": osmLayer,
+            "CartoDB Light": cartoLayer,
+            "Esri Satellite": esriLayer
+        };
+        
+        L.control.layers(baseMaps).addTo(map);
+        
+        // Force a refresh after a short delay
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                map.setView([20, 0], 2);
+                
+                // If tiles still don't load, try a different approach
+                setTimeout(() => {
+                    if (map && !map.hasLayer(osmLayer) && !map.hasLayer(cartoLayer)) {
+                        console.log('Trying alternative tile source...');
+                        // Try a different tile source
+                        const altLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19
+                        });
+                        altLayer.addTo(map);
+                    }
+                }, 3000);
+            }
+        }, 1000);
+    }
+}
+
+function setupEventListeners() {
+    // Tab navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            switchTab(targetTab);
+        });
+    });
+
+    // Data fetching buttons
+    document.getElementById('fetch-approaches')?.addEventListener('click', fetchCloseApproaches);
+    document.getElementById('fetch-fireballs')?.addEventListener('click', fetchFireballs);
+    document.getElementById('fetch-neos')?.addEventListener('click', fetchNearEarthObjects);
+    document.getElementById('fetch-natural-events')?.addEventListener('click', fetchNaturalEvents);
+
+    // Map controls
+    document.getElementById('show-natural-events-map')?.addEventListener('click', showNaturalEventsOnMap);
+    document.getElementById('show-fireballs-map')?.addEventListener('click', showFireballsOnMap);
+    document.getElementById('show-approaches-map')?.addEventListener('click', showApproachesOnMap);
+    document.getElementById('clear-map')?.addEventListener('click', clearMap);
+    
+    // Add debug button for map troubleshooting
+    const debugButton = document.createElement('button');
+    debugButton.className = 'btn-secondary';
+    debugButton.innerHTML = '<i class="fas fa-bug"></i> Debug Map';
+    debugButton.style.marginLeft = '10px';
+    debugButton.addEventListener('click', debugMap);
+    
+    const mapControls = document.querySelector('.map-controls');
+    if (mapControls) {
+        mapControls.appendChild(debugButton);
+    }
+}
+
+function setDefaultDates() {
+    const today = new Date();
+    const oneMonthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const oneMonthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const twoDaysFromNow = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const oneYearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+    // Set default dates for inputs
+    const dateMinInput = document.getElementById('date-min');
+    const dateMaxInput = document.getElementById('date-max');
+    const fireballSinceInput = document.getElementById('fireball-since');
+    const neoStartInput = document.getElementById('neo-start');
+    const neoEndInput = document.getElementById('neo-end');
+
+    if (dateMinInput) dateMinInput.value = formatDate(oneMonthAgo);
+    if (dateMaxInput) dateMaxInput.value = formatDate(oneMonthFromNow);
+    if (fireballSinceInput) fireballSinceInput.value = formatDate(oneYearAgo);
+    if (neoStartInput) neoStartInput.value = formatDate(twoDaysAgo);
+    if (neoEndInput) neoEndInput.value = formatDate(twoDaysFromNow);
+}
+
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
+async function loadEventCategories() {
+    try {
+        const response = await fetch('/api/event-categories');
+        if (response.ok) {
+            const categories = await response.json();
+            const select = document.getElementById('event-category');
+            if (select) {
+                // Clear existing options except the first one
+                select.innerHTML = '<option value="">All Categories</option>';
+                
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.title;
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to load event categories:', error);
+    }
+}
+
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Remove active class from all nav tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+
+    // Add active class to selected nav tab
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+    // Load data for specific tabs
+    if (tabName === 'overview') {
+        loadOverviewData();
+    } else if (tabName === 'map') {
+        // Refresh map when switching to map tab
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                map.setView([20, 0], 2);
+            }
+        }, 100);
+    }
+}
+
+function showLoading() {
+    document.getElementById('loading').classList.add('show');
+}
+
+function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+}
+
+// API calls to Java backend
+async function fetchCloseApproaches() {
+    showLoading();
+    try {
+        const dateMin = document.getElementById('date-min').value;
+        const dateMax = document.getElementById('date-max').value;
+        const distMax = document.getElementById('distance-max').value;
+        const limit = document.getElementById('limit').value;
+
+        const response = await fetch(`/api/close-approaches?dateMin=${dateMin}&dateMax=${dateMax}&distMax=${distMax}&limit=${limit}`);
+        const data = await response.json();
+        
+        displayApproachesTable(data);
+        updateApproachesCount(data.length);
+    } catch (error) {
+        console.error('Error fetching close approaches:', error);
+        alert('Error fetching close approaches data');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function fetchFireballs() {
+    showLoading();
+    try {
+        const sinceDate = document.getElementById('fireball-since').value;
+        const limit = document.getElementById('fireball-limit').value;
+
+        const response = await fetch(`/api/fireballs?sinceDate=${sinceDate}&limit=${limit}`);
+        const data = await response.json();
+        
+        displayFireballsTable(data);
+        updateFireballsCount(data.length);
+    } catch (error) {
+        console.error('Error fetching fireballs:', error);
+        alert('Error fetching fireballs data');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function fetchNearEarthObjects() {
+    showLoading();
+    try {
+        const startDate = document.getElementById('neo-start').value;
+        const endDate = document.getElementById('neo-end').value;
+
+        const response = await fetch(`/api/neo-feed?startDate=${startDate}&endDate=${endDate}`);
+        const data = await response.json();
+        
+        displayNeosTable(data);
+        updateHazardousCount(data.filter(item => item.hazardous === 'yes').length);
+    } catch (error) {
+        console.error('Error fetching NEOs:', error);
+        alert('Error fetching near earth objects data');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function fetchNaturalEvents() {
+    showLoading();
+    try {
+        const days = document.getElementById('event-days').value;
+        const limit = document.getElementById('event-limit').value;
+        const status = document.getElementById('event-status').value;
+        const category = document.getElementById('event-category').value;
+
+        let url = `/api/natural-events?days=${days}&limit=${limit}&status=${status}`;
+        if (category) {
+            url += `&category=${category}`;
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        displayNaturalEventsTable(data);
+    } catch (error) {
+        console.error('Error fetching natural events:', error);
+        alert('Error fetching natural events data');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function loadOverviewData() {
+    showLoading();
+    
+    // Show initial loading state
+    updateOverviewStats([], [], []);
+    
+    try {
+        // Load data sequentially to avoid overwhelming the server
+        const today = new Date();
+        const oneMonthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const oneMonthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const oneYearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+        const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+        const twoDaysFromNow = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+        // Load approaches data first
+        let approaches = [];
+        try {
+            const response = await fetch(`/api/close-approaches?dateMin=${formatDate(oneMonthAgo)}&dateMax=${formatDate(oneMonthFromNow)}&distMax=0.05&limit=20`);
+            if (response.ok) {
+                approaches = await response.json();
+            }
+        } catch (e) {
+            console.warn('Failed to load approaches data:', e);
+        }
+
+        // Update stats with approaches data
+        updateOverviewStats(approaches, [], []);
+        
+        // Load fireballs data
+        let fireballs = [];
+        try {
+            const response = await fetch(`/api/fireballs?sinceDate=${formatDate(oneYearAgo)}&limit=20`);
+            if (response.ok) {
+                fireballs = await response.json();
+            }
+        } catch (e) {
+            console.warn('Failed to load fireballs data:', e);
+        }
+
+        // Update stats with fireballs data
+        updateOverviewStats(approaches, fireballs, []);
+        
+        // Load NEOs data
+        let neos = [];
+        try {
+            const response = await fetch(`/api/neo-feed?startDate=${formatDate(twoDaysAgo)}&endDate=${formatDate(twoDaysFromNow)}`);
+            if (response.ok) {
+                neos = await response.json();
+            }
+        } catch (e) {
+            console.warn('Failed to load NEOs data:', e);
+        }
+
+        // Final update with all data
+        updateOverviewStats(approaches, fireballs, neos);
+        updateDataSummary(approaches, fireballs, neos);
+        
+        // Create charts with a small delay to ensure smooth rendering
+        setTimeout(() => {
+            createOverviewCharts(approaches, fireballs);
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error loading overview data:', error);
+        // Show demo data if API is not available
+        showDemoData();
+    } finally {
+        hideLoading();
+    }
+}
+
+function showDemoData() {
+    // Demo data for when API is not available
+    updateOverviewStats(
+        [{ object: 'Demo Object 1', cd: '2024-01-15', dist: '0.02', v_rel: '15.5', h: '20.1' }],
+        [{ date: '2024-01-10', lat: '40.7128', lon: '-74.0060', energy: '1.2e12', vel: '15.2', alt: '45.3' }],
+        [{ date: '2024-01-15', name: 'Demo NEO', hazardous: 'no', min: '0.1', max: '0.3' }]
+    );
+    createDemoCharts();
+}
+
+// Display functions
+function displayApproachesTable(data) {
+    const tbody = document.querySelector('#approaches-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.object || item.fullname || item.des || 'N/A'}</td>
+            <td>${item.cd || 'N/A'}</td>
+            <td>${item.dist || 'N/A'}</td>
+            <td>${item.v_rel || 'N/A'}</td>
+            <td>${item.h || 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function displayFireballsTable(data) {
+    const tbody = document.querySelector('#fireballs-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.date || 'N/A'}</td>
+            <td>${item.lat || 'N/A'}</td>
+            <td>${item.lon || 'N/A'}</td>
+            <td>${item.energy || 'N/A'}</td>
+            <td>${item.vel || 'N/A'}</td>
+            <td>${item.alt || 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function displayNeosTable(data) {
+    const tbody = document.querySelector('#neos-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.date || 'N/A'}</td>
+            <td>${item.name || 'N/A'}</td>
+            <td>${item.hazardous || 'N/A'}</td>
+            <td>${item.min || 'N/A'}</td>
+            <td>${item.max || 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function displayNaturalEventsTable(data) {
+    const tbody = document.querySelector('#natural-events-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        const categories = Array.isArray(item.categories) ? item.categories.join(', ') : item.categories || 'N/A';
+        const location = item.latitude && item.longitude ? 
+            `${item.latitude.toFixed(2)}, ${item.longitude.toFixed(2)}` : 'N/A';
+        const gibsLayers = Array.isArray(item.gibsLayers) ? item.gibsLayers.join(', ') : item.gibsLayers || 'N/A';
+        
+        row.innerHTML = `
+            <td>${item.title || 'N/A'}</td>
+            <td>${categories}</td>
+            <td>${item.status || 'N/A'}</td>
+            <td>${location}</td>
+            <td>${item.date || 'N/A'}</td>
+            <td>${gibsLayers}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Stats update functions
+function updateOverviewStats(approaches, fireballs, neos) {
+    const approachesCount = approaches.length;
+    const fireballsCount = fireballs.length;
+    const hazardousCount = neos.filter(item => item.hazardous === 'yes').length;
+    
+    // Update counts with animation
+    animateCount('close-approaches-count', approachesCount);
+    animateCount('fireballs-count', fireballsCount);
+    animateCount('hazardous-count', hazardousCount);
+    
+    // Update last updated time
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+    
+    // Add additional context to stats
+    updateStatsContext(approaches, fireballs, neos);
+}
+
+function animateCount(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const currentValue = parseInt(element.textContent) || 0;
+    const increment = (targetValue - currentValue) / 10;
+    let current = currentValue;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= targetValue) || (increment < 0 && current <= targetValue)) {
+            current = targetValue;
+            clearInterval(timer);
+        }
+        element.textContent = Math.round(current);
+    }, 50);
+}
+
+function updateStatsContext(approaches, fireballs, neos) {
+    // Add context information to the stats cards
+    const approachesCard = document.querySelector('#close-approaches-count').closest('.stat-card');
+    const fireballsCard = document.querySelector('#fireballs-count').closest('.stat-card');
+    const hazardousCard = document.querySelector('#hazardous-count').closest('.stat-card');
+    
+    // Update approaches context
+    if (approaches.length > 0) {
+        const avgDistance = approaches.reduce((sum, item) => sum + parseFloat(item.dist || 0), 0) / approaches.length;
+        const context = approachesCard.querySelector('.stat-context') || document.createElement('div');
+        context.className = 'stat-context';
+        context.innerHTML = `Avg Distance: ${avgDistance.toFixed(3)} AU`;
+        if (!approachesCard.querySelector('.stat-context')) {
+            approachesCard.appendChild(context);
+        }
+    }
+    
+    // Update fireballs context
+    if (fireballs.length > 0) {
+        const totalEnergy = fireballs.reduce((sum, item) => sum + parseFloat(item.energy || 0), 0);
+        const context = fireballsCard.querySelector('.stat-context') || document.createElement('div');
+        context.className = 'stat-context';
+        context.innerHTML = `Total Energy: ${(totalEnergy / 1e12).toFixed(2)} TJ`;
+        if (!fireballsCard.querySelector('.stat-context')) {
+            fireballsCard.appendChild(context);
+        }
+    }
+    
+    // Update hazardous context
+    if (neos.length > 0) {
+        const hazardousPercentage = (neos.filter(item => item.hazardous === 'yes').length / neos.length * 100).toFixed(1);
+        const context = hazardousCard.querySelector('.stat-context') || document.createElement('div');
+        context.className = 'stat-context';
+        context.innerHTML = `${hazardousPercentage}% of tracked NEOs`;
+        if (!hazardousCard.querySelector('.stat-context')) {
+            hazardousCard.appendChild(context);
+        }
+    }
+}
+
+function updateDataSummary(approaches, fireballs, neos) {
+    const summaryElement = document.getElementById('data-summary');
+    if (!summaryElement) return;
+    
+    let summary = '';
+    
+    // Approaches summary
+    if (approaches.length > 0) {
+        const avgDistance = approaches.reduce((sum, item) => sum + parseFloat(item.dist || 0), 0) / approaches.length;
+        const minDistance = Math.min(...approaches.map(item => parseFloat(item.dist || Infinity)));
+        const maxVelocity = Math.max(...approaches.map(item => parseFloat(item.v_rel || 0)));
+        
+        summary += `<p><strong>Close Approaches:</strong> ${approaches.length} objects tracked with average distance of ${avgDistance.toFixed(3)} AU. Closest approach: ${minDistance.toFixed(3)} AU. Fastest velocity: ${maxVelocity.toFixed(1)} km/s.</p>`;
+    } else {
+        summary += `<p><strong>Close Approaches:</strong> No recent close approaches detected.</p>`;
+    }
+    
+    // Fireballs summary
+    if (fireballs.length > 0) {
+        const totalEnergy = fireballs.reduce((sum, item) => sum + parseFloat(item.energy || 0), 0);
+        const avgEnergy = totalEnergy / fireballs.length;
+        const maxEnergy = Math.max(...fireballs.map(item => parseFloat(item.energy || 0)));
+        const avgVelocity = fireballs.reduce((sum, item) => sum + parseFloat(item.vel || 0), 0) / fireballs.length;
+        
+        summary += `<p><strong>Fireball Events:</strong> ${fireballs.length} events recorded with total energy of ${(totalEnergy / 1e12).toFixed(2)} TJ. Average energy: ${(avgEnergy / 1e9).toFixed(1)} GJ. Most energetic event: ${(maxEnergy / 1e12).toFixed(2)} TJ. Average velocity: ${avgVelocity.toFixed(1)} km/s.</p>`;
+    } else {
+        summary += `<p><strong>Fireball Events:</strong> No recent fireball events recorded.</p>`;
+    }
+    
+    // NEOs summary
+    if (neos.length > 0) {
+        const hazardousCount = neos.filter(item => item.hazardous === 'yes').length;
+        const hazardousPercentage = (hazardousCount / neos.length * 100).toFixed(1);
+        const avgMinDiam = neos.reduce((sum, item) => sum + parseFloat(item.min || 0), 0) / neos.length;
+        const avgMaxDiam = neos.reduce((sum, item) => sum + parseFloat(item.max || 0), 0) / neos.length;
+        
+        summary += `<p><strong>Near Earth Objects:</strong> ${neos.length} objects tracked. ${hazardousCount} (${hazardousPercentage}%) are potentially hazardous. Average size: ${avgMinDiam.toFixed(2)} - ${avgMaxDiam.toFixed(2)} km diameter.</p>`;
+    } else {
+        summary += `<p><strong>Near Earth Objects:</strong> No NEOs data available for the selected time period.</p>`;
+    }
+    
+    // Data source info
+    summary += `<p><strong>Data Sources:</strong> NASA CNEOS Close Approach Data, Fireball API, and NeoWs Feed. Data updated in real-time from NASA's databases.</p>`;
+    
+    summaryElement.innerHTML = summary;
+}
+
+function updateApproachesCount(count) {
+    document.getElementById('close-approaches-count').textContent = count;
+}
+
+function updateFireballsCount(count) {
+    document.getElementById('fireballs-count').textContent = count;
+}
+
+function updateHazardousCount(count) {
+    document.getElementById('hazardous-count').textContent = count;
+}
+
+// Chart creation functions
+function createOverviewCharts(approaches, fireballs) {
+    createApproachesChart(approaches);
+    createEnergyChart(fireballs);
+}
+
+function createApproachesChart(approaches) {
+    const ctx = document.getElementById('approachesChart');
+    if (!ctx) return;
+
+    if (approachesChart) {
+        approachesChart.destroy();
+    }
+
+    // Group approaches by date
+    const dateGroups = {};
+    approaches.forEach(approach => {
+        const date = approach.cd ? approach.cd.split(' ')[0] : 'Unknown';
+        dateGroups[date] = (dateGroups[date] || 0) + 1;
+    });
+
+    approachesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(dateGroups).sort(),
+            datasets: [{
+                label: 'Close Approaches',
+                data: Object.values(dateGroups),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createEnergyChart(fireballs) {
+    const ctx = document.getElementById('energyChart');
+    if (!ctx) return;
+
+    if (energyChart) {
+        energyChart.destroy();
+    }
+
+    // Create energy distribution
+    const energyRanges = ['< 1e10', '1e10-1e11', '1e11-1e12', '1e12-1e13', '> 1e13'];
+    const energyCounts = [0, 0, 0, 0, 0];
+
+    fireballs.forEach(fireball => {
+        const energy = parseFloat(fireball.energy);
+        if (energy < 1e10) energyCounts[0]++;
+        else if (energy < 1e11) energyCounts[1]++;
+        else if (energy < 1e12) energyCounts[2]++;
+        else if (energy < 1e13) energyCounts[3]++;
+        else energyCounts[4]++;
+    });
+
+    energyChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: energyRanges,
+            datasets: [{
+                data: energyCounts,
+                backgroundColor: [
+                    '#667eea',
+                    '#764ba2',
+                    '#f093fb',
+                    '#f5576c',
+                    '#4facfe'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createDemoCharts() {
+    // Demo data for charts
+    const demoApproaches = [
+        { cd: '2024-01-15' },
+        { cd: '2024-01-16' },
+        { cd: '2024-01-17' },
+        { cd: '2024-01-18' }
+    ];
+    
+    const demoFireballs = [
+        { energy: '5e10' },
+        { energy: '1.2e11' },
+        { energy: '8e12' },
+        { energy: '2e13' }
+    ];
+
+    createApproachesChart(demoApproaches);
+    createEnergyChart(demoFireballs);
+}
+
+// Map functions
+async function showNaturalEventsOnMap() {
+    clearMap();
+    
+    try {
+        // Fetch natural events data
+        const days = document.getElementById('event-days')?.value || '30';
+        const limit = document.getElementById('event-limit')?.value || '50';
+        const status = document.getElementById('event-status')?.value || 'all';
+        
+        const response = await fetch(`/api/natural-events?days=${days}&limit=${limit}&status=${status}`);
+        if (response.ok) {
+            const events = await response.json();
+            
+            // Add markers for each natural event
+            events.forEach(event => {
+                if (event.latitude && event.longitude) {
+                    const lat = parseFloat(event.latitude);
+                    const lon = parseFloat(event.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        // Choose icon based on category
+                        let iconColor = '#4facfe'; // Default blue
+                        let iconSymbol = '🌍';
+                        
+                        if (event.categories && Array.isArray(event.categories)) {
+                            const category = event.categories[0].toLowerCase();
+                            if (category.includes('fire') || category.includes('wildfire')) {
+                                iconColor = '#ff6b6b';
+                                iconSymbol = '🔥';
+                            } else if (category.includes('storm') || category.includes('hurricane')) {
+                                iconColor = '#4facfe';
+                                iconSymbol = '⛈️';
+                            } else if (category.includes('volcano')) {
+                                iconColor = '#ff8c42';
+                                iconSymbol = '🌋';
+                            } else if (category.includes('earthquake')) {
+                                iconColor = '#8b4513';
+                                iconSymbol = '🌍';
+                            }
+                        }
+                        
+                        const marker = L.marker([lat, lon], {
+                            icon: L.divIcon({
+                                className: 'natural-event-marker',
+                                html: `<div style="background-color: ${iconColor}; border-radius: 50%; width: 14px; height: 14px; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 8px;">${iconSymbol}</div>`,
+                                iconSize: [14, 14]
+                            })
+                        });
+                        
+                        const popupContent = `
+                            <div style="font-family: Arial, sans-serif;">
+                                <h4 style="margin: 0 0 8px 0; color: ${iconColor};">${iconSymbol} ${event.title || 'Natural Event'}</h4>
+                                <p style="margin: 4px 0;"><strong>Category:</strong> ${Array.isArray(event.categories) ? event.categories.join(', ') : event.categories || 'Unknown'}</p>
+                                <p style="margin: 4px 0;"><strong>Status:</strong> ${event.status || 'Unknown'}</p>
+                                <p style="margin: 4px 0;"><strong>Date:</strong> ${event.date || 'Unknown'}</p>
+                                <p style="margin: 4px 0;"><strong>Location:</strong> ${lat.toFixed(2)}, ${lon.toFixed(2)}</p>
+                                ${event.description ? `<p style="margin: 4px 0;"><strong>Description:</strong> ${event.description}</p>` : ''}
+                                ${event.gibsLayers && event.gibsLayers.length > 0 ? `<p style="margin: 4px 0;"><strong>GIBS Layers:</strong> ${Array.isArray(event.gibsLayers) ? event.gibsLayers.join(', ') : event.gibsLayers}</p>` : ''}
+                                ${event.link ? `<p style="margin: 4px 0;"><a href="${event.link}" target="_blank" style="color: ${iconColor};">More Info</a></p>` : ''}
+                            </div>
+                        `;
+                        
+                        marker.bindPopup(popupContent);
+                        marker.addTo(map);
+                        naturalEventMarkers.push(marker);
+                    }
+                }
+            });
+            
+            // Fit map to show all markers
+            if (naturalEventMarkers.length > 0) {
+                const group = new L.featureGroup(naturalEventMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+    } catch (error) {
+        console.error('Error loading natural events for map:', error);
+    }
+}
+
+async function showFireballsOnMap() {
+    clearMap();
+    
+    try {
+        // Fetch fireballs data
+        const sinceDate = document.getElementById('fireball-since')?.value || '2019-01-01';
+        const limit = document.getElementById('fireball-limit')?.value || '15';
+        
+        const response = await fetch(`/api/fireballs?sinceDate=${sinceDate}&limit=${limit}`);
+        if (response.ok) {
+            const fireballs = await response.json();
+            
+            // Add markers for each fireball
+            fireballs.forEach(fireball => {
+                if (fireball.lat && fireball.lon) {
+                    const lat = parseFloat(fireball.lat);
+                    const lon = parseFloat(fireball.lon);
+                    
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        const marker = L.marker([lat, lon], {
+                            icon: L.divIcon({
+                                className: 'fireball-marker',
+                                html: '<div style="background-color: #ff6b6b; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>',
+                                iconSize: [12, 12]
+                            })
+                        });
+                        
+                        const popupContent = `
+                            <div style="font-family: Arial, sans-serif;">
+                                <h4 style="margin: 0 0 8px 0; color: #ff6b6b;">🔥 Fireball Event</h4>
+                                <p style="margin: 4px 0;"><strong>Date:</strong> ${fireball.date || 'Unknown'}</p>
+                                <p style="margin: 4px 0;"><strong>Energy:</strong> ${fireball.energy || 'Unknown'} J</p>
+                                <p style="margin: 4px 0;"><strong>Velocity:</strong> ${fireball.vel || 'Unknown'} km/s</p>
+                                <p style="margin: 4px 0;"><strong>Altitude:</strong> ${fireball.alt || 'Unknown'} km</p>
+                            </div>
+                        `;
+                        
+                        marker.bindPopup(popupContent);
+                        marker.addTo(map);
+                        fireballMarkers.push(marker);
+                    }
+                }
+            });
+            
+            // Fit map to show all markers
+            if (fireballMarkers.length > 0) {
+                const group = new L.featureGroup(fireballMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+    } catch (error) {
+        console.error('Error loading fireballs for map:', error);
+    }
+}
+
+async function showApproachesOnMap() {
+    clearMap();
+    
+    try {
+        // Fetch approaches data
+        const today = new Date();
+        const oneMonthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const oneMonthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        
+        const response = await fetch(`/api/close-approaches?dateMin=${formatDate(oneMonthAgo)}&dateMax=${formatDate(oneMonthFromNow)}&distMax=0.05&limit=20`);
+        if (response.ok) {
+            const approaches = await response.json();
+            
+            // Add markers for each approach
+            approaches.forEach(approach => {
+                // For approaches, we'll show them as orbital markers
+                // Since we don't have exact coordinates, we'll place them randomly around Earth
+                const lat = (Math.random() - 0.5) * 180;
+                const lon = (Math.random() - 0.5) * 360;
+                
+                const marker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'approach-marker',
+                        html: '<div style="background-color: #4facfe; border-radius: 50%; width: 10px; height: 10px; border: 2px solid white;"></div>',
+                        iconSize: [10, 10]
+                    })
+                });
+                
+                const popupContent = `
+                    <div style="font-family: Arial, sans-serif;">
+                        <h4 style="margin: 0 0 8px 0; color: #4facfe;">🛰️ Close Approach</h4>
+                        <p style="margin: 4px 0;"><strong>Object:</strong> ${approach.object || approach.fullname || approach.des || 'Unknown'}</p>
+                        <p style="margin: 4px 0;"><strong>Date:</strong> ${approach.cd || 'Unknown'}</p>
+                        <p style="margin: 4px 0;"><strong>Distance:</strong> ${approach.dist || 'Unknown'} AU</p>
+                        <p style="margin: 4px 0;"><strong>Velocity:</strong> ${approach.v_rel || 'Unknown'} km/s</p>
+                        <p style="margin: 4px 0;"><strong>Magnitude:</strong> ${approach.h || 'Unknown'}</p>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                marker.addTo(map);
+                approachMarkers.push(marker);
+            });
+            
+            // Fit map to show all markers
+            if (approachMarkers.length > 0) {
+                const group = new L.featureGroup(approachMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+    } catch (error) {
+        console.error('Error loading approaches for map:', error);
+    }
+}
+
+function clearMap() {
+    fireballMarkers.forEach(marker => map.removeLayer(marker));
+    approachMarkers.forEach(marker => map.removeLayer(marker));
+    naturalEventMarkers.forEach(marker => map.removeLayer(marker));
+    fireballMarkers = [];
+    approachMarkers = [];
+    naturalEventMarkers = [];
+}
+
+function debugMap() {
+    if (!map) {
+        console.log('Map not initialized');
+        return;
+    }
+    
+    console.log('Map debug info:');
+    console.log('- Map center:', map.getCenter());
+    console.log('- Map zoom:', map.getZoom());
+    console.log('- Map size:', map.getSize());
+    console.log('- Map bounds:', map.getBounds());
+    
+    // Check if tiles are loading
+    const tileLayers = map._layers;
+    let tileLayerCount = 0;
+    for (let key in tileLayers) {
+        if (tileLayers[key] instanceof L.TileLayer) {
+            tileLayerCount++;
+            console.log('- Tile layer found:', key);
+        }
+    }
+    
+    console.log('- Number of tile layers:', tileLayerCount);
+    
+    // Force refresh
+    map.invalidateSize();
+    map.setView([20, 0], 2);
+    
+    // Try to reload tiles
+    setTimeout(() => {
+        map.eachLayer(layer => {
+            if (layer instanceof L.TileLayer) {
+                layer.redraw();
+            }
+        });
+    }, 1000);
+    
+    alert('Map debug info logged to console. Check browser developer tools.');
+}
