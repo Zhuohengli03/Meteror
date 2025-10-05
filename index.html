@@ -169,6 +169,36 @@
             margin: -20px -20px 15px -20px;
             border-radius: 15px 15px 0 0;
             z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .results-toggle {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .results-toggle:hover {
+            background: #357ABD;
+        }
+
+        .results.collapsed {
+            height: 50px;
+            overflow: hidden;
+        }
+
+        .results.collapsed .impact-stats,
+        .results.collapsed .cities-section {
+            display: none;
         }
 
         .resize-handle {
@@ -176,16 +206,28 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 10px;
+            height: 15px;
             background: linear-gradient(to right, #4A90E2, #00aaff);
             cursor: ns-resize;
             border-radius: 0 0 15px 15px;
-            opacity: 0.7;
-            transition: opacity 0.3s;
+            opacity: 0.8;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .resize-handle:hover {
             opacity: 1;
+            height: 20px;
+        }
+
+        .resize-handle::before {
+            content: "⋮⋮";
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
 
         .trajectory-options {
@@ -322,6 +364,170 @@
         .status-selected { color: #ffaa00; }
         .status-simulating { color: #00aaff; }
         .status-error { color: #ff4444; }
+
+        .grid-label {
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            border: 1px solid #ff6b6b;
+        }
+
+        .impact-zone-label {
+            background: transparent;
+            border: none;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            margin: 5% auto;
+            padding: 0;
+            border: 2px solid #333;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #2a2a2a;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .search-filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+        }
+
+        .filter-group input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .history-results {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .history-item:hover {
+            background: #333;
+        }
+
+        .history-item h3 {
+            color: #4a90e2;
+            margin: 0 0 10px 0;
+        }
+
+        .history-item .meta {
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .history-item .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .history-marker {
+            background: transparent;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
 
         /* 动态演示样式 */
         .demo-container {
@@ -507,18 +713,22 @@
             <div class="title">🌍 小行星撞击地球模拟</div>
             <div class="instruction">
                 点击地图选择撞击地点 → 选择小行星 → 运行模拟
-                    </div>
+    </div>
 
             <div class="step">
                 <div class="step-label">步骤 1: 选择撞击地点</div>
                 <div class="step-content" id="location-status">点击地图上的任意位置</div>
-                    </div>
+            </div>
 
             <div class="step">
                 <div class="step-label">步骤 2: 选择小行星</div>
-                <select id="asteroid-select">
-                    <option value="">请先选择撞击地点</option>
-                </select>
+                <div class="asteroid-search">
+                    <input type="text" id="asteroid-search" placeholder="搜索小行星名称..." style="width: 100%; padding: 6px; margin-bottom: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    <select id="asteroid-select" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="">请先选择撞击地点</option>
+                        </select>
+                    <div class="asteroid-stats" id="asteroid-stats" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
+                    </div>
                     </div>
 
         <div class="step">
@@ -534,11 +744,20 @@
                     <span class="checkmark"></span>
                     立体地图效果
                 </label>
-            </div>
-        </div>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="show-coordinates" checked>
+                    <span class="checkmark"></span>
+                    显示经纬度
+                </label>
+                    </div>
+                    </div>
 
             <button class="btn" id="simulate-btn" onclick="runSimulation()" disabled>
                 🚀 运行撞击模拟
+            </button>
+            
+            <button class="btn" id="history-btn" onclick="showHistoryModal()" style="background: #4a90e2; margin-top: 10px;">
+                📊 查询历史模拟
             </button>
             
             <div class="error" id="error" style="display: none;"></div>
@@ -546,22 +765,56 @@
 
         <div class="status-indicator" id="status">
             <span class="status-ready">● 准备就绪</span>
+                </div>
+
+        <!-- 历史模拟查询模态框 -->
+        <div id="history-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📊 历史模拟查询</h2>
+                    <span class="close" onclick="closeHistoryModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <label>小行星名称:</label>
+                            <input type="text" id="asteroid-name-filter" placeholder="输入小行星名称">
+            </div>
+                        <div class="filter-group">
+                            <label>日期范围:</label>
+                            <input type="date" id="start-date-filter">
+                            <span>至</span>
+                            <input type="date" id="end-date-filter">
         </div>
+                        <div class="filter-group">
+                            <label>撞击地点:</label>
+                            <input type="text" id="location-filter" placeholder="输入地点关键词">
+    </div>
+                        <button class="btn" onclick="searchHistory()" style="background: #4a90e2;">
+                            🔍 搜索
+                        </button>
+                    </div>
+                    <div class="history-results" id="history-results">
+                        <!-- 历史模拟结果将在这里显示 -->
+                </div>
+            </div>
+                    </div>
+                    </div>
 
         <div class="real-time-indicator">
             🛰️ NASA小行星数据
-        </div>
+                    </div>
 
         <div class="layer-controls">
             <h4>🗺️ 地图图层</h4>
             <div class="layer-item">
                 <input type="radio" name="map-layer" id="osm-layer" checked>
                 <label for="osm-layer">OpenStreetMap</label>
-            </div>
+                    </div>
             <div class="layer-item">
                 <input type="radio" name="map-layer" id="terrain-layer">
                 <label for="terrain-layer">地形图</label>
-            </div>
+                </div>
             <div class="layer-item">
                 <input type="radio" name="map-layer" id="dark-layer">
                 <label for="dark-layer">深色主题</label>
@@ -569,19 +822,22 @@
             <div class="layer-item">
                 <input type="radio" name="map-layer" id="esri-layer">
                 <label for="esri-layer">Esri地图</label>
-            </div>
+    </div>
             <div class="layer-item">
                 <input type="radio" name="map-layer" id="imagery-layer">
                 <label for="imagery-layer">卫星影像</label>
-            </div>
         </div>
+    </div>
 
         <div class="results" id="results">
-            <div class="results-header">💥 撞击影响分析</div>
+            <div class="results-header">
+                <span>💥 撞击影响分析</span>
+                <button class="results-toggle" onclick="toggleResults()" id="results-toggle">−</button>
+                </div>
             
             <div class="impact-stats" id="impact-stats">
                 <!-- 统计数据将在这里显示 -->
-    </div>
+            </div>
 
             <div class="cities-section">
                 <div class="cities-title">🏙️ 受影响城市</div>
@@ -595,6 +851,7 @@
     <script>
         let map;
         let impactMarker;
+        let currentImpactMarker = null;
         let impactCircle;
         let cityMarkers = [];
         let selectedLocation = null;
@@ -811,15 +1068,15 @@
             impactMarker.bindPopup(`
                 <div style="text-align: center; color: #333;">
                     <h4 style="margin: 0 0 5px 0;">🎯 撞击地点</h4>
-                    <p style="margin: 0; font-size: 12px;">纬度: ${latlng.lat.toFixed(4)}°</p>
-                    <p style="margin: 0; font-size: 12px;">经度: ${latlng.lng.toFixed(4)}°</p>
+                    <p style="margin: 0; font-size: 12px;">纬度: ${latlng.lat ? latlng.lat.toFixed(4) : 'N/A'}°</p>
+                    <p style="margin: 0; font-size: 12px;">经度: ${latlng.lng ? latlng.lng.toFixed(4) : 'N/A'}°</p>
                 </div>
             `);
 
             // 更新状态
             updateStatus('selected', '已选择撞击地点');
             document.getElementById('location-status').textContent = 
-                `已选择: ${latlng.lat.toFixed(2)}°, ${latlng.lng.toFixed(2)}°`;
+                `已选择: ${latlng.lat ? latlng.lat.toFixed(2) : 'N/A'}°, ${latlng.lng ? latlng.lng.toFixed(2) : 'N/A'}°`;
             
             // 启用小行星选择
             document.getElementById('asteroid-select').disabled = false;
@@ -829,21 +1086,20 @@
             loadAsteroids();
         }
 
+        // 存储所有小行星数据
+        let allAsteroids = [];
+
         // 加载小行星数据
         async function loadAsteroids() {
             try {
                 const response = await fetch('http://localhost:8000/asteroids');
-                const asteroids = await response.json();
+                allAsteroids = await response.json();
                 
-                const select = document.getElementById('asteroid-select');
-                select.innerHTML = '<option value="">选择小行星...</option>';
+                // 初始化搜索功能
+                setupAsteroidSearch();
                 
-                asteroids.forEach(asteroid => {
-                    const option = document.createElement('option');
-                    option.value = asteroid.id;
-                    option.textContent = `${asteroid.name} (直径: ${Math.round(asteroid.diameter_min/1000)}-${Math.round(asteroid.diameter_max/1000)}km)`;
-                    select.appendChild(option);
-                });
+                // 显示所有小行星
+                displayAsteroids(allAsteroids);
 
                 // 启用模拟按钮
                 document.getElementById('simulate-btn').disabled = false;
@@ -852,6 +1108,57 @@
                 console.error('加载小行星数据失败:', error);
                 showError('无法加载小行星数据，请检查后端服务');
             }
+        }
+        
+        // 设置小行星搜索功能
+        function setupAsteroidSearch() {
+            const searchInput = document.getElementById('asteroid-search');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filteredAsteroids = allAsteroids.filter(asteroid => 
+                    asteroid.name.toLowerCase().includes(searchTerm) ||
+                    asteroid.id.includes(searchTerm)
+                );
+                displayAsteroids(filteredAsteroids);
+            });
+        }
+        
+        // 显示小行星列表
+        function displayAsteroids(asteroids) {
+            const select = document.getElementById('asteroid-select');
+            const stats = document.getElementById('asteroid-stats');
+            
+            select.innerHTML = '';
+            
+            if (asteroids.length === 0) {
+                select.innerHTML = '<option value="">未找到匹配的小行星</option>';
+                stats.textContent = '显示 0 个小行星';
+                return;
+            }
+            
+            // 按危险等级和直径排序
+            asteroids.sort((a, b) => {
+                if (a.is_potentially_hazardous !== b.is_potentially_hazardous) {
+                    return b.is_potentially_hazardous - a.is_potentially_hazardous;
+                }
+                return (b.diameter_min + b.diameter_max) - (a.diameter_min + a.diameter_max);
+            });
+            
+                asteroids.forEach(asteroid => {
+                    const option = document.createElement('option');
+                    option.value = asteroid.id;
+                    
+                    // 只显示名字和日期
+                    const approachDate = asteroid.close_approach_data?.[0]?.close_approach_date || '未知';
+                    const hazardStatus = asteroid.is_potentially_hazardous ? '⚠️' : '✅';
+                    
+                    option.textContent = `${hazardStatus} ${asteroid.name} | ${approachDate}`;
+                    select.appendChild(option);
+                });
+            
+            // 更新统计信息
+            const hazardousCount = asteroids.filter(a => a.is_potentially_hazardous).length;
+            stats.textContent = `显示 ${asteroids.length} 个小行星 (${hazardousCount} 个高危)`;
         }
 
         // 运行撞击模拟
@@ -876,6 +1183,9 @@
             hideError();
 
             try {
+                // 清理所有现有显示
+                clearAllDisplays();
+                
                 // 检查是否显示轨迹
                 const showTrajectory = document.getElementById('show-trajectory').checked;
                 const show3DEffect = document.getElementById('show-3d-effect').checked;
@@ -932,11 +1242,17 @@
                 const result = await response.json();
                 currentImpactData = result;
                 
-                // 显示结果（不显示范围圆圈）
-                displayResults(result, 0);
+                // 计算影响半径用于城市计算
+                const craterRadius = result.crater_diameter / 2;
+                const impactRadius = craterRadius * 50; // 影响范围是陨石坑的50倍
+                
+                // 显示结果
+                displayResults(result, impactRadius);
                 
                 // 延迟显示撞击范围，模拟撞击后的效果
                 setTimeout(() => {
+                    // 确保清除所有现有圈层
+                    clearImpactZones();
                     showImpactArea(result);
                 }, 1000);
                 
@@ -951,20 +1267,34 @@
 
         // 显示撞击范围
         function showImpactArea(result) {
+            console.log('showImpactArea called with result:', result);
+            console.log('selectedLocation:', selectedLocation);
+            
+            if (!selectedLocation) {
+                console.error('selectedLocation is null, cannot show impact area');
+                return;
+            }
+            
             const craterRadius = result.crater_diameter / 2;
             const impactRadius = craterRadius * 50; // 影响范围是陨石坑的50倍
+            
+            console.log('craterRadius:', craterRadius, 'impactRadius:', impactRadius);
             
             // 清除之前的影响范围圆圈
             if (impactCircle) {
                 map.removeLayer(impactCircle);
             }
             
+            // 准备坐标
+            const impactLatLng = [selectedLocation.lat, selectedLocation.lng];
+            console.log('Creating impact circle at:', impactLatLng, 'with radius:', impactRadius * 1000);
+            
             // 添加撞击点标记
             if (currentImpactMarker) {
                 map.removeLayer(currentImpactMarker);
             }
             
-            currentImpactMarker = L.circleMarker([selectedLocation.lat, selectedLocation.lng], {
+            currentImpactMarker = L.circleMarker(impactLatLng, {
                 radius: 8,
                 color: '#ff0000',
                 fillColor: '#ff0000',
@@ -972,18 +1302,121 @@
                 weight: 2
             }).addTo(map);
             
-            // 添加影响范围圆圈（带动画效果）
-            impactCircle = L.circle(selectedLocation, {
-                radius: impactRadius * 1000, // 转换为米
-                color: '#ff4444',
-                weight: 2,
-                opacity: 0.6,
-                fillOpacity: 0.1,
-                dashArray: '5, 5'
-            }).addTo(map);
+            // 创建影响圈层
+            // craterRadius 单位是米，需要转换为公里用于显示
+            const craterRadiusKm = craterRadius / 1000; // 转换为公里
+            
+            // 获取爆炸效应数据
+            const blastEffects = result.blast_effects;
+            const zones = [
+                {
+                    radius: craterRadiusKm,
+                    color: '#ff0000',
+                    opacity: 0.8,
+                    label: '陨石坑',
+                    description: '直接撞击区域'
+                }
+            ];
+            
+            // 添加爆炸效应圈层
+            if (blastEffects) {
+                // 20psi超压圈层（严重损坏）
+                if (blastEffects.overpressure_20psi_radius > 0) {
+                    zones.push({
+                        radius: blastEffects.overpressure_20psi_radius,
+                        color: '#ff4400',
+                        opacity: 0.6,
+                        label: '20psi超压区',
+                        description: '严重损坏区域'
+                    });
+                }
+                
+                // 5psi超压圈层（中等损坏）
+                if (blastEffects.overpressure_5psi_radius > 0) {
+                    zones.push({
+                        radius: blastEffects.overpressure_5psi_radius,
+                        color: '#ff8800',
+                        opacity: 0.4,
+                        label: '5psi超压区',
+                        description: '中等损坏区域'
+                    });
+                }
+                
+                // 1psi超压圈层（轻微损坏）
+                if (blastEffects.overpressure_1psi_radius > 0) {
+                    zones.push({
+                        radius: blastEffects.overpressure_1psi_radius,
+                        color: '#ffaa00',
+                        opacity: 0.3,
+                        label: '1psi超压区',
+                        description: '轻微损坏区域'
+                    });
+                }
+            }
+            
+            // 创建影响圈层
+            zones.forEach((zone, index) => {
+                console.log(`创建圈层 ${index + 1}:`, {
+                    label: zone.label,
+                    color: zone.color,
+                    radius: zone.radius,
+                    opacity: zone.opacity
+                });
+                
+                const circle = L.circle(impactLatLng, {
+                    radius: zone.radius * 1000, // zone.radius已经是公里，转换为米
+                    color: zone.color,
+                    fillColor: zone.color,
+                    fillOpacity: Math.max(zone.opacity, 0.1), // 确保最小透明度
+                    weight: 4, // 增加线条粗细
+                    dashArray: index === 0 ? '0' : '15, 10' // 陨石坑实线，其他虚线
+                }).addTo(map);
+                
+                circle._impactZone = true;
+                
+                // 添加标签（所有圈层都添加标签，位置在圈层边缘）
+                // 将半径从公里转换为度（粗略转换：1度约111km）
+                const radiusInDegrees = zone.radius / 111; // 转换为度
+                
+                // 为不同圈层设置不同的角度偏移，避免重叠
+                // 使用更合理的角度分布：0°, 72°, 144°, 216°, 288°
+                const angles = [0, 72, 144, 216, 288];
+                const angleOffset = angles[index] || (index * 72) % 360;
+                const angleRad = (angleOffset * Math.PI) / 180;
+                
+                // 计算标签位置，在圈层外部
+                const labelOffset = radiusInDegrees * 1.2; // 在圈层外部20%的位置
+                const labelLat = selectedLocation.lat + Math.cos(angleRad) * labelOffset;
+                const labelLng = selectedLocation.lng + Math.sin(angleRad) * labelOffset;
+                
+                console.log(`圈层 ${index + 1} 标签位置:`, {
+                    label: zone.label,
+                    radius: zone.radius + 'm',
+                    radiusInDegrees: radiusInDegrees ? radiusInDegrees.toFixed(6) + '°' : 'N/A',
+                    angleOffset: angleOffset + '°',
+                    labelPosition: [labelLat ? labelLat.toFixed(6) : 'N/A', labelLng ? labelLng.toFixed(6) : 'N/A']
+                });
+                
+                const label = L.marker([labelLat, labelLng], {
+                    icon: L.divIcon({
+                        className: 'impact-zone-label',
+                        html: `
+                            <div style="background: ${zone.color}; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; text-align: center; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.5); min-width: 80px;">
+                                ${zone.label}<br>
+                                <small style="font-size: 10px;">${zone.radius ? zone.radius.toFixed(1) : 'N/A'}km</small>
+                            </div>
+                        `,
+                        iconSize: [90, 45],
+                        iconAnchor: [45, 22]
+                    })
+                }).addTo(map);
+                label._impactZone = true;
+            });
+            
+            console.log('Impact zones created:', zones.length);
             
             // 添加冲击波动画
-            const shockwave = L.circle(selectedLocation, {
+            const shockwave = L.circle(impactLatLng, {
                 radius: 0,
                 color: '#ffaa00',
                 weight: 3,
@@ -1037,6 +1470,9 @@
 
         // 格式化经济损失显示
         function formatEconomicLoss(loss) {
+            if (!loss || isNaN(loss) || loss < 0) {
+                return 'N/A';
+            }
             if (loss >= 1000000) {
                 return (loss / 1000000).toFixed(1) + 'T'; // 万亿
             } else if (loss >= 1000) {
@@ -1050,10 +1486,13 @@
 
         // 格式化撞击速度显示
         function formatImpactVelocity(velocity) {
-            if (!velocity || isNaN(velocity) || velocity <= 0) {
+            // 确保velocity是数字，处理可能的字符串输入
+            let numVelocity = parseFloat(velocity);
+            
+            if (isNaN(numVelocity) || numVelocity <= 0) {
                 return 'N/A';
             }
-            return (velocity / 1000).toFixed(1) + 'km/s';
+            return (numVelocity / 1000).toFixed(1) + 'km/s';
         }
 
         // 显示结果
@@ -1072,27 +1511,55 @@
             // 更新统计数据
             statsDiv.innerHTML = `
                 <div class="stat-card">
-                    <div class="stat-value">${Math.round(result.crater_diameter/1000)}km</div>
-                    <div class="stat-label">陨石坑直径</div>
+                    <div class="stat-value">${result.asteroid_diameter ? result.asteroid_diameter.toFixed(1) : 'N/A'}m</div>
+                    <div class="stat-label">小行星直径</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${formatImpactVelocity(result.impact_velocity)}</div>
                     <div class="stat-label">撞击速度</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${result.seismic_magnitude.toFixed(1)}</div>
+                    <div class="stat-value">${result.asteroid_mass ? (result.asteroid_mass / 1e9).toFixed(1) : 'N/A'}B kg</div>
+                    <div class="stat-label">小行星质量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.crater_diameter ? Math.round(result.crater_diameter/1000) : 'N/A'}km</div>
+                    <div class="stat-label">陨石坑直径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.seismic_magnitude ? result.seismic_magnitude.toFixed(1) : 'N/A'}</div>
                     <div class="stat-label">地震震级</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${Math.round(result.tsunami_height)}m</div>
+                    <div class="stat-value">${result.tsunami_height ? Math.round(result.tsunami_height) : 'N/A'}m</div>
                     <div class="stat-label">海啸高度</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${(result.impact_energy / 1e21).toFixed(1)}EJ</div>
+                    <div class="stat-value">${result.impact_energy ? (result.impact_energy / 1e21).toFixed(1) : 'N/A'}EJ</div>
                     <div class="stat-label">冲击能量</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${result.population_loss.toLocaleString()}</div>
+                    <div class="stat-value">${result.blast_effects && result.blast_effects.energy_megatons ? result.blast_effects.energy_megatons.toFixed(1) : 0}MT</div>
+                    <div class="stat-label">TNT当量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.blast_effects && result.blast_effects.overpressure_1psi_radius ? Math.round(result.blast_effects.overpressure_1psi_radius) : 0}km</div>
+                    <div class="stat-label">1psi超压半径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.blast_effects && result.blast_effects.overpressure_5psi_radius ? Math.round(result.blast_effects.overpressure_5psi_radius) : 0}km</div>
+                    <div class="stat-label">5psi超压半径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.blast_effects && result.blast_effects.overpressure_20psi_radius ? Math.round(result.blast_effects.overpressure_20psi_radius) : 0}km</div>
+                    <div class="stat-label">20psi超压半径</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.blast_effects && result.blast_effects.thermal_50km ? (result.blast_effects.thermal_50km / 1e6).toFixed(1) : 0}MJ/m²</div>
+                    <div class="stat-label">50km热辐射</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.population_loss !== undefined ? result.population_loss.toLocaleString() : 'N/A'}</div>
                     <div class="stat-label">人口损失</div>
                 </div>
                 <div class="stat-card">
@@ -1129,32 +1596,33 @@
             affectedCities.sort((a, b) => a.distance - b.distance);
 
             // 显示受影响城市
+            let citiesHtml = '';
+            
             if (affectedCities.length === 0) {
-                // 如果没有城市在影响范围内，显示最近的城市
-                const nearestCities = majorCities.map(city => ({
-                    ...city,
-                    distance: Math.round(impactPoint.distanceTo([city.lat, city.lng]) / 1000)
-                })).sort((a, b) => a.distance - b.distance).slice(0, 10);
-                
-                citiesDiv.innerHTML = `
-                    <div style="color: #ffaa00; margin-bottom: 10px;">
-                        ⚠️ 影响范围内暂无城市，显示最近的城市：
+                citiesHtml += `
+                    <div style="color: #00aa00; margin-bottom: 10px; font-weight: bold;">
+                        ✅ 撞击地点位于偏远地区，无城市受影响
                     </div>
-                    ${nearestCities.map(city => `
-                        <div class="city-item">
+                    <div style="color: #666; font-size: 14px;">
+                        由于撞击地点远离城市，此次撞击不会造成人口损失和经济损失。
+                    </div>
+                `;
+            } else {
+                citiesHtml += `
+                    <div style="color: #ff4444; margin-bottom: 10px; font-weight: bold;">
+                        🚨 受影响城市 (${affectedCities.length}个)：
+                    </div>
+                    ${affectedCities.map(city => `
+                        <div class="city-item" style="color: #ff4444; font-weight: bold;">
                             <div class="city-name">${city.name}</div>
                             <div class="city-info">${city.country} | ${city.distance}km | ${city.population.toLocaleString()}人</div>
                         </div>
                     `).join('')}
                 `;
-            } else {
-                citiesDiv.innerHTML = affectedCities.map(city => `
-                    <div class="city-item">
-                        <div class="city-name">${city.name}</div>
-                        <div class="city-info">${city.country} | ${city.distance}km | ${city.population.toLocaleString()}人</div>
-                    </div>
-                `).join('');
             }
+            
+            
+            citiesDiv.innerHTML = citiesHtml;
 
             resultsDiv.style.display = 'block';
         }
@@ -1435,14 +1903,14 @@
                 
                 renderer.setSize(container.offsetWidth, container.offsetHeight);
                 renderer.setClearColor(0x000000, 0);
-                container.appendChild(renderer.domElement);
+            container.appendChild(renderer.domElement);
 
                 // 添加轨道控制器（如果可用）
                 let controls = null;
                 if (typeof THREE.OrbitControls !== 'undefined') {
-                    controls = new THREE.OrbitControls(camera, renderer.domElement);
-                    controls.enableDamping = true;
-                    controls.dampingFactor = 0.05;
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
                 }
 
             // 创建地球
@@ -1543,7 +2011,7 @@
                     }
                     renderer.render(scene, camera);
                 }
-                animate();
+            animate();
 
                 // 10秒后自动关闭
                 setTimeout(() => {
@@ -1703,7 +2171,15 @@
             // 创建轨迹效果
             await create3DTrajectory(container, impactPixel, asteroid, show3DEffect);
 
-            // 3秒后清理
+            // 显示经纬度信息
+            if (document.getElementById('show-coordinates').checked) {
+                showCoordinates(selectedLocation.lat, selectedLocation.lng);
+            }
+            
+            // 显示轨道信息
+            showOrbitalInfo(asteroid);
+
+            // 3秒后清理轨迹，但不显示影响圈层
             setTimeout(() => {
                 if (container.parentNode) {
                     container.remove();
@@ -1711,44 +2187,964 @@
             }, 3000);
         }
 
-        async function create3DTrajectory(container, impactPixel, asteroid, show3DEffect = true) {
-            // 创建轨迹路径
-            const trajectory = document.createElement('div');
-            trajectory.style.position = 'absolute';
-            trajectory.style.left = '50%';
-            trajectory.style.top = '10%';
-            trajectory.style.width = '4px';
-            trajectory.style.height = '2px';
-            trajectory.style.background = 'linear-gradient(45deg, #ff6b6b, #ffaa00)';
-            trajectory.style.borderRadius = '2px';
-            trajectory.style.boxShadow = '0 0 20px #ff6b6b';
-            trajectory.style.transformOrigin = 'left center';
-            trajectory.style.animation = 'trajectoryFall 2.5s ease-in forwards';
-            container.appendChild(trajectory);
+        function showCoordinates(lat, lng) {
+            // 创建经纬线网格
+            createGridLines(lat, lng);
+            
+            // 创建经纬度显示框
+            const coordBox = document.createElement('div');
+            coordBox.id = 'coordinates-display';
+            coordBox.style.position = 'absolute';
+            coordBox.style.top = '20px';
+            coordBox.style.right = '20px';
+            coordBox.style.background = 'rgba(0, 0, 0, 0.8)';
+            coordBox.style.color = 'white';
+            coordBox.style.padding = '10px';
+            coordBox.style.borderRadius = '5px';
+            coordBox.style.fontSize = '14px';
+            coordBox.style.zIndex = '1001';
+            coordBox.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">📍 撞击坐标</div>
+                <div>纬度: ${lat ? lat.toFixed(4) : 'N/A'}°</div>
+                <div>经度: ${lng ? lng.toFixed(4) : 'N/A'}°</div>
+            `;
+            
+            document.getElementById('map').appendChild(coordBox);
+            
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                if (coordBox.parentNode) {
+                    coordBox.remove();
+                }
+                // 清除网格线
+                clearGridLines();
+            }, 5000);
+        }
 
-            // 创建小行星
+        function createGridLines(lat, lng) {
+            // 创建经线（垂直线）
+            const meridian = L.polyline([
+                [90, lng], [-90, lng]
+            ], {
+                color: '#ff6b6b',
+                weight: 2,
+                opacity: 0.8,
+                dashArray: '5, 5'
+            }).addTo(map);
+            meridian._gridId = 'meridian';
+
+            // 创建纬线（水平线）
+            const parallel = L.polyline([
+                [lat, -180], [lat, 180]
+            ], {
+                color: '#ff6b6b',
+                weight: 2,
+                opacity: 0.8,
+                dashArray: '5, 5'
+            }).addTo(map);
+            parallel._gridId = 'parallel';
+
+            // 添加标签
+            const latLabel = L.marker([lat, lng + 5], {
+                icon: L.divIcon({
+                    className: 'grid-label',
+                    html: `${lat ? lat.toFixed(2) : 'N/A'}°`,
+                    iconSize: [50, 20],
+                    iconAnchor: [25, 10]
+                })
+            }).addTo(map);
+            latLabel._gridId = 'lat-label';
+
+            const lngLabel = L.marker([lat + 2, lng], {
+                icon: L.divIcon({
+                    className: 'grid-label',
+                    html: `${lng ? lng.toFixed(2) : 'N/A'}°`,
+                    iconSize: [50, 20],
+                    iconAnchor: [25, 10]
+                })
+            }).addTo(map);
+            lngLabel._gridId = 'lng-label';
+        }
+
+        function clearGridLines() {
+            map.eachLayer(function(layer) {
+                if (layer._gridId) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        function showOrbitalInfo(asteroid) {
+            const orbitalData = asteroid.orbital_data || {};
+            const closeApproachData = asteroid.close_approach_data || [];
+            
+            // 创建轨道信息显示框
+            const orbitalBox = document.createElement('div');
+            orbitalBox.id = 'orbital-info';
+            orbitalBox.style.position = 'absolute';
+            orbitalBox.style.bottom = '20px';
+            orbitalBox.style.right = '20px';
+            orbitalBox.style.background = 'rgba(0, 0, 0, 0.8)';
+            orbitalBox.style.color = 'white';
+            orbitalBox.style.padding = '10px';
+            orbitalBox.style.borderRadius = '5px';
+            orbitalBox.style.fontSize = '12px';
+            orbitalBox.style.zIndex = '1001';
+            orbitalBox.style.maxWidth = '250px';
+            
+            let orbitalInfo = `
+                <div style="font-weight: bold; margin-bottom: 5px;">🛰️ 轨道信息</div>
+                <div>小行星: ${asteroid.name}</div>
+            `;
+            
+            if (orbitalData && orbitalData.inclination && !isNaN(parseFloat(orbitalData.inclination))) {
+                orbitalInfo += `<div>轨道倾角: ${parseFloat(orbitalData.inclination).toFixed(2)}°</div>`;
+            }
+            if (orbitalData && orbitalData.eccentricity && !isNaN(parseFloat(orbitalData.eccentricity))) {
+                orbitalInfo += `<div>偏心率: ${parseFloat(orbitalData.eccentricity).toFixed(3)}</div>`;
+            }
+            if (orbitalData && orbitalData.orbital_period && !isNaN(parseFloat(orbitalData.orbital_period))) {
+                orbitalInfo += `<div>轨道周期: ${parseFloat(orbitalData.orbital_period).toFixed(1)}天</div>`;
+            }
+            if (closeApproachData.length > 0) {
+                const approach = closeApproachData[0];
+                if (approach && approach.relative_velocity && approach.relative_velocity.kilometers_per_second) {
+                    orbitalInfo += `<div>接近速度: ${parseFloat(approach.relative_velocity.kilometers_per_second).toFixed(1)} km/s</div>`;
+                }
+            }
+            
+            orbitalBox.innerHTML = orbitalInfo;
+            document.getElementById('map').appendChild(orbitalBox);
+            
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                if (orbitalBox.parentNode) {
+                    orbitalBox.remove();
+                }
+            }, 5000);
+        }
+
+        async function showImpactZones(lat, lng, asteroid) {
+            // 使用后端API的精确计算
+            try {
+            const simulationData = {
+                    asteroid_id: asteroid.id,
+                    impact_latitude: lat,
+                    impact_longitude: lng,
+                    impact_angle: 45,
+                    impact_velocity: parseFloat(asteroid.velocity) || 20000,
+                    target_type: "continental_crust"
+                };
+                
+                const response = await fetch('http://localhost:8000/simulate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(simulationData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('模拟失败');
+                }
+
+                const result = await response.json();
+                
+                // 使用后端计算的精确数据
+                const craterDiameter = result.crater_diameter; // 米
+                const craterRadius = craterDiameter / 2000; // 转换为公里半径
+                
+                // 基于精确陨石坑直径计算其他圈层
+                const immediateRadius = craterRadius * 5; // 立即影响区域
+                const severeRadius = craterRadius * 15; // 严重影响区域
+                const moderateRadius = craterRadius * 30; // 中等影响区域
+                const lightRadius = craterRadius * 50; // 轻微影响区域
+                
+                // 创建不同圈层
+                const zones = [
+                    {
+                        radius: craterRadius,
+                        color: '#ff0000',
+                        opacity: 0.8,
+                        label: '陨石坑',
+                        description: '直接撞击区域'
+                    },
+                    {
+                        radius: immediateRadius,
+                        color: '#ff4400',
+                        opacity: 0.6,
+                        label: '立即影响区',
+                        description: '爆炸、地震、热辐射'
+                    },
+                    {
+                        radius: severeRadius,
+                        color: '#ff8800',
+                        opacity: 0.4,
+                        label: '严重影响区',
+                        description: '强烈地震、冲击波'
+                    },
+                    {
+                        radius: moderateRadius,
+                        color: '#ffaa00',
+                        opacity: 0.3,
+                        label: '中等影响区',
+                        description: '中等地震、碎片飞溅'
+                    },
+                    {
+                        radius: lightRadius,
+                        color: '#ffcc00',
+                        opacity: 0.2,
+                        label: '轻微影响区',
+                        description: '轻微地震、声波'
+                    }
+                ];
+                
+                // 创建影响圈层
+                createImpactCircles(lat, lng, zones);
+                
+                // 添加图例
+                showImpactLegend(zones);
+                
+            } catch (error) {
+                console.error('获取精确数据失败，使用简化计算:', error);
+                // 回退到简化计算
+                const diameter = (parseFloat(asteroid.diameter_min) + parseFloat(asteroid.diameter_max)) / 2;
+                const craterRadius = Math.max(0.1, diameter * 0.1);
+                const immediateRadius = craterRadius * 5;
+                const severeRadius = craterRadius * 15;
+                const moderateRadius = craterRadius * 30;
+                const lightRadius = craterRadius * 50;
+                
+                const zones = [
+                    { radius: craterRadius, color: '#ff0000', opacity: 0.8, label: '陨石坑', description: '直接撞击区域' },
+                    { radius: immediateRadius, color: '#ff4400', opacity: 0.6, label: '立即影响区', description: '爆炸、地震、热辐射' },
+                    { radius: severeRadius, color: '#ff8800', opacity: 0.4, label: '严重影响区', description: '强烈地震、冲击波' },
+                    { radius: moderateRadius, color: '#ffaa00', opacity: 0.3, label: '中等影响区', description: '中等地震、碎片飞溅' },
+                    { radius: lightRadius, color: '#ffcc00', opacity: 0.2, label: '轻微影响区', description: '轻微地震、声波' }
+                ];
+                
+                createImpactCircles(lat, lng, zones);
+                showImpactLegend(zones);
+            }
+        }
+
+        function createImpactCircles(lat, lng, zones) {
+            // 创建影响圈层
+            zones.forEach((zone, index) => {
+                const circle = L.circle([lat, lng], {
+                    radius: zone.radius * 1000, // 转换为米
+                    color: zone.color,
+                    fillColor: zone.color,
+                    fillOpacity: zone.opacity,
+                    weight: 2,
+                    dashArray: index === 0 ? '0' : '5, 5' // 陨石坑实线，其他虚线
+                }).addTo(map);
+                
+                circle._impactZone = true;
+                
+                // 添加标签
+                if (zone.radius > 1) { // 只对较大的圈层添加标签
+                    const label = L.marker([lat + zone.radius * 0.01, lng + zone.radius * 0.01], {
+                        icon: L.divIcon({
+                            className: 'impact-zone-label',
+                            html: `
+                                <div style="background: ${zone.color}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; text-align: center; border: 1px solid white;">
+                                    ${zone.label}<br>
+                                    <small>${zone.radius ? zone.radius.toFixed(1) : 'N/A'}km</small>
+                </div>
+                            `,
+                            iconSize: [60, 30],
+                            iconAnchor: [30, 15]
+                        })
+                    }).addTo(map);
+                    label._impactZone = true;
+                }
+            });
+        }
+
+        function showImpactLegend(zones) {
+            const legend = document.createElement('div');
+            legend.id = 'impact-legend';
+            legend.style.position = 'absolute';
+            legend.style.top = '20px';
+            legend.style.right = '20px';
+            legend.style.background = 'rgba(0, 0, 0, 0.9)';
+            legend.style.color = 'white';
+            legend.style.padding = '15px';
+            legend.style.borderRadius = '8px';
+            legend.style.fontSize = '12px';
+            legend.style.zIndex = '1001';
+            legend.style.maxWidth = '220px';
+            legend.style.border = '2px solid #ff6b6b';
+            legend.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+            
+            let legendHtml = '<h4 style="margin: 0 0 10px 0; color: #ff6b6b; text-align: center;">💥 撞击影响范围</h4>';
+            
+            // 显示所有5个圈层
+            zones.forEach((zone, index) => {
+                const lineStyle = index === 0 ? 'solid' : 'dashed';
+                legendHtml += `
+                    <div style="display: flex; align-items: center; margin: 8px 0; padding: 5px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                        <div style="width: 20px; height: 3px; background: ${zone.color}; margin-right: 10px; border-radius: 2px; border: 1px solid white; border-style: ${lineStyle};"></div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: ${zone.color};">${zone.label}</div>
+                            <div style="font-size: 10px; color: #ccc;">${zone.radius ? (zone.radius/1000).toFixed(1) : 'N/A'}km - ${zone.description}</div>
+                </div>
+                </div>
+                `;
+            });
+            
+            legend.innerHTML = legendHtml;
+            document.getElementById('map').appendChild(legend);
+            
+            // 15秒后只隐藏图例，保留影响圈层
+            setTimeout(() => {
+                if (legend.parentNode) {
+                    legend.remove();
+                }
+                // 不再自动清除影响圈层，让它们持续显示
+            }, 15000);
+        }
+
+        function clearImpactZones() {
+            map.eachLayer(function(layer) {
+                if (layer._impactZone) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        function clearAllDisplays() {
+            // 清除所有影响圈层
+            clearImpactZones();
+            
+            // 清除撞击标记
+            if (impactMarker) {
+                map.removeLayer(impactMarker);
+                impactMarker = null;
+            }
+            if (currentImpactMarker) {
+                map.removeLayer(currentImpactMarker);
+                currentImpactMarker = null;
+            }
+            if (impactCircle) {
+                map.removeLayer(impactCircle);
+                impactCircle = null;
+            }
+            
+            // 清除城市标记
+            cityMarkers.forEach(marker => {
+                map.removeLayer(marker);
+            });
+            cityMarkers = [];
+            
+            // 清除轨迹容器
+            const trajectoryContainer = document.getElementById('trajectory-container');
+            if (trajectoryContainer) {
+                trajectoryContainer.remove();
+            }
+            
+            // 清除经纬线网格
+            map.eachLayer(function(layer) {
+                if (layer._gridId) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // 清除信息面板
+            const orbitalInfo = document.getElementById('orbital-info');
+            if (orbitalInfo) {
+                orbitalInfo.remove();
+            }
+            
+            const historyInfo = document.getElementById('history-info');
+            if (historyInfo) {
+                historyInfo.remove();
+            }
+            
+            console.log('All displays cleared');
+        }
+
+        // 历史模拟查询功能
+        function showHistoryModal() {
+            document.getElementById('history-modal').style.display = 'block';
+            loadHistoryData();
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('history-modal').style.display = 'none';
+        }
+
+        async function loadHistoryData() {
+            try {
+                // 模拟历史数据（实际应用中应该从后端获取）
+                const mockHistory = [
+                    {
+                        id: 1,
+                        asteroidName: "2062 Aten (1976 AA)",
+                        date: "2024-01-15",
+                        location: "33.14°, 120.59°",
+                        craterDiameter: 1000,
+                        impactVelocity: 11300,
+                        seismicMagnitude: 11.3,
+                        tsunamiHeight: 61,
+                        populationLoss: 54772,
+                        buildingLoss: 362.3,
+                        totalEconomicLoss: 83.2
+                    },
+                    {
+                        id: 2,
+                        asteroidName: "99942 Apophis",
+                        date: "2024-01-10",
+                        location: "40.71°, -74.01°",
+                        craterDiameter: 2500,
+                        impactVelocity: 15000,
+                        seismicMagnitude: 12.1,
+                        tsunamiHeight: 85,
+                        populationLoss: 125000,
+                        buildingLoss: 850.7,
+                        totalEconomicLoss: 195.3
+                    },
+                    {
+                        id: 3,
+                        asteroidName: "101955 Bennu",
+                        date: "2024-01-05",
+                        location: "51.51°, -0.13°",
+                        craterDiameter: 800,
+                        impactVelocity: 9800,
+                        seismicMagnitude: 10.8,
+                        tsunamiHeight: 45,
+                        populationLoss: 32000,
+                        buildingLoss: 180.5,
+                        totalEconomicLoss: 42.1
+                    }
+                ];
+                
+                displayHistoryResults(mockHistory);
+            } catch (error) {
+                console.error('加载历史数据失败:', error);
+                document.getElementById('history-results').innerHTML = 
+                    '<div style="color: #ff4444; text-align: center; padding: 20px;">加载历史数据失败</div>';
+            }
+        }
+
+        function displayHistoryResults(historyData) {
+            const resultsContainer = document.getElementById('history-results');
+            
+            if (historyData.length === 0) {
+                resultsContainer.innerHTML = '<div style="color: #aaa; text-align: center; padding: 20px;">暂无历史模拟数据</div>';
+                return;
+            }
+            
+            let html = '';
+            historyData.forEach(item => {
+                html += `
+                    <div class="history-item" onclick="loadHistorySimulation(${item.id})">
+                        <h3>${item.asteroidName}</h3>
+                        <div class="meta">
+                            📅 ${item.date} | 📍 ${item.location}
+                </div>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${item.craterDiameter}m</div>
+                                <div class="stat-label">陨石坑直径</div>
+                </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${item.impactVelocity/1000}km/s</div>
+                                <div class="stat-label">撞击速度</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${item.seismicMagnitude}</div>
+                                <div class="stat-label">地震震级</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${item.populationLoss.toLocaleString()}</div>
+                                <div class="stat-label">人口损失</div>
+                            </div>
+                        </div>
+                </div>
+            `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+
+        function searchHistory() {
+            const asteroidName = document.getElementById('asteroid-name-filter').value.toLowerCase();
+            const startDate = document.getElementById('start-date-filter').value;
+            const endDate = document.getElementById('end-date-filter').value;
+            const location = document.getElementById('location-filter').value.toLowerCase();
+            
+            // 这里应该调用后端API进行搜索
+            // 目前使用模拟数据
+            loadHistoryData();
+        }
+
+        function loadHistorySimulation(simulationId) {
+            // 加载历史模拟到地图上
+            console.log('加载历史模拟:', simulationId);
+            
+            // 模拟历史数据（实际应用中应该从后端获取）
+            const mockHistory = [
+                {
+                    id: 1,
+                    asteroidName: "2062 Aten (1976 AA)",
+                    date: "2024-01-15",
+                    location: "33.14°, 120.59°",
+                    lat: 33.14,
+                    lng: 120.59,
+                    craterDiameter: 1000,
+                    impactVelocity: 11300,
+                    seismicMagnitude: 11.3,
+                    tsunamiHeight: 61,
+                    populationLoss: 54772,
+                    buildingLoss: 362.3,
+                    totalEconomicLoss: 83.2
+                },
+                {
+                    id: 2,
+                    asteroidName: "99942 Apophis",
+                    date: "2024-01-10",
+                    location: "40.71°, -74.01°",
+                    lat: 40.71,
+                    lng: -74.01,
+                    craterDiameter: 2500,
+                    impactVelocity: 15000,
+                    seismicMagnitude: 12.1,
+                    tsunamiHeight: 85,
+                    populationLoss: 125000,
+                    buildingLoss: 850.7,
+                    totalEconomicLoss: 195.3
+                },
+                {
+                    id: 3,
+                    asteroidName: "101955 Bennu",
+                    date: "2024-01-05",
+                    location: "51.51°, -0.13°",
+                    lat: 51.51,
+                    lng: -0.13,
+                    craterDiameter: 800,
+                    impactVelocity: 9800,
+                    seismicMagnitude: 10.8,
+                    tsunamiHeight: 45,
+                    populationLoss: 32000,
+                    buildingLoss: 180.5,
+                    totalEconomicLoss: 42.1
+                }
+            ];
+            
+            const historyItem = mockHistory.find(item => item.id === simulationId);
+            if (historyItem) {
+                // 清除之前的影响圈层
+                clearImpactZones();
+                
+                // 移动到撞击位置，使用合适的缩放级别
+                const maxRadius = Math.max(historyItem.craterDiameter / 2000 * 50, 50); // 确保能看到最大圈层
+                const zoomLevel = Math.max(4, Math.min(8, 10 - Math.log2(maxRadius / 100)));
+                map.setView([historyItem.lat, historyItem.lng], zoomLevel);
+                
+                // 显示影响圈层
+                showHistoryImpactZones(historyItem);
+                
+                // 显示历史模拟信息
+                showHistoryInfo(historyItem);
+                
+                // 关闭模态框
+                closeHistoryModal();
+            }
+        }
+
+        function showHistoryImpactZones(historyItem) {
+            const lat = historyItem.lat;
+            const lng = historyItem.lng;
+            const craterDiameter = historyItem.craterDiameter; // 米
+            const craterRadius = craterDiameter / 2; // 转换为米半径，与实时模拟保持一致
+            
+            console.log('历史模拟圈层计算:', {
+                craterDiameter,
+                craterRadius,
+                lat,
+                lng
+            });
+            
+            // 确保最小半径，避免圈层太小看不见
+            const minRadius = 10; // 最小10公里
+            const adjustedCraterRadius = Math.max(craterRadius, minRadius);
+            
+            // 基于调整后的陨石坑半径计算其他圈层
+            const immediateRadius = adjustedCraterRadius * 5; // 立即影响区域
+            const severeRadius = adjustedCraterRadius * 15; // 严重影响区域
+            const moderateRadius = adjustedCraterRadius * 30; // 中等影响区域
+            const lightRadius = adjustedCraterRadius * 50; // 轻微影响区域
+            
+            // 创建不同圈层
+            const zones = [
+                {
+                    radius: adjustedCraterRadius,
+                    color: '#ff0000',
+                    opacity: 0.8,
+                    label: '陨石坑',
+                    description: '直接撞击区域'
+                },
+                {
+                    radius: immediateRadius,
+                    color: '#ff4400',
+                    opacity: 0.6,
+                    label: '立即影响区',
+                    description: '爆炸、地震、热辐射'
+                },
+                {
+                    radius: severeRadius,
+                    color: '#ff8800',
+                    opacity: 0.4,
+                    label: '严重影响区',
+                    description: '强烈地震、冲击波'
+                },
+                {
+                    radius: moderateRadius,
+                    color: '#ffaa00',
+                    opacity: 0.3,
+                    label: '中等影响区',
+                    description: '中等地震、碎片飞溅'
+                },
+                {
+                    radius: lightRadius,
+                    color: '#ffcc00',
+                    opacity: 0.2,
+                    label: '轻微影响区',
+                    description: '轻微地震、声波'
+                }
+            ];
+            
+            console.log('历史模拟圈层数据:', zones);
+            
+            // 创建影响圈层
+            createImpactCircles(lat, lng, zones);
+            
+            // 添加历史标记
+            const historyMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'history-marker',
+                    html: `
+                        <div style="background: #4a90e2; color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; font-weight: bold; text-align: center; border: 2px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                            📊 历史模拟<br>
+                            <small>${historyItem.asteroidName}</small>
+                        </div>
+                    `,
+                    iconSize: [80, 40],
+                    iconAnchor: [40, 20]
+                })
+            }).addTo(map);
+            historyMarker._impactZone = true;
+            
+            // 添加图例
+            showImpactLegend(zones);
+        }
+
+        function showHistoryInfo(historyItem) {
+            // 创建历史信息显示框
+            const historyInfo = document.createElement('div');
+            historyInfo.id = 'history-info';
+            historyInfo.style.position = 'absolute';
+            historyInfo.style.top = '20px';
+            historyInfo.style.left = '20px';
+            historyInfo.style.background = 'rgba(74, 144, 226, 0.9)';
+            historyInfo.style.color = 'white';
+            historyInfo.style.padding = '15px';
+            historyInfo.style.borderRadius = '8px';
+            historyInfo.style.fontSize = '14px';
+            historyInfo.style.zIndex = '1001';
+            historyInfo.style.maxWidth = '300px';
+            historyInfo.style.border = '2px solid #4a90e2';
+            
+            historyInfo.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">
+                    📊 历史模拟详情
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>小行星:</strong> ${historyItem.asteroidName}
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>模拟日期:</strong> ${historyItem.date}
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>撞击位置:</strong> ${historyItem.location}
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>陨石坑直径:</strong> ${historyItem.craterDiameter}m
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>撞击速度:</strong> ${historyItem.impactVelocity ? (historyItem.impactVelocity/1000).toFixed(1) : 'N/A'}km/s
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>地震震级:</strong> ${historyItem.seismicMagnitude}
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>海啸高度:</strong> ${historyItem.tsunamiHeight}m
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>人口损失:</strong> ${historyItem.populationLoss.toLocaleString()}人
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>建筑损失:</strong> $${historyItem.buildingLoss}B
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>总经济损失:</strong> $${historyItem.totalEconomicLoss}B
+                </div>
+                <button onclick="clearHistoryDisplay()" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+                    ✕ 清除显示
+                </button>
+            `;
+            
+            document.getElementById('map').appendChild(historyInfo);
+        }
+
+        function clearHistoryDisplay() {
+            // 清除历史信息显示
+            const historyInfo = document.getElementById('history-info');
+            if (historyInfo) {
+                historyInfo.remove();
+            }
+            
+            // 清除影响圈层
+            clearImpactZones();
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('history-modal');
+            if (event.target === modal) {
+                closeHistoryModal();
+            }
+        }
+
+        // 折叠/展开结果面板
+        function toggleResults() {
+            const resultsDiv = document.getElementById('results');
+            const toggleBtn = document.getElementById('results-toggle');
+            
+            if (resultsDiv.classList.contains('collapsed')) {
+                resultsDiv.classList.remove('collapsed');
+                toggleBtn.textContent = '−';
+                toggleBtn.title = '折叠面板';
+            } else {
+                resultsDiv.classList.add('collapsed');
+                toggleBtn.textContent = '+';
+                toggleBtn.title = '展开面板';
+            }
+        }
+
+        async function create3DTrajectory(container, impactPixel, asteroid, show3DEffect = true) {
+            // 根据小行星轨道数据计算真实轨迹
+            const orbitalData = asteroid.orbital_data || {};
+            const closeApproachData = asteroid.close_approach_data || [];
+            
+            console.log('🌍 创建真实轨迹模拟');
+            console.log('小行星:', asteroid.name);
+            console.log('轨道数据:', orbitalData);
+            console.log('接近数据:', closeApproachData);
+            
+            // 计算撞击角度（基于轨道倾角）
+            let impactAngle = 45; // 默认角度
+            if (orbitalData.inclination && !isNaN(parseFloat(orbitalData.inclination))) {
+                const inclination = parseFloat(orbitalData.inclination);
+                // 轨道倾角越大，撞击角度越大（更接近水平）
+                impactAngle = Math.min(85, Math.max(15, inclination * 0.8 + 20));
+                console.log('📐 轨道倾角:', inclination, '° → 撞击角度:', impactAngle, '°');
+            }
+            
+            // 根据轨道偏心率计算轨迹弯曲度
+            let trajectoryCurvature = 0;
+            if (orbitalData.eccentricity && !isNaN(parseFloat(orbitalData.eccentricity))) {
+                const eccentricity = parseFloat(orbitalData.eccentricity);
+                // 偏心率越大，轨迹越弯曲
+                trajectoryCurvature = Math.min(30, Math.max(-30, (eccentricity - 0.5) * 60));
+                console.log('🔄 轨道偏心率:', eccentricity, '→ 轨迹弯曲度:', trajectoryCurvature, '°');
+            }
+            
+            // 计算轨迹方向（基于轨道参数和接近方向）
+            let trajectoryDirection = 0; // 默认从上方
+            let trajectoryLength = 200;
+            let animationDuration = 3000;
+            let approachDirection = 0; // 接近方向角度
+            
+            if (closeApproachData.length > 0) {
+                const approach = closeApproachData[0];
+                const relativeVelocity = approach.relative_velocity || {};
+                
+                // 根据相对速度计算轨迹长度和动画时长
+                if (relativeVelocity.kilometers_per_second && !isNaN(parseFloat(relativeVelocity.kilometers_per_second))) {
+                    const velocity = parseFloat(relativeVelocity.kilometers_per_second);
+                    trajectoryLength = Math.min(500, Math.max(200, velocity * 10));
+                    animationDuration = Math.min(6000, Math.max(2000, 5000 - velocity * 40));
+                    
+                    // 根据速度计算基础轨迹方向
+                    trajectoryDirection = Math.min(60, Math.max(-60, (velocity - 15) * 2));
+                    
+                    console.log('🚀 相对速度:', velocity, 'km/s → 长度:', trajectoryLength, 'px 时长:', animationDuration, 'ms');
+                }
+                
+                // 根据轨道倾角计算接近方向
+                if (orbitalData.inclination && !isNaN(parseFloat(orbitalData.inclination))) {
+                    const inclination = parseFloat(orbitalData.inclination);
+                    // 轨道倾角影响接近方向（0-180度）
+                    approachDirection = (inclination * 2) % 360;
+                    console.log('📐 轨道倾角:', inclination, '° → 接近方向:', approachDirection, '°');
+                }
+                
+                // 根据轨道偏心率计算轨迹弯曲
+                if (orbitalData.eccentricity && !isNaN(parseFloat(orbitalData.eccentricity))) {
+                    const eccentricity = parseFloat(orbitalData.eccentricity);
+                    // 偏心率越大，轨迹越弯曲
+                    const curvature = (eccentricity - 0.5) * 30;
+                    approachDirection += curvature;
+                    console.log('🔄 轨道偏心率:', eccentricity, '→ 轨迹弯曲:', curvature, '°');
+                }
+                
+                // 根据轨道周期调整轨迹特征
+                if (orbitalData.orbital_period && !isNaN(parseFloat(orbitalData.orbital_period))) {
+                    const period = parseFloat(orbitalData.orbital_period);
+                    // 轨道周期越长，轨迹越平缓
+                    const periodEffect = Math.min(20, Math.max(-20, (period - 365) * 0.05));
+                    approachDirection += periodEffect;
+                    console.log('⏰ 轨道周期:', period, '天 → 轨迹调整:', periodEffect, '°');
+                }
+            }
+            
+            // 计算最终轨迹方向（结合所有因素）
+            const finalDirection = (trajectoryDirection + approachDirection + trajectoryCurvature) % 360;
+            console.log('🎯 最终轨迹方向:', finalDirection, '° (基础:', trajectoryDirection, '° + 接近:', approachDirection, '° + 弯曲:', trajectoryCurvature, '°)');
+            
+            // 根据轨道周期调整动画速度
+            if (orbitalData.orbital_period && !isNaN(parseFloat(orbitalData.orbital_period))) {
+                const period = parseFloat(orbitalData.orbital_period);
+                // 轨道周期越长，动画越慢
+                animationDuration = Math.min(6000, Math.max(2000, period * 0.1));
+                console.log('⏰ 轨道周期:', period, '天 → 动画时长:', animationDuration, 'ms');
+            }
+            
+            // 计算最终轨迹参数（使用新的方向计算）
+            const angleRad = (finalDirection * Math.PI) / 180;
+            const startX = impactPixel.x - Math.cos(angleRad) * trajectoryLength;
+            const startY = impactPixel.y - Math.sin(angleRad) * trajectoryLength;
+            
+            console.log('🎯 最终轨迹参数:');
+            console.log('  起始位置:', startX, startY);
+            console.log('  撞击位置:', impactPixel.x, impactPixel.y);
+            console.log('  轨迹长度:', trajectoryLength);
+            console.log('  总角度:', impactAngle + trajectoryDirection + trajectoryCurvature, '°');
+            
+            // 不再创建轨迹线，只保留小行星和尾迹效果
+
+            // 创建小行星（基于真实数据）
             const asteroidElement = document.createElement('div');
             asteroidElement.style.position = 'absolute';
-            asteroidElement.style.left = '50%';
-            asteroidElement.style.top = '10%';
-            asteroidElement.style.width = '12px';
-            asteroidElement.style.height = '12px';
-            asteroidElement.style.background = 'radial-gradient(circle, #ff6b6b, #cc0000)';
+            asteroidElement.style.left = startX + 'px';
+            asteroidElement.style.top = startY + 'px';
+            
+            // 根据小行星大小调整显示尺寸
+            const diameter = asteroid.diameter_min || 100;
+            const displaySize = Math.max(8, Math.min(20, diameter / 50));
+            asteroidElement.style.width = displaySize + 'px';
+            asteroidElement.style.height = displaySize + 'px';
+            
+            // 根据小行星类型选择颜色
+            let asteroidColor = '#ff6b6b';
+            if (asteroid.orbital_data && asteroid.orbital_data.orbit_class) {
+                // 确保orbit_class是字符串类型
+                const orbitClass = String(asteroid.orbital_data.orbit_class).toLowerCase();
+                if (orbitClass.includes('apollo')) asteroidColor = '#ff4444';
+                else if (orbitClass.includes('aten')) asteroidColor = '#ff8800';
+                else if (orbitClass.includes('amor')) asteroidColor = '#ffaa00';
+                else if (orbitClass.includes('main_belt')) asteroidColor = '#ffcc00';
+            }
+            
+            asteroidElement.style.background = `radial-gradient(circle, ${asteroidColor}, #cc0000)`;
             asteroidElement.style.borderRadius = '50%';
-            asteroidElement.style.boxShadow = '0 0 15px #ff6b6b, 0 0 30px rgba(255, 107, 107, 0.5)';
-            asteroidElement.style.animation = 'asteroidFall 2.5s ease-in forwards';
+            asteroidElement.style.boxShadow = `0 0 ${displaySize * 2}px ${asteroidColor}, 0 0 ${displaySize * 4}px rgba(255, 107, 107, 0.5)`;
+            asteroidElement.style.animation = `asteroidFall ${animationDuration}ms ease-in forwards`;
+            asteroidElement.title = `${asteroid.name} (${diameter}m)`;
             container.appendChild(asteroidElement);
+            
+            console.log('🪨 小行星创建完成:', {
+                name: asteroid.name,
+                size: displaySize + 'px',
+                color: asteroidColor,
+                duration: animationDuration + 'ms'
+            });
 
-            // 创建尾迹效果
+            // 创建尾迹效果（基于真实数据）
             const trail = document.createElement('div');
             trail.style.position = 'absolute';
-            trail.style.left = '50%';
-            trail.style.top = '10%';
+            trail.style.left = startX + 'px';
+            trail.style.top = startY + 'px';
             trail.style.width = '2px';
             trail.style.height = '0px';
-            trail.style.background = 'linear-gradient(to bottom, transparent, #ffaa00, #ff6b6b)';
-            trail.style.animation = 'trailGrow 2.5s ease-in forwards';
+            
+            // 根据速度调整尾迹颜色和强度
+            let trailColor = '#ffaa00';
+            let trailIntensity = '0.8';
+            if (closeApproachData.length > 0) {
+                const approach = closeApproachData[0];
+                const relativeVelocity = approach.relative_velocity || {};
+                if (relativeVelocity.kilometers_per_second && !isNaN(parseFloat(relativeVelocity.kilometers_per_second))) {
+                    const velocity = parseFloat(relativeVelocity.kilometers_per_second);
+                    if (velocity > 30) {
+                        trailColor = '#ff4444'; // 高速 - 红色
+                        trailIntensity = '1.0';
+                    } else if (velocity > 20) {
+                        trailColor = '#ff8800'; // 中速 - 橙色
+                        trailIntensity = '0.9';
+                    } else {
+                        trailColor = '#ffaa00'; // 低速 - 黄色
+                        trailIntensity = '0.7';
+                    }
+                }
+            }
+            
+            trail.style.background = `linear-gradient(to bottom, transparent, ${trailColor}, #ff6b6b)`;
+            trail.style.transform = `rotate(${finalDirection}deg)`;
+            trail.style.animation = `trailGrow ${animationDuration}ms ease-in forwards`;
+            trail.style.opacity = trailIntensity;
             container.appendChild(trail);
+            
+            console.log('🌠 尾迹创建完成:', {
+                color: trailColor,
+                intensity: trailIntensity,
+                duration: animationDuration + 'ms'
+            });
+            
+            // 添加轨迹方向指示器
+            const directionIndicator = document.createElement('div');
+            directionIndicator.style.position = 'absolute';
+            directionIndicator.style.left = (startX - 20) + 'px';
+            directionIndicator.style.top = (startY - 20) + 'px';
+            directionIndicator.style.width = '40px';
+            directionIndicator.style.height = '40px';
+            directionIndicator.style.background = `conic-gradient(from ${finalDirection}deg, transparent 0deg, ${asteroidColor} 60deg, transparent 120deg)`;
+            directionIndicator.style.borderRadius = '50%';
+            directionIndicator.style.opacity = '0.6';
+            directionIndicator.style.animation = 'pulse 2s infinite';
+            directionIndicator.title = `轨迹方向: ${finalDirection ? finalDirection.toFixed(1) : 'N/A'}°`;
+            container.appendChild(directionIndicator);
+            
+            // 添加方向箭头
+            const arrow = document.createElement('div');
+            arrow.style.position = 'absolute';
+            arrow.style.left = (startX - 5) + 'px';
+            arrow.style.top = (startY - 5) + 'px';
+            arrow.style.width = '10px';
+            arrow.style.height = '10px';
+            arrow.style.background = asteroidColor;
+            arrow.style.clipPath = 'polygon(0% 0%, 100% 50%, 0% 100%)';
+            arrow.style.transform = `rotate(${finalDirection + 90}deg)`;
+            arrow.style.animation = 'pulse 2s infinite';
+            container.appendChild(arrow);
+            
+            console.log('🧭 方向指示器创建完成:', {
+                direction: finalDirection ? finalDirection.toFixed(1) + '°' : 'N/A',
+                color: asteroidColor
+            });
 
             // 添加立体地图效果（如果启用）
             if (show3DEffect) {
@@ -1783,7 +3179,7 @@
                         opacity: 0.9;
                     }
                     100% {
-                        transform: translate(${impactPixel.x - window.innerWidth/2}px, ${impactPixel.y - window.innerHeight/10}px) scale(1.2);
+                        transform: translate(${impactPixel.x - startX}px, ${impactPixel.y - startY}px) scale(1.2);
                         opacity: 0;
                     }
                 }
@@ -1794,12 +3190,12 @@
                         opacity: 0;
                     }
                     50% {
-                        height: 100px;
-                        opacity: 0.7;
+                        height: ${trajectoryLength * 0.3}px;
+                        opacity: ${trailIntensity};
                     }
                     100% {
-                        height: 200px;
-                        opacity: 0;
+                        height: ${trajectoryLength}px;
+                        opacity: ${parseFloat(trailIntensity) * 0.8};
                     }
                 }
                 
@@ -1814,6 +3210,17 @@
                     70% { transform: translate(-1px, -2px) rotate(-0.1deg); }
                     80% { transform: translate(1px, 2px) rotate(0.1deg); }
                     90% { transform: translate(-2px, -1px) rotate(-0.05deg); }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { 
+                        opacity: 0.6; 
+                        transform: scale(1); 
+                    }
+                    50% { 
+                        opacity: 1; 
+                        transform: scale(1.2); 
+                    }
                 }
             `;
             document.head.appendChild(style);
