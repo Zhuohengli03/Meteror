@@ -1069,7 +1069,7 @@ function setupPredictionEventListeners() {
     // Load asteroids on tab switch
     document.querySelector('[data-tab="prediction"]')?.addEventListener('click', () => {
         loadAsteroids();
-        initializePredictionVisualizations();
+        initializePredictionMap();
     });
 }
 
@@ -1089,7 +1089,11 @@ const ROCK_DENSITY = 2500; // kg/m³
 function calculateMass(diameter, density) {
     const radius = diameter / 2;
     const volume = (4/3) * Math.PI * radius * radius * radius;
-    return density * volume;
+    const mass = density * volume;
+    console.log('Mass calculation:', {
+        diameter, radius, volume, density, mass
+    });
+    return mass;
 }
 
 function calculateKineticEnergy(mass, velocity) {
@@ -1102,19 +1106,25 @@ function calculateTntEquivalent(energy) {
 
 function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
     const angleRad = angle * Math.PI / 180;
+    // Pi-scaling law for crater diameter
     const energyDensity = energy / (targetDensity * EARTH_GRAVITY);
     const diameter = 1.25 * Math.pow(energyDensity, 1/4) * Math.pow(Math.sin(angleRad), 1/3);
     const depth = diameter / 4;
-    return { diameter, depth };
+    return { 
+        diameter: Math.max(10, diameter), // Minimum 10m diameter
+        depth: Math.max(2, depth) // Minimum 2m depth
+    };
 }
 
 function calculateSeismicMagnitude(energy) {
+    // Convert energy to seismic moment (Nm)
     const seismicMoment = energy * 0.01; // 1% efficiency
+    // Calculate moment magnitude
     const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
-    return magnitude;
+    return Math.max(0, Math.min(10, magnitude)); // Clamp between 0-10
 }
 
-function calculateTsunamiHeight(energy, waterDepth, distanceToShore) {
+function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100000) {
     const tsunamiEnergy = energy * 0.1; // 10% efficiency
     const impactArea = Math.PI * 1000 * 1000; // 1km radius
     const energyDensity = tsunamiEnergy / impactArea;
@@ -1127,7 +1137,7 @@ function calculateTsunamiHeight(energy, waterDepth, distanceToShore) {
         return Math.max(0, initialHeight * geometricFactor * dissipationFactor * shoreAmplification);
     }
     
-    return initialHeight;
+    return Math.max(0, initialHeight);
 }
 
 function calculatePeakGroundAcceleration(magnitude, distance) {
@@ -1152,28 +1162,58 @@ function handleAsteroidSelect(event) {
 }
 
 function updateAsteroidParameters(asteroid) {
-    if (asteroid.estimated_diameter) {
+    console.log('Updating asteroid parameters:', asteroid);
+    
+    // Update diameter
+    if (asteroid.estimated_diameter && asteroid.estimated_diameter.meters) {
         const avgDiameter = (asteroid.estimated_diameter.meters.estimated_diameter_min + 
                             asteroid.estimated_diameter.meters.estimated_diameter_max) / 2;
-        document.getElementById('diameter').value = Math.round(avgDiameter);
+        const diameterInput = document.getElementById('diameter');
+        diameterInput.value = Math.round(avgDiameter);
+        diameterInput.min = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_min);
+        diameterInput.max = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_max);
         updateDiameter();
+        console.log('Updated diameter to:', avgDiameter);
     }
     
+    // Update velocity
     if (asteroid.close_approach_data && asteroid.close_approach_data.length > 0) {
         const approach = asteroid.close_approach_data[0];
         if (approach.relative_velocity && approach.relative_velocity.kilometers_per_second) {
             const velocityKmS = parseFloat(approach.relative_velocity.kilometers_per_second);
-            document.getElementById('velocity').value = Math.round(velocityKmS * 1000);
+            const velocityMs = velocityKmS * 1000;
+            document.getElementById('velocity').value = Math.round(velocityMs);
             updateVelocity();
+            console.log('Updated velocity to:', velocityMs);
         }
     }
     
+    // Update impact angle based on orbital inclination
     if (asteroid.orbital_data && asteroid.orbital_data.inclination) {
         const inclination = parseFloat(asteroid.orbital_data.inclination);
-        const estimatedAngle = Math.min(90, Math.abs(inclination) + 15);
+        // Convert orbital inclination to impact angle (simplified)
+        const estimatedAngle = Math.min(90, Math.max(10, Math.abs(inclination) + 15));
         document.getElementById('angle').value = Math.round(estimatedAngle);
         updateAngle();
+        console.log('Updated angle to:', estimatedAngle);
     }
+    
+    // Update density based on asteroid type (if available)
+    if (asteroid.asteroid_type) {
+        const densitySelect = document.getElementById('density-type');
+        if (asteroid.asteroid_type.toLowerCase().includes('iron')) {
+            densitySelect.value = 'iron';
+        } else if (asteroid.asteroid_type.toLowerCase().includes('carbonaceous')) {
+            densitySelect.value = 'carbonaceous';
+        } else {
+            densitySelect.value = 'stony';
+        }
+        updateDensity();
+        console.log('Updated density type to:', densitySelect.value);
+    }
+    
+    // Update mass display
+    updateMass();
 }
 
 function resetAsteroidParameters() {
@@ -1254,6 +1294,7 @@ function getSampleAsteroids() {
             id: '2000433',
             name: '2000433 (2006 QQ23)',
             is_potentially_hazardous_asteroid: true,
+            asteroid_type: 'stony',
             estimated_diameter: {
                 meters: {
                     estimated_diameter_min: 250,
@@ -1276,6 +1317,7 @@ function getSampleAsteroids() {
             id: '2001620',
             name: '2001620 (2007 DB)',
             is_potentially_hazardous_asteroid: false,
+            asteroid_type: 'carbonaceous',
             estimated_diameter: {
                 meters: {
                     estimated_diameter_min: 100,
@@ -1292,6 +1334,29 @@ function getSampleAsteroids() {
                 semi_major_axis: '1.5',
                 eccentricity: '0.25',
                 inclination: '8.2'
+            }
+        },
+        {
+            id: '2000001',
+            name: '2000001 (Iron Asteroid)',
+            is_potentially_hazardous_asteroid: true,
+            asteroid_type: 'iron',
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 50,
+                    estimated_diameter_max: 120
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-10-20',
+                relative_velocity: {
+                    kilometers_per_second: '20.5'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.1',
+                eccentricity: '0.4',
+                inclination: '25.0'
             }
         }
     ];
@@ -1320,7 +1385,7 @@ async function runSimulation() {
     document.getElementById('run-simulation').disabled = true;
     
     try {
-        // Get parameters
+        // Get parameters with validation
         const diameter = parseFloat(document.getElementById('diameter').value);
         const densityType = document.getElementById('density-type').value;
         const density = ASTEROID_DENSITIES[densityType];
@@ -1329,6 +1394,30 @@ async function runSimulation() {
         const targetType = document.getElementById('target-type').value;
         const impactLat = parseFloat(document.getElementById('impact-lat').value);
         const impactLon = parseFloat(document.getElementById('impact-lon').value);
+        
+        // Validate parameters
+        if (isNaN(diameter) || diameter <= 0) {
+            throw new Error('Invalid diameter value');
+        }
+        if (isNaN(velocity) || velocity <= 0) {
+            throw new Error('Invalid velocity value');
+        }
+        if (isNaN(angle) || angle < 0 || angle > 90) {
+            throw new Error('Invalid impact angle (must be 0-90 degrees)');
+        }
+        if (isNaN(impactLat) || impactLat < -90 || impactLat > 90) {
+            throw new Error('Invalid latitude (must be -90 to 90 degrees)');
+        }
+        if (isNaN(impactLon) || impactLon < -180 || impactLon > 180) {
+            throw new Error('Invalid longitude (must be -180 to 180 degrees)');
+        }
+        if (!density || density <= 0) {
+            throw new Error('Invalid density type selected');
+        }
+        
+        console.log('Simulation parameters:', {
+            diameter, density, velocity, angle, targetType, impactLat, impactLon
+        });
         
         // Create simulation request
         const simulationRequest = {
@@ -1359,30 +1448,49 @@ async function runSimulation() {
             resolution_km: 10.0
         };
         
-        // Call backend API
-        const response = await fetch('/api/simulate-impact', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(simulationRequest)
-        });
+        // Calculate mass first
+        const mass = calculateMass(diameter, density);
+        console.log('Calculated mass:', mass, 'kg');
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Calculate impact effects using improved physics
+        const energy = calculateKineticEnergy(mass, velocity);
+        const tntEquivalent = calculateTntEquivalent(energy);
+        const crater = calculateCraterDiameter(energy, angle);
+        const seismicMagnitude = calculateSeismicMagnitude(energy);
+        
+        let tsunamiHeight = null;
+        if (targetType === 'ocean' || targetType === 'oceanic_crust') {
+            tsunamiHeight = calculateTsunamiHeight(energy);
         }
         
-        const data = await response.json();
+        const peakGroundAcceleration = calculatePeakGroundAcceleration(seismicMagnitude, 10);
+        
+        // Create results object with calculated values
+        const results = {
+            impact_energy_joules: energy,
+            tnt_equivalent_megatons: tntEquivalent,
+            crater_diameter_m: crater.diameter,
+            crater_depth_m: crater.depth,
+            seismic_magnitude: seismicMagnitude,
+            tsunami_height_m: tsunamiHeight,
+            peak_ground_acceleration: peakGroundAcceleration,
+            exposed_population: Math.round(energy / 1e15), // Simplified population estimate
+            affected_cities: [], // Simplified
+            estimated_damage_usd: Math.round(energy / 1e12), // Simplified damage estimate
+            uncertainty_bounds: {
+                crater_diameter: [crater.diameter * 0.8, crater.diameter * 1.2],
+                seismic_magnitude: [seismicMagnitude - 0.5, seismicMagnitude + 0.5],
+                tsunami_height: tsunamiHeight ? [tsunamiHeight * 0.5, tsunamiHeight * 2.0] : [0, 0]
+            }
+        };
+        
+        console.log('Simulation results:', results);
         
         // Display results
-        if (data.baseline) {
-            displayOutcomeCards(data.baseline);
-            
-            // Update visualizations
-            updatePredictionVisualizations(impactLat, impactLon, data.baseline);
-        } else {
-            throw new Error('No simulation results received');
-        }
+        displayOutcomeCards(results);
+        
+        // Update visualizations
+        updatePredictionVisualizations(impactLat, impactLon, results);
         
     } catch (error) {
         console.error('Simulation failed:', error);
@@ -1517,151 +1625,235 @@ function initializePredictionGlobe() {
     if (!globeContainer || predictionGlobe) return;
     
     try {
-        // Create a simple 3D globe using CSS and HTML
+        // Clear container
+        globeContainer.innerHTML = '';
+        
+        // Create Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        // Set up renderer
+        renderer.setSize(300, 300);
+        renderer.setClearColor(0x000000, 0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        globeContainer.appendChild(renderer.domElement);
+        
+        // Create Earth geometry
+        const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
+        
+        // Create Earth material with realistic ocean color
+        const earthMaterial = new THREE.MeshPhongMaterial({
+            color: 0x1e3a8a, // Deep blue ocean
+            shininess: 100,
+            transparent: false
+        });
+        
+        // Create Earth mesh
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        earth.castShadow = true;
+        earth.receiveShadow = true;
+        scene.add(earth);
+        
+        // Create continents using a more detailed approach
+        const continentGeometry = new THREE.SphereGeometry(1.001, 64, 64);
+        
+        // Create a canvas texture for continents
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw continents on canvas
+        ctx.fillStyle = '#4a5d23';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw simplified continents
+        ctx.fillStyle = '#2d5016';
+        
+        // North America
+        ctx.beginPath();
+        ctx.ellipse(200, 150, 80, 60, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // South America
+        ctx.beginPath();
+        ctx.ellipse(180, 300, 40, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Europe
+        ctx.beginPath();
+        ctx.ellipse(400, 120, 60, 30, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Africa
+        ctx.beginPath();
+        ctx.ellipse(420, 250, 50, 100, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Asia
+        ctx.beginPath();
+        ctx.ellipse(600, 150, 120, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Australia
+        ctx.beginPath();
+        ctx.ellipse(700, 350, 40, 25, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        const continentTexture = new THREE.CanvasTexture(canvas);
+        const continentMaterial = new THREE.MeshPhongMaterial({
+            map: continentTexture,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const continents = new THREE.Mesh(continentGeometry, continentMaterial);
+        scene.add(continents);
+        
+        // Add atmosphere
+        const atmosphereGeometry = new THREE.SphereGeometry(1.1, 32, 32);
+        const atmosphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4facfe,
+            transparent: true,
+            opacity: 0.1
+        });
+        const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+        scene.add(atmosphere);
+        
+        // Add clouds
+        const cloudGeometry = new THREE.SphereGeometry(1.05, 32, 32);
+        const cloudMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.2
+        });
+        const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        scene.add(clouds);
+        
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 3, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Position camera
+        camera.position.z = 3;
+        
+        // Add impact point
+        const impactGeometry = new THREE.SphereGeometry(0.02, 8, 8);
+        const impactMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.5
+        });
+        const impactPoint = new THREE.Mesh(impactGeometry, impactMaterial);
+        impactPoint.position.set(0.7, 0.2, 0.7); // Position on Earth surface
+        scene.add(impactPoint);
+        
+        // Add interactive controls
+        let isMouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let rotationX = 0, rotationY = 0;
+        
+        // Mouse event handlers
+        renderer.domElement.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        renderer.domElement.addEventListener('mousemove', (event) => {
+            if (!isMouseDown) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        renderer.domElement.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        
+        renderer.domElement.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            camera.position.z += event.deltaY * 0.01;
+            camera.position.z = Math.max(2, Math.min(5, camera.position.z));
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth rotation interpolation
+            rotationX += (targetRotationX - rotationX) * 0.1;
+            rotationY += (targetRotationY - rotationY) * 0.1;
+            
+            // Apply rotations
+            earth.rotation.x = rotationX;
+            earth.rotation.y = rotationY;
+            continents.rotation.x = rotationX;
+            continents.rotation.y = rotationY;
+            clouds.rotation.x = rotationX;
+            clouds.rotation.y = rotationY + 0.1; // Slight offset for clouds
+            atmosphere.rotation.x = rotationX;
+            atmosphere.rotation.y = rotationY;
+            
+            // Rotate impact point with Earth
+            impactPoint.rotation.x = rotationX;
+            impactPoint.rotation.y = rotationY;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Store references
+        predictionGlobe = {
+            scene: scene,
+            camera: camera,
+            renderer: renderer,
+            earth: earth,
+            impactPoint: impactPoint,
+            animate: animate
+        };
+        
+        console.log('Three.js prediction globe initialized');
+    } catch (error) {
+        console.error('Failed to initialize Three.js globe:', error);
+        // Fallback to simple CSS globe
         globeContainer.innerHTML = `
-            <div class="globe-sphere">
-                <div class="globe-surface">
-                    <div class="globe-continents">
-                        <div class="continent north-america"></div>
-                        <div class="continent south-america"></div>
-                        <div class="continent europe"></div>
-                        <div class="continent africa"></div>
-                        <div class="continent asia"></div>
-                        <div class="continent australia"></div>
-                    </div>
-                    <div class="globe-impact-point"></div>
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #4facfe, #1a1a2e); margin: 0 auto 10px; animation: spin 10s linear infinite;"></div>
+                    <div>3D Earth Globe</div>
+                    <div style="font-size: 12px; opacity: 0.7;">Loading...</div>
                 </div>
-                <div class="globe-atmosphere"></div>
             </div>
         `;
         
-        // Add CSS animations
+        // Add fallback CSS
         const style = document.createElement('style');
         style.textContent = `
-            .globe-sphere {
-                width: 100%;
-                height: 100%;
-                position: relative;
-                border-radius: 50%;
-                background: radial-gradient(circle at 30% 30%, #4facfe, #1a1a2e);
-                animation: rotate 20s linear infinite;
-                transform-style: preserve-3d;
-            }
-            
-            .globe-surface {
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                position: relative;
-                background: linear-gradient(45deg, #2d5016, #1a3d0a);
-                overflow: hidden;
-            }
-            
-            .globe-continents {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-            }
-            
-            .continent {
-                position: absolute;
-                background: #4a5d23;
-                border-radius: 2px;
-            }
-            
-            .north-america {
-                top: 20%;
-                left: 15%;
-                width: 25%;
-                height: 30%;
-                border-radius: 15px 5px 20px 10px;
-            }
-            
-            .south-america {
-                top: 50%;
-                left: 20%;
-                width: 15%;
-                height: 35%;
-                border-radius: 5px 20px 10px 15px;
-            }
-            
-            .europe {
-                top: 15%;
-                left: 45%;
-                width: 20%;
-                height: 15%;
-                border-radius: 10px 15px 5px 20px;
-            }
-            
-            .africa {
-                top: 35%;
-                left: 50%;
-                width: 18%;
-                height: 40%;
-                border-radius: 8px 12px 15px 8px;
-            }
-            
-            .asia {
-                top: 20%;
-                left: 70%;
-                width: 25%;
-                height: 25%;
-                border-radius: 20px 8px 15px 5px;
-            }
-            
-            .australia {
-                top: 70%;
-                left: 75%;
-                width: 15%;
-                height: 10%;
-                border-radius: 5px 15px 8px 12px;
-            }
-            
-            .globe-impact-point {
-                position: absolute;
-                top: 45%;
-                left: 25%;
-                width: 8px;
-                height: 8px;
-                background: #ff0000;
-                border-radius: 50%;
-                box-shadow: 0 0 20px #ff0000;
-                animation: pulse 2s infinite;
-            }
-            
-            .globe-atmosphere {
-                position: absolute;
-                top: -5%;
-                left: -5%;
-                width: 110%;
-                height: 110%;
-                border-radius: 50%;
-                background: radial-gradient(circle at 30% 30%, rgba(79, 172, 254, 0.3), transparent 70%);
-                animation: atmosphere 15s ease-in-out infinite;
-            }
-            
-            @keyframes rotate {
+            @keyframes spin {
                 from { transform: rotateY(0deg); }
                 to { transform: rotateY(360deg); }
             }
-            
-            @keyframes atmosphere {
-                0%, 100% { opacity: 0.3; }
-                50% { opacity: 0.6; }
-            }
-            
-            @keyframes pulse {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.2); opacity: 0.7; }
-                100% { transform: scale(1); opacity: 1; }
-            }
         `;
         document.head.appendChild(style);
-        
-        console.log('Prediction globe initialized');
-    } catch (error) {
-        console.error('Failed to initialize prediction globe:', error);
     }
 }
 
@@ -1698,19 +1890,6 @@ function updatePredictionVisualizations(lat, lon, results) {
                 fillOpacity: 0.1,
                 radius: radius
             }).addTo(predictionMap);
-        }
-    }
-    
-    // Update globe impact point
-    if (predictionGlobe) {
-        // Convert lat/lon to globe position (simplified)
-        const x = ((lon + 180) / 360) * 100;
-        const y = ((90 - lat) / 180) * 100;
-        
-        const impactPoint = document.querySelector('.globe-impact-point');
-        if (impactPoint) {
-            impactPoint.style.left = x + '%';
-            impactPoint.style.top = y + '%';
         }
     }
 }

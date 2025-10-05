@@ -633,27 +633,21 @@
                     </div>
                 </div>
 
-                <!-- Center - Visualizations -->
-                <div class="visualization-section">
-                    <!-- 3D Globe -->
-                    <div class="globe-container">
-                        <h3><i class="fas fa-globe"></i> 3D Earth View</h3>
-                        <div id="globe-3d" class="globe-3d"></div>
-                    </div>
-                    
-                    <!-- 2D Map -->
+                <!-- Right side - Map and Results -->
+                <div class="right-section">
+                    <!-- Top Right - Impact Map -->
                     <div class="map-container">
                         <h3><i class="fas fa-map"></i> Impact Map</h3>
                         <div id="impact-map" class="impact-map"></div>
                     </div>
-                </div>
 
-                <!-- Right side - Results -->
-                <div class="results-section">
-                    <h3><i class="fas fa-chart-line"></i> Impact Analysis Results</h3>
-                    <div id="outcome-cards" class="outcome-cards">
-                        <div class="no-results">
-                            <p>Run a simulation to see impact analysis results</p>
+                    <!-- Bottom Right - Results -->
+                    <div class="results-section">
+                        <h3><i class="fas fa-chart-line"></i> Impact Analysis Results</h3>
+                        <div id="outcome-cards" class="outcome-cards">
+                            <div class="no-results">
+                                <p>Run a simulation to see impact analysis results</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -680,6 +674,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

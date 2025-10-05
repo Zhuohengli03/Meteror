@@ -893,7 +893,7 @@ i.fas, i.fa {
 
 .prediction-main {
     display: grid;
-    grid-template-columns: 350px 1fr 350px;
+    grid-template-columns: 350px 1fr;
     gap: 2rem;
     margin-bottom: 3rem;
     min-height: 600px;
@@ -918,7 +918,7 @@ i.fas, i.fa {
     gap: 0.5rem;
 }
 
-.visualization-section {
+.right-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -951,6 +951,19 @@ i.fas, i.fa {
     border-radius: 8px;
     position: relative;
     overflow: hidden;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.globe-3d:active {
+    cursor: grabbing;
+}
+
+.globe-3d canvas {
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
 }
 
 .map-container {
@@ -959,7 +972,7 @@ i.fas, i.fa {
     padding: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     flex: 1;
-    min-height: 0;
+    min-height: 300px;
 }
 
 .map-container h3 {
@@ -983,6 +996,8 @@ i.fas, i.fa {
     border-radius: 12px;
     padding: 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1;
+    min-height: 300px;
 }
 
 .results-section h3 {
@@ -1128,30 +1143,9 @@ i.fas, i.fa {
 }
 
 /* Responsive design for prediction tab */
-@media (max-width: 1400px) {
-    .prediction-main {
-        grid-template-columns: 300px 1fr 300px;
-    }
-}
-
 @media (max-width: 1200px) {
     .prediction-main {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .visualization-section {
-        order: 1;
-        min-height: 400px;
-    }
-    
-    .asteroid-settings {
-        order: 2;
-        position: static;
-    }
-    
-    .results-section {
-        order: 3;
+        grid-template-columns: 300px 1fr;
     }
 }
 
@@ -1161,17 +1155,9 @@ i.fas, i.fa {
         gap: 1rem;
     }
     
-    .visualization-section {
+    .right-section {
         order: 1;
-        min-height: 300px;
-    }
-    
-    .globe-3d {
-        min-height: 200px;
-    }
-    
-    .impact-map {
-        min-height: 200px;
+        min-height: 400px;
     }
     
     .asteroid-settings {
@@ -1179,8 +1165,12 @@ i.fas, i.fa {
         position: static;
     }
     
+    .impact-map {
+        min-height: 200px;
+    }
+    
     .results-section {
-        order: 3;
+        min-height: 200px;
     }
     
     .prediction-header h2 {
