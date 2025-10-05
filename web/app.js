@@ -10,6 +10,8 @@ let isLoadingOverview = false;
 // Prediction tab variables
 let selectedAsteroid = null;
 let isSimulating = false;
+let predictionMap = null;
+let predictionGlobe = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -1065,7 +1067,10 @@ function setupPredictionEventListeners() {
     document.getElementById('run-simulation')?.addEventListener('click', runSimulation);
     
     // Load asteroids on tab switch
-    document.querySelector('[data-tab="prediction"]')?.addEventListener('click', loadAsteroids);
+    document.querySelector('[data-tab="prediction"]')?.addEventListener('click', () => {
+        loadAsteroids();
+        initializePredictionVisualizations();
+    });
 }
 
 // Physics calculation functions
@@ -1372,6 +1377,9 @@ async function runSimulation() {
         // Display results
         if (data.baseline) {
             displayOutcomeCards(data.baseline);
+            
+            // Update visualizations
+            updatePredictionVisualizations(impactLat, impactLon, data.baseline);
         } else {
             throw new Error('No simulation results received');
         }
@@ -1452,4 +1460,257 @@ function displayOutcomeCards(results) {
             ` : ''}
         </div>
     `;
+}
+
+// ===== PREDICTION VISUALIZATION FUNCTIONS =====
+
+function initializePredictionVisualizations() {
+    initializePredictionMap();
+    initializePredictionGlobe();
+}
+
+function initializePredictionMap() {
+    const mapContainer = document.getElementById('impact-map');
+    if (!mapContainer || predictionMap) return;
+    
+    try {
+        predictionMap = L.map('impact-map', {
+            center: [40.7128, -74.0060],
+            zoom: 6,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(predictionMap);
+        
+        // Add impact marker
+        const impactMarker = L.marker([40.7128, -74.0060], {
+            icon: L.divIcon({
+                className: 'impact-marker',
+                html: '<div style="background-color: #ff0000; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; animation: pulse 2s infinite;"></div>',
+                iconSize: [20, 20]
+            })
+        }).addTo(predictionMap);
+        
+        impactMarker.bindPopup('<b>Impact Location</b><br>Lat: 40.7128°<br>Lon: -74.0060°');
+        
+        // Add impact circle
+        const impactCircle = L.circle([40.7128, -74.0060], {
+            color: '#ff0000',
+            fillColor: '#ff0000',
+            fillOpacity: 0.1,
+            radius: 50000 // 50km radius
+        }).addTo(predictionMap);
+        
+        console.log('Prediction map initialized');
+    } catch (error) {
+        console.error('Failed to initialize prediction map:', error);
+    }
+}
+
+function initializePredictionGlobe() {
+    const globeContainer = document.getElementById('globe-3d');
+    if (!globeContainer || predictionGlobe) return;
+    
+    try {
+        // Create a simple 3D globe using CSS and HTML
+        globeContainer.innerHTML = `
+            <div class="globe-sphere">
+                <div class="globe-surface">
+                    <div class="globe-continents">
+                        <div class="continent north-america"></div>
+                        <div class="continent south-america"></div>
+                        <div class="continent europe"></div>
+                        <div class="continent africa"></div>
+                        <div class="continent asia"></div>
+                        <div class="continent australia"></div>
+                    </div>
+                    <div class="globe-impact-point"></div>
+                </div>
+                <div class="globe-atmosphere"></div>
+            </div>
+        `;
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .globe-sphere {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                border-radius: 50%;
+                background: radial-gradient(circle at 30% 30%, #4facfe, #1a1a2e);
+                animation: rotate 20s linear infinite;
+                transform-style: preserve-3d;
+            }
+            
+            .globe-surface {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                position: relative;
+                background: linear-gradient(45deg, #2d5016, #1a3d0a);
+                overflow: hidden;
+            }
+            
+            .globe-continents {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+            }
+            
+            .continent {
+                position: absolute;
+                background: #4a5d23;
+                border-radius: 2px;
+            }
+            
+            .north-america {
+                top: 20%;
+                left: 15%;
+                width: 25%;
+                height: 30%;
+                border-radius: 15px 5px 20px 10px;
+            }
+            
+            .south-america {
+                top: 50%;
+                left: 20%;
+                width: 15%;
+                height: 35%;
+                border-radius: 5px 20px 10px 15px;
+            }
+            
+            .europe {
+                top: 15%;
+                left: 45%;
+                width: 20%;
+                height: 15%;
+                border-radius: 10px 15px 5px 20px;
+            }
+            
+            .africa {
+                top: 35%;
+                left: 50%;
+                width: 18%;
+                height: 40%;
+                border-radius: 8px 12px 15px 8px;
+            }
+            
+            .asia {
+                top: 20%;
+                left: 70%;
+                width: 25%;
+                height: 25%;
+                border-radius: 20px 8px 15px 5px;
+            }
+            
+            .australia {
+                top: 70%;
+                left: 75%;
+                width: 15%;
+                height: 10%;
+                border-radius: 5px 15px 8px 12px;
+            }
+            
+            .globe-impact-point {
+                position: absolute;
+                top: 45%;
+                left: 25%;
+                width: 8px;
+                height: 8px;
+                background: #ff0000;
+                border-radius: 50%;
+                box-shadow: 0 0 20px #ff0000;
+                animation: pulse 2s infinite;
+            }
+            
+            .globe-atmosphere {
+                position: absolute;
+                top: -5%;
+                left: -5%;
+                width: 110%;
+                height: 110%;
+                border-radius: 50%;
+                background: radial-gradient(circle at 30% 30%, rgba(79, 172, 254, 0.3), transparent 70%);
+                animation: atmosphere 15s ease-in-out infinite;
+            }
+            
+            @keyframes rotate {
+                from { transform: rotateY(0deg); }
+                to { transform: rotateY(360deg); }
+            }
+            
+            @keyframes atmosphere {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 0.6; }
+            }
+            
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.2); opacity: 0.7; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('Prediction globe initialized');
+    } catch (error) {
+        console.error('Failed to initialize prediction globe:', error);
+    }
+}
+
+function updatePredictionVisualizations(lat, lon, results) {
+    // Update map center and markers
+    if (predictionMap) {
+        predictionMap.setView([lat, lon], 8);
+        
+        // Update impact marker
+        const impactMarker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'impact-marker',
+                html: '<div style="background-color: #ff0000; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; animation: pulse 2s infinite;"></div>',
+                iconSize: [20, 20]
+            })
+        });
+        
+        // Clear existing markers
+        predictionMap.eachLayer(layer => {
+            if (layer instanceof L.Marker || layer instanceof L.Circle) {
+                predictionMap.removeLayer(layer);
+            }
+        });
+        
+        impactMarker.addTo(predictionMap);
+        impactMarker.bindPopup(`<b>Impact Location</b><br>Lat: ${lat.toFixed(4)}°<br>Lon: ${lon.toFixed(4)}°`);
+        
+        // Add impact circle based on crater diameter
+        if (results && results.crater_diameter_m) {
+            const radius = results.crater_diameter_m / 2; // Convert diameter to radius
+            L.circle([lat, lon], {
+                color: '#ff0000',
+                fillColor: '#ff0000',
+                fillOpacity: 0.1,
+                radius: radius
+            }).addTo(predictionMap);
+        }
+    }
+    
+    // Update globe impact point
+    if (predictionGlobe) {
+        // Convert lat/lon to globe position (simplified)
+        const x = ((lon + 180) / 360) * 100;
+        const y = ((90 - lat) / 180) * 100;
+        
+        const impactPoint = document.querySelector('.globe-impact-point');
+        if (impactPoint) {
+            impactPoint.style.left = x + '%';
+            impactPoint.style.top = y + '%';
+        }
+    }
 }

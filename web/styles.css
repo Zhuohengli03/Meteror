@@ -893,7 +893,7 @@ i.fas, i.fa {
 
 .prediction-main {
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 350px 1fr 350px;
     gap: 2rem;
     margin-bottom: 3rem;
     min-height: 600px;
@@ -916,6 +916,66 @@ i.fas, i.fa {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.visualization-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 600px;
+}
+
+.globe-container {
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+.globe-container h3 {
+    color: white;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.globe-3d {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #0c0c0c 100%);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1;
+    min-height: 0;
+}
+
+.map-container h3 {
+    color: white;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.impact-map {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    position: relative;
 }
 
 .results-section {
@@ -1068,9 +1128,30 @@ i.fas, i.fa {
 }
 
 /* Responsive design for prediction tab */
+@media (max-width: 1400px) {
+    .prediction-main {
+        grid-template-columns: 300px 1fr 300px;
+    }
+}
+
 @media (max-width: 1200px) {
     .prediction-main {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .visualization-section {
+        order: 1;
+        min-height: 400px;
+    }
+    
+    .asteroid-settings {
+        order: 2;
+        position: static;
+    }
+    
+    .results-section {
+        order: 3;
     }
 }
 
@@ -1080,13 +1161,26 @@ i.fas, i.fa {
         gap: 1rem;
     }
     
+    .visualization-section {
+        order: 1;
+        min-height: 300px;
+    }
+    
+    .globe-3d {
+        min-height: 200px;
+    }
+    
+    .impact-map {
+        min-height: 200px;
+    }
+    
     .asteroid-settings {
-        position: static;
         order: 2;
+        position: static;
     }
     
     .results-section {
-        order: 1;
+        order: 3;
     }
     
     .prediction-header h2 {
