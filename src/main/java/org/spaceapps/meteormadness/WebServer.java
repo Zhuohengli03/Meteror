@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.spaceapps.meteormadness.service.MeteorDataService;
 import org.spaceapps.meteormadness.clients.NeoWsClient;
-import org.spaceapps.meteormadness.util.JsonUtil;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -15,7 +14,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 
 /**
@@ -44,6 +42,7 @@ public class WebServer {
         server.createContext("/api/event-categories", this::handleEventCategories);
         server.createContext("/api/test", this::handleTest);
         server.createContext("/api/reset-key", this::handleResetKey);
+        server.createContext("/api/simulate-impact", this::handleSimulateImpact);
         
         // Static file serving
         server.createContext("/", this::handleStaticFiles);
@@ -85,6 +84,8 @@ public class WebServer {
             handleTest(exchange);
         } else if (path.equals("/api/reset-key")) {
             handleResetKey(exchange);
+        } else if (path.equals("/api/simulate-impact")) {
+            handleSimulateImpact(exchange);
         }
     }
     
@@ -290,6 +291,69 @@ public class WebServer {
         
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(json.getBytes());
+        }
+    }
+    
+    private void handleSimulateImpact(HttpExchange exchange) throws IOException {
+        try {
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendErrorResponse(exchange, "Method not allowed");
+                return;
+            }
+            
+            // Read request body (for future use)
+            // String requestBody = new String(exchange.getRequestBody().readAllBytes());
+            
+            // Parse JSON request (simplified - in production use proper JSON library)
+            // For now, we'll return a mock response with calculated values
+            String response = """
+                {
+                    "baseline": {
+                        "impact_energy_joules": 1.5e18,
+                        "tnt_equivalent_megatons": 358.5,
+                        "crater_diameter_m": 2500,
+                        "crater_depth_m": 625,
+                        "seismic_magnitude": 7.2,
+                        "tsunami_height_m": 15.5,
+                        "peak_ground_acceleration": 0.8,
+                        "exposed_population": 500000,
+                        "affected_cities": [
+                            {
+                                "name": "New York",
+                                "distance": 50.2,
+                                "population": 2000000,
+                                "exposure_level": "high"
+                            }
+                        ],
+                        "estimated_damage_usd": 50000000000,
+                        "uncertainty_bounds": {
+                            "crater_diameter": [2000, 3000],
+                            "seismic_magnitude": [6.7, 7.7],
+                            "tsunami_height": [7.8, 31.0]
+                        }
+                    },
+                    "simulation_metadata": {
+                        "simulation_time": "2024-01-01T00:00:00Z",
+                        "physics_models": {
+                            "crater_scaling": "pi_scaling",
+                            "seismic": "simplified_attenuation",
+                            "tsunami": "energy_based"
+                        }
+                    }
+                }
+                """;
+            
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, response.getBytes().length);
+            
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error handling simulation request: " + e.getMessage());
+            sendErrorResponse(exchange, "Simulation failed: " + e.getMessage());
         }
     }
     

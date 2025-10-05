@@ -7,6 +7,17 @@ let approachMarkers = [];
 let naturalEventMarkers = [];
 let isLoadingOverview = false;
 
+// Tab-specific maps
+let closeApproachesMap = null;
+let fireballsMap = null;
+let nearEarthMap = null;
+
+// Prediction tab variables
+let selectedAsteroid = null;
+let isSimulating = false;
+let predictionMap = null;
+let predictionGlobe = null;
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -18,91 +29,118 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Initialize Leaflet map
-    if (document.getElementById('map-container')) {
-        map = L.map('map-container', {
+    // Initialize tab maps when needed
+    initializeTabMaps();
+}
+
+function initializeTabMaps() {
+    // Initialize maps for each tab
+    initializeCloseApproachesMap();
+    initializeFireballsMap();
+    initializeNearEarthMap();
+}
+
+function initializeCloseApproachesMap() {
+    const mapContainer = document.getElementById('close-approaches-map');
+    if (!mapContainer || closeApproachesMap) return;
+    
+    try {
+        closeApproachesMap = L.map('close-approaches-map', {
             center: [20, 0],
             zoom: 2,
             zoomControl: true,
-            attributionControl: true,
-            preferCanvas: false,
-            renderer: L.canvas()
+            attributionControl: true
         });
         
-        // Create multiple tile layers with better error handling
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c'],
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
+            maxZoom: 19
+        }).addTo(closeApproachesMap);
         
-        const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c', 'd'],
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
-        
-        const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri',
-            maxZoom: 19,
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
-        
-        // Try to add the first layer, with fallbacks
-        let layerAdded = false;
-        
-        // Try OpenStreetMap first
-        osmLayer.on('tileerror', function() {
-            if (!layerAdded) {
-                console.log('OSM tiles failed, trying CartoDB...');
-                map.removeLayer(osmLayer);
-                cartoLayer.addTo(map);
-                layerAdded = true;
-            }
-        });
-        
-        osmLayer.on('load', function() {
-            layerAdded = true;
-        });
-        
-        // Add default layer
-        osmLayer.addTo(map);
-        
-        // Add layer control with multiple options
-        const baseMaps = {
-            "OpenStreetMap": osmLayer,
-            "CartoDB Light": cartoLayer,
-            "Esri Satellite": esriLayer
-        };
-        
-        L.control.layers(baseMaps).addTo(map);
-        
-        // Force a refresh after a short delay
-        setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-                map.setView([20, 0], 2);
-                
-                // If tiles still don't load, try a different approach
-                setTimeout(() => {
-                    if (map && !map.hasLayer(osmLayer) && !map.hasLayer(cartoLayer)) {
-                        console.log('Trying alternative tile source...');
-                        // Try a different tile source
-                        const altLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 19
-                        });
-                        altLayer.addTo(map);
-                    }
-                }, 3000);
-            }
-        }, 1000);
+        console.log('Close approaches map initialized');
+    } catch (error) {
+        console.error('Failed to initialize close approaches map:', error);
     }
+}
+
+function initializeFireballsMap() {
+    const mapContainer = document.getElementById('fireballs-map');
+    if (!mapContainer || fireballsMap) return;
+    
+    try {
+        fireballsMap = L.map('fireballs-map', {
+            center: [20, 0],
+            zoom: 2,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(fireballsMap);
+        
+        console.log('Fireballs map initialized');
+    } catch (error) {
+        console.error('Failed to initialize fireballs map:', error);
+    }
+}
+
+function initializeNearEarthMap() {
+    const mapContainer = document.getElementById('near-earth-map');
+    if (!mapContainer || nearEarthMap) return;
+    
+    try {
+        nearEarthMap = L.map('near-earth-map', {
+            center: [20, 0],
+            zoom: 2,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(nearEarthMap);
+        
+        console.log('Near Earth map initialized');
+    } catch (error) {
+        console.error('Failed to initialize near Earth map:', error);
+    }
+}
+
+
+function addHideLoadingButtonToTabs() {
+    // Add Hide Loading button to each tab that has controls
+    const tabsWithControls = [
+        'close-approaches',
+        'fireballs', 
+        'near-earth',
+        'natural-events',
+        'prediction'
+    ];
+    
+    tabsWithControls.forEach(tabId => {
+        const tabElement = document.getElementById(tabId);
+        if (tabElement) {
+            const controlsDiv = tabElement.querySelector('.controls');
+            if (controlsDiv) {
+                // Check if button already exists
+                if (!controlsDiv.querySelector('.hide-loading-btn')) {
+                    const hideLoadingButton = document.createElement('button');
+                    hideLoadingButton.className = 'btn-secondary hide-loading-btn';
+                    hideLoadingButton.innerHTML = '<i class="fas fa-stop"></i> Hide Loading (if any error occurs)';
+                    hideLoadingButton.style.marginLeft = '10px';
+                    hideLoadingButton.addEventListener('click', () => {
+                        console.log('Manually hiding loading indicator');
+                        hideLoading();
+                        isLoadingOverview = false;
+                    });
+                    controlsDiv.appendChild(hideLoadingButton);
+                }
+            }
+        }
+    });
 }
 
 function setupEventListeners() {
@@ -120,38 +158,14 @@ function setupEventListeners() {
     document.getElementById('fetch-neos')?.addEventListener('click', fetchNearEarthObjects);
     document.getElementById('fetch-natural-events')?.addEventListener('click', fetchNaturalEvents);
 
-    // Map controls
-    document.getElementById('show-natural-events-map')?.addEventListener('click', showNaturalEventsOnMap);
-    document.getElementById('show-fireballs-map')?.addEventListener('click', showFireballsOnMap);
-    document.getElementById('show-approaches-map')?.addEventListener('click', showApproachesOnMap);
-    document.getElementById('clear-map')?.addEventListener('click', clearMap);
-    
-    // Add debug button for map troubleshooting
-    const debugButton = document.createElement('button');
-    debugButton.className = 'btn-secondary';
-    debugButton.innerHTML = '<i class="fas fa-bug"></i> Debug Map';
-    debugButton.style.marginLeft = '10px';
-    debugButton.addEventListener('click', debugMap);
-    
-    const mapControls = document.querySelector('.map-controls');
-    if (mapControls) {
-        mapControls.appendChild(debugButton);
-        
-        // Add loading debug button
-        const loadingDebugButton = document.createElement('button');
-        loadingDebugButton.className = 'btn-secondary';
-        loadingDebugButton.innerHTML = '<i class="fas fa-stop"></i> Hide Loading';
-        loadingDebugButton.style.marginLeft = '10px';
-        loadingDebugButton.addEventListener('click', () => {
-            console.log('Manually hiding loading indicator');
-            hideLoading();
-            isLoadingOverview = false;
-        });
-        mapControls.appendChild(loadingDebugButton);
-    }
+    // Add loading debug button to each tab for troubleshooting
+    addHideLoadingButtonToTabs();
     
     // API key reset button
     document.getElementById('reset-api-key')?.addEventListener('click', resetApiKey);
+    
+    // Prediction tab event listeners
+    setupPredictionEventListeners();
 }
 
 function setDefaultDates() {
@@ -253,12 +267,28 @@ function switchTab(tabName) {
         if (!isLoadingOverview) {
             loadOverviewData();
         }
-    } else if (tabName === 'map') {
-        // Refresh map when switching to map tab
+    } else if (tabName === 'close-approaches') {
+        // Initialize map if not already done
         setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-                map.setView([20, 0], 2);
+            initializeCloseApproachesMap();
+            if (closeApproachesMap) {
+                closeApproachesMap.invalidateSize();
+            }
+        }, 100);
+    } else if (tabName === 'fireballs') {
+        // Initialize map if not already done
+        setTimeout(() => {
+            initializeFireballsMap();
+            if (fireballsMap) {
+                fireballsMap.invalidateSize();
+            }
+        }, 100);
+    } else if (tabName === 'near-earth') {
+        // Initialize map if not already done
+        setTimeout(() => {
+            initializeNearEarthMap();
+            if (nearEarthMap) {
+                nearEarthMap.invalidateSize();
             }
         }, 100);
     }
@@ -288,6 +318,7 @@ async function fetchCloseApproaches() {
         
         displayApproachesTable(data);
         updateApproachesCount(data.length);
+        updateCloseApproachesMap(data);
     } catch (error) {
         console.error('Error fetching close approaches:', error);
         alert('Error fetching close approaches data');
@@ -307,6 +338,7 @@ async function fetchFireballs() {
         
         displayFireballsTable(data);
         updateFireballsCount(data.length);
+        updateFireballsMap(data);
     } catch (error) {
         console.error('Error fetching fireballs:', error);
         alert('Error fetching fireballs data');
@@ -326,6 +358,7 @@ async function fetchNearEarthObjects() {
         
         displayNeosTable(data);
         updateHazardousCount(data.filter(item => item.hazardous === 'yes').length);
+        updateNearEarthMap(data);
     } catch (error) {
         console.error('Error fetching NEOs:', error);
         alert('Error fetching near earth objects data');
@@ -996,6 +1029,155 @@ function debugMap() {
     alert('Map debug info logged to console. Check browser developer tools.');
 }
 
+// Tab-specific map update functions
+function updateCloseApproachesMap(data) {
+    if (!closeApproachesMap) return;
+    
+    // Clear existing markers
+    closeApproachesMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            closeApproachesMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each approach
+    data.forEach(approach => {
+        // For approaches, we'll show them as orbital markers
+        // Since we don't have exact coordinates, we'll place them randomly around Earth
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        
+        const marker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'approach-marker',
+                html: '<div style="background-color: #4facfe; border-radius: 50%; width: 10px; height: 10px; border: 2px solid white;"></div>',
+                iconSize: [10, 10]
+            })
+        });
+        
+        const popupContent = `
+            <div style="font-family: Arial, sans-serif;">
+                <h4 style="margin: 0 0 8px 0; color: #4facfe;">🛰️ Close Approach</h4>
+                <p style="margin: 4px 0;"><strong>Object:</strong> ${approach.object || approach.fullname || approach.des || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Date:</strong> ${approach.cd || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Distance:</strong> ${approach.dist || 'Unknown'} AU</p>
+                <p style="margin: 4px 0;"><strong>Velocity:</strong> ${approach.v_rel || 'Unknown'} km/s</p>
+                <p style="margin: 4px 0;"><strong>Magnitude:</strong> ${approach.h || 'Unknown'}</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.addTo(closeApproachesMap);
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(closeApproachesMap._layers);
+        if (group.getBounds().isValid()) {
+            closeApproachesMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
+function updateFireballsMap(data) {
+    if (!fireballsMap) return;
+    
+    // Clear existing markers
+    fireballsMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            fireballsMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each fireball
+    data.forEach(fireball => {
+        if (fireball.lat && fireball.lon) {
+            const lat = parseFloat(fireball.lat);
+            const lon = parseFloat(fireball.lon);
+            
+            if (!isNaN(lat) && !isNaN(lon)) {
+                const marker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'fireball-marker',
+                        html: '<div style="background-color: #ff6b6b; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>',
+                        iconSize: [12, 12]
+                    })
+                });
+                
+                const popupContent = `
+                    <div style="font-family: Arial, sans-serif;">
+                        <h4 style="margin: 0 0 8px 0; color: #ff6b6b;">🔥 Fireball Event</h4>
+                        <p style="margin: 4px 0;"><strong>Date:</strong> ${fireball.date || 'Unknown'}</p>
+                        <p style="margin: 4px 0;"><strong>Energy:</strong> ${fireball.energy || 'Unknown'} J</p>
+                        <p style="margin: 4px 0;"><strong>Velocity:</strong> ${fireball.vel || 'Unknown'} km/s</p>
+                        <p style="margin: 4px 0;"><strong>Altitude:</strong> ${fireball.alt || 'Unknown'} km</p>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                marker.addTo(fireballsMap);
+            }
+        }
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(fireballsMap._layers);
+        if (group.getBounds().isValid()) {
+            fireballsMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
+function updateNearEarthMap(data) {
+    if (!nearEarthMap) return;
+    
+    // Clear existing markers
+    nearEarthMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            nearEarthMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each NEO (simplified - no exact coordinates available)
+    data.forEach(neo => {
+        // Place markers randomly around Earth
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        
+        const isHazardous = neo.hazardous === 'yes';
+        const marker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'neo-marker',
+                html: `<div style="background-color: ${isHazardous ? '#ff6b6b' : '#4facfe'}; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>`,
+                iconSize: [12, 12]
+            })
+        });
+        
+        const popupContent = `
+            <div style="font-family: Arial, sans-serif;">
+                <h4 style="margin: 0 0 8px 0; color: ${isHazardous ? '#ff6b6b' : '#4facfe'};">${isHazardous ? '⚠️' : '✅'} NEO</h4>
+                <p style="margin: 4px 0;"><strong>Name:</strong> ${neo.name || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Date:</strong> ${neo.date || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Hazardous:</strong> ${neo.hazardous || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Size:</strong> ${neo.min || 'Unknown'} - ${neo.max || 'Unknown'} km</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.addTo(nearEarthMap);
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(nearEarthMap._layers);
+        if (group.getBounds().isValid()) {
+            nearEarthMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
+
 function updateApiKeyStatus(status) {
     const statusElement = document.getElementById('api-status');
     const statusText = document.getElementById('api-status-text');
@@ -1036,5 +1218,851 @@ async function resetApiKey() {
     } catch (error) {
         console.error('Error resetting API key:', error);
         alert('Error resetting API key');
+    }
+}
+
+// ===== PREDICTION TAB FUNCTIONALITY =====
+
+function setupPredictionEventListeners() {
+    // Asteroid selection
+    document.getElementById('asteroid-select')?.addEventListener('change', handleAsteroidSelect);
+    
+    // Parameter controls
+    document.getElementById('diameter')?.addEventListener('input', updateDiameter);
+    document.getElementById('density-type')?.addEventListener('change', updateDensity);
+    document.getElementById('velocity')?.addEventListener('input', updateVelocity);
+    document.getElementById('angle')?.addEventListener('input', updateAngle);
+    document.getElementById('impact-lat')?.addEventListener('input', updateImpactLocation);
+    document.getElementById('impact-lon')?.addEventListener('input', updateImpactLocation);
+    document.getElementById('target-type')?.addEventListener('change', updateTargetType);
+    
+    // Simulation button
+    document.getElementById('run-simulation')?.addEventListener('click', runSimulation);
+    
+    // Load asteroids on tab switch
+    document.querySelector('[data-tab="prediction"]')?.addEventListener('click', () => {
+        loadAsteroids();
+        initializePredictionMap();
+    });
+}
+
+// Physics calculation functions
+const ASTEROID_DENSITIES = {
+    stony: 3000,
+    iron: 7800,
+    carbonaceous: 2000
+};
+
+const TNT_TO_JOULES = 4.184e15; // 1 megaton TNT in joules
+const EARTH_GRAVITY = 9.81; // m/s²
+const EARTH_RADIUS = 6371000; // meters
+const WATER_DENSITY = 1000; // kg/m³
+const ROCK_DENSITY = 2500; // kg/m³
+
+function calculateMass(diameter, density) {
+    const radius = diameter / 2;
+    const volume = (4/3) * Math.PI * radius * radius * radius;
+    const mass = density * volume;
+    console.log('Mass calculation:', {
+        diameter, radius, volume, density, mass
+    });
+    return mass;
+}
+
+function calculateKineticEnergy(mass, velocity) {
+    return 0.5 * mass * velocity * velocity;
+}
+
+function calculateTntEquivalent(energy) {
+    return energy / TNT_TO_JOULES;
+}
+
+function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
+    const angleRad = angle * Math.PI / 180;
+    // Pi-scaling law for crater diameter
+    const energyDensity = energy / (targetDensity * EARTH_GRAVITY);
+    const diameter = 1.25 * Math.pow(energyDensity, 1/4) * Math.pow(Math.sin(angleRad), 1/3);
+    const depth = diameter / 4;
+    return { 
+        diameter: Math.max(10, diameter), // Minimum 10m diameter
+        depth: Math.max(2, depth) // Minimum 2m depth
+    };
+}
+
+function calculateSeismicMagnitude(energy) {
+    // Convert energy to seismic moment (Nm)
+    const seismicMoment = energy * 0.01; // 1% efficiency
+    // Calculate moment magnitude
+    const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
+    return Math.max(0, Math.min(10, magnitude)); // Clamp between 0-10
+}
+
+function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100000) {
+    const tsunamiEnergy = energy * 0.1; // 10% efficiency
+    const impactArea = Math.PI * 1000 * 1000; // 1km radius
+    const energyDensity = tsunamiEnergy / impactArea;
+    const initialHeight = 0.1 * Math.sqrt(energyDensity / (WATER_DENSITY * EARTH_GRAVITY));
+    
+    if (distanceToShore > 0) {
+        const geometricFactor = 1 / Math.sqrt(distanceToShore / 1000);
+        const dissipationFactor = Math.exp(-distanceToShore / (100 * 1000));
+        const shoreAmplification = 1 / Math.sqrt(0.01);
+        return Math.max(0, initialHeight * geometricFactor * dissipationFactor * shoreAmplification);
+    }
+    
+    return Math.max(0, initialHeight);
+}
+
+function calculatePeakGroundAcceleration(magnitude, distance) {
+    const pga = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
+    return pga;
+}
+
+// Event handlers
+function handleAsteroidSelect(event) {
+    const asteroidId = event.target.value;
+    if (asteroidId) {
+        // Find asteroid in loaded data
+        const asteroid = loadedAsteroids.find(a => a.id === asteroidId);
+        if (asteroid) {
+            selectedAsteroid = asteroid;
+            updateAsteroidParameters(asteroid);
+        }
+    } else {
+        selectedAsteroid = null;
+        resetAsteroidParameters();
+    }
+}
+
+function updateAsteroidParameters(asteroid) {
+    console.log('Updating asteroid parameters:', asteroid);
+    
+    // Update diameter
+    if (asteroid.estimated_diameter && asteroid.estimated_diameter.meters) {
+        const avgDiameter = (asteroid.estimated_diameter.meters.estimated_diameter_min + 
+                            asteroid.estimated_diameter.meters.estimated_diameter_max) / 2;
+        const diameterInput = document.getElementById('diameter');
+        diameterInput.value = Math.round(avgDiameter);
+        diameterInput.min = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_min);
+        diameterInput.max = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_max);
+        updateDiameter();
+        console.log('Updated diameter to:', avgDiameter);
+    }
+    
+    // Update velocity
+    if (asteroid.close_approach_data && asteroid.close_approach_data.length > 0) {
+        const approach = asteroid.close_approach_data[0];
+        if (approach.relative_velocity && approach.relative_velocity.kilometers_per_second) {
+            const velocityKmS = parseFloat(approach.relative_velocity.kilometers_per_second);
+            const velocityMs = velocityKmS * 1000;
+            document.getElementById('velocity').value = Math.round(velocityMs);
+            updateVelocity();
+            console.log('Updated velocity to:', velocityMs);
+        }
+    }
+    
+    // Update impact angle based on orbital inclination
+    if (asteroid.orbital_data && asteroid.orbital_data.inclination) {
+        const inclination = parseFloat(asteroid.orbital_data.inclination);
+        // Convert orbital inclination to impact angle (simplified)
+        const estimatedAngle = Math.min(90, Math.max(10, Math.abs(inclination) + 15));
+        document.getElementById('angle').value = Math.round(estimatedAngle);
+        updateAngle();
+        console.log('Updated angle to:', estimatedAngle);
+    }
+    
+    // Update density based on asteroid type (if available)
+    if (asteroid.asteroid_type) {
+        const densitySelect = document.getElementById('density-type');
+        if (asteroid.asteroid_type.toLowerCase().includes('iron')) {
+            densitySelect.value = 'iron';
+        } else if (asteroid.asteroid_type.toLowerCase().includes('carbonaceous')) {
+            densitySelect.value = 'carbonaceous';
+        } else {
+            densitySelect.value = 'stony';
+        }
+        updateDensity();
+        console.log('Updated density type to:', densitySelect.value);
+    }
+    
+    // Update mass display
+    updateMass();
+}
+
+function resetAsteroidParameters() {
+    document.getElementById('diameter').value = 500;
+    document.getElementById('velocity').value = 15000;
+    document.getElementById('angle').value = 45;
+    updateDiameter();
+    updateVelocity();
+    updateAngle();
+}
+
+function updateDiameter() {
+    const diameter = document.getElementById('diameter').value;
+    document.getElementById('diameter-value').textContent = diameter + ' m';
+    updateMass();
+}
+
+function updateDensity() {
+    updateMass();
+}
+
+function updateMass() {
+    const diameter = parseFloat(document.getElementById('diameter').value);
+    const densityType = document.getElementById('density-type').value;
+    const density = ASTEROID_DENSITIES[densityType];
+    const mass = calculateMass(diameter, density);
+    
+    document.getElementById('mass-display').innerHTML = 
+        `<strong>${(mass / 1e9).toFixed(1)} billion kg</strong><br>
+         <small>Raw: ${mass.toExponential(2)} kg</small>`;
+}
+
+function updateVelocity() {
+    const velocity = document.getElementById('velocity').value;
+    document.getElementById('velocity-value').textContent = (velocity / 1000).toFixed(1) + ' km/s';
+}
+
+function updateAngle() {
+    const angle = document.getElementById('angle').value;
+    document.getElementById('angle-value').textContent = angle + '°';
+}
+
+function updateImpactLocation() {
+    // Could add map interaction here
+}
+
+function updateTargetType() {
+    // Target type changed
+}
+
+// Load asteroids for prediction tab
+let loadedAsteroids = [];
+
+async function loadAsteroids() {
+    if (loadedAsteroids.length > 0) return; // Already loaded
+    
+    try {
+        const response = await fetch('/api/neo-feed?startDate=2024-01-01&endDate=2024-01-07');
+        if (response.ok) {
+            const data = await response.json();
+            loadedAsteroids = data;
+            populateAsteroidSelect(data);
+        } else {
+            // Fallback to sample data
+            loadedAsteroids = getSampleAsteroids();
+            populateAsteroidSelect(loadedAsteroids);
+        }
+    } catch (error) {
+        console.error('Failed to load asteroids:', error);
+        loadedAsteroids = getSampleAsteroids();
+        populateAsteroidSelect(loadedAsteroids);
+    }
+}
+
+function getSampleAsteroids() {
+    return [
+        {
+            id: '2000433',
+            name: '2000433 (2006 QQ23)',
+            is_potentially_hazardous_asteroid: true,
+            asteroid_type: 'stony',
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 250,
+                    estimated_diameter_max: 560
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-11-15',
+                relative_velocity: {
+                    kilometers_per_second: '15.2'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.2',
+                eccentricity: '0.3',
+                inclination: '15.5'
+            }
+        },
+        {
+            id: '2001620',
+            name: '2001620 (2007 DB)',
+            is_potentially_hazardous_asteroid: false,
+            asteroid_type: 'carbonaceous',
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 100,
+                    estimated_diameter_max: 220
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-12-01',
+                relative_velocity: {
+                    kilometers_per_second: '12.8'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.5',
+                eccentricity: '0.25',
+                inclination: '8.2'
+            }
+        },
+        {
+            id: '2000001',
+            name: '2000001 (Iron Asteroid)',
+            is_potentially_hazardous_asteroid: true,
+            asteroid_type: 'iron',
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 50,
+                    estimated_diameter_max: 120
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-10-20',
+                relative_velocity: {
+                    kilometers_per_second: '20.5'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.1',
+                eccentricity: '0.4',
+                inclination: '25.0'
+            }
+        }
+    ];
+}
+
+function populateAsteroidSelect(asteroids) {
+    const select = document.getElementById('asteroid-select');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Choose an asteroid...</option>';
+    
+    asteroids.forEach(asteroid => {
+        const option = document.createElement('option');
+        option.value = asteroid.id;
+        option.textContent = `${asteroid.name} - ${asteroid.is_potentially_hazardous_asteroid ? '⚠️' : '✅'}`;
+        select.appendChild(option);
+    });
+}
+
+// Run simulation
+async function runSimulation() {
+    if (isSimulating) return;
+    
+    isSimulating = true;
+    document.getElementById('simulation-progress').style.display = 'block';
+    document.getElementById('run-simulation').disabled = true;
+    
+    try {
+        // Get parameters with validation
+        const diameter = parseFloat(document.getElementById('diameter').value);
+        const densityType = document.getElementById('density-type').value;
+        const density = ASTEROID_DENSITIES[densityType];
+        const velocity = parseFloat(document.getElementById('velocity').value);
+        const angle = parseFloat(document.getElementById('angle').value);
+        const targetType = document.getElementById('target-type').value;
+        const impactLat = parseFloat(document.getElementById('impact-lat').value);
+        const impactLon = parseFloat(document.getElementById('impact-lon').value);
+        
+        // Validate parameters
+        if (isNaN(diameter) || diameter <= 0) {
+            throw new Error('Invalid diameter value');
+        }
+        if (isNaN(velocity) || velocity <= 0) {
+            throw new Error('Invalid velocity value');
+        }
+        if (isNaN(angle) || angle < 0 || angle > 90) {
+            throw new Error('Invalid impact angle (must be 0-90 degrees)');
+        }
+        if (isNaN(impactLat) || impactLat < -90 || impactLat > 90) {
+            throw new Error('Invalid latitude (must be -90 to 90 degrees)');
+        }
+        if (isNaN(impactLon) || impactLon < -180 || impactLon > 180) {
+            throw new Error('Invalid longitude (must be -180 to 180 degrees)');
+        }
+        if (!density || density <= 0) {
+            throw new Error('Invalid density type selected');
+        }
+        
+        console.log('Simulation parameters:', {
+            diameter, density, velocity, angle, targetType, impactLat, impactLon
+        });
+        
+        // Create simulation request
+        const simulationRequest = {
+            scenario: {
+                asteroid: {
+                    diameter: diameter,
+                    density_type: densityType,
+                    density: density
+                },
+                orbit: {
+                    semi_major_axis: 1.2,
+                    eccentricity: 0.3,
+                    inclination: 15,
+                    longitude_of_ascending_node: 45,
+                    argument_of_periapsis: 30,
+                    mean_anomaly: 180,
+                    epoch: 2460000
+                },
+                impact_angle: angle,
+                impact_velocity: velocity,
+                target_type: targetType,
+                impact_latitude: impactLat,
+                impact_longitude: impactLon
+            },
+            include_tsunami: true,
+            include_seismic: true,
+            include_population: true,
+            resolution_km: 10.0
+        };
+        
+        // Calculate mass first
+        const mass = calculateMass(diameter, density);
+        console.log('Calculated mass:', mass, 'kg');
+        
+        // Calculate impact effects using improved physics
+        const energy = calculateKineticEnergy(mass, velocity);
+        const tntEquivalent = calculateTntEquivalent(energy);
+        const crater = calculateCraterDiameter(energy, angle);
+        const seismicMagnitude = calculateSeismicMagnitude(energy);
+        
+        let tsunamiHeight = null;
+        if (targetType === 'ocean' || targetType === 'oceanic_crust') {
+            tsunamiHeight = calculateTsunamiHeight(energy);
+        }
+        
+        const peakGroundAcceleration = calculatePeakGroundAcceleration(seismicMagnitude, 10);
+        
+        // Create results object with calculated values
+        const results = {
+            impact_energy_joules: energy,
+            tnt_equivalent_megatons: tntEquivalent,
+            crater_diameter_m: crater.diameter,
+            crater_depth_m: crater.depth,
+            seismic_magnitude: seismicMagnitude,
+            tsunami_height_m: tsunamiHeight,
+            peak_ground_acceleration: peakGroundAcceleration,
+            exposed_population: Math.round(energy / 1e15), // Simplified population estimate
+            affected_cities: [], // Simplified
+            estimated_damage_usd: Math.round(energy / 1e12), // Simplified damage estimate
+            uncertainty_bounds: {
+                crater_diameter: [crater.diameter * 0.8, crater.diameter * 1.2],
+                seismic_magnitude: [seismicMagnitude - 0.5, seismicMagnitude + 0.5],
+                tsunami_height: tsunamiHeight ? [tsunamiHeight * 0.5, tsunamiHeight * 2.0] : [0, 0]
+            }
+        };
+        
+        console.log('Simulation results:', results);
+        
+        // Display results
+        displayOutcomeCards(results);
+        
+        // Update visualizations
+        updatePredictionVisualizations(impactLat, impactLon, results);
+        
+    } catch (error) {
+        console.error('Simulation failed:', error);
+        alert('Simulation failed: ' + error.message);
+    } finally {
+        isSimulating = false;
+        document.getElementById('simulation-progress').style.display = 'none';
+        document.getElementById('run-simulation').disabled = false;
+    }
+}
+
+function displayOutcomeCards(results) {
+    const container = document.getElementById('outcome-cards');
+    if (!container) return;
+    
+    const formatNumber = (num, decimals = 1) => {
+        if (num === undefined || num === null || isNaN(num)) return 'N/A';
+        if (num >= 1e12) return `${(num / 1e12).toFixed(decimals)}T`;
+        if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
+        if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+        if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+        return num.toFixed(decimals);
+    };
+    
+    const formatDistance = (meters) => {
+        if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+        return `${meters.toFixed(0)} m`;
+    };
+    
+    const formatEnergy = (joules) => {
+        if (joules >= 1e21) return `${(joules / 1e21).toFixed(1)} ZJ`;
+        if (joules >= 1e18) return `${(joules / 1e18).toFixed(1)} EJ`;
+        if (joules >= 1e15) return `${(joules / 1e15).toFixed(1)} PJ`;
+        return `${(joules / 1e12).toFixed(1)} TJ`;
+    };
+    
+    container.innerHTML = `
+        <div class="cards-grid">
+            <div class="outcome-card energy">
+                <div class="card-icon">💥</div>
+                <div class="card-content">
+                    <h3>Impact Energy</h3>
+                    <div class="card-value">${formatEnergy(results.impact_energy_joules)}</div>
+                    <div class="card-subtitle">${formatNumber(results.tnt_equivalent_megatons)} MT TNT</div>
+                </div>
+            </div>
+            
+            <div class="outcome-card crater">
+                <div class="card-icon">🕳️</div>
+                <div class="card-content">
+                    <h3>Crater Diameter</h3>
+                    <div class="card-value">${formatDistance(results.crater_diameter_m)}</div>
+                    <div class="card-subtitle">Depth: ${formatDistance(results.crater_depth_m)}</div>
+                </div>
+            </div>
+            
+            <div class="outcome-card seismic">
+                <div class="card-icon">🌍</div>
+                <div class="card-content">
+                    <h3>Seismic Magnitude</h3>
+                    <div class="card-value">${results.seismic_magnitude.toFixed(1)}</div>
+                    <div class="card-subtitle">PGA: ${results.peak_ground_acceleration.toFixed(2)} m/s²</div>
+                </div>
+            </div>
+            
+            ${results.tsunami_height_m ? `
+            <div class="outcome-card tsunami">
+                <div class="card-icon">🌊</div>
+                <div class="card-content">
+                    <h3>Tsunami Height</h3>
+                    <div class="card-value">${results.tsunami_height_m.toFixed(1)} m</div>
+                    <div class="card-subtitle">Maximum wave height</div>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// ===== PREDICTION VISUALIZATION FUNCTIONS =====
+
+function initializePredictionVisualizations() {
+    initializePredictionMap();
+    initializePredictionGlobe();
+}
+
+function initializePredictionMap() {
+    const mapContainer = document.getElementById('impact-map');
+    if (!mapContainer || predictionMap) return;
+    
+    try {
+        predictionMap = L.map('impact-map', {
+            center: [40.7128, -74.0060],
+            zoom: 6,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(predictionMap);
+        
+        // Add impact marker
+        const impactMarker = L.marker([40.7128, -74.0060], {
+            icon: L.divIcon({
+                className: 'impact-marker',
+                html: '<div style="background-color: #ff0000; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; animation: pulse 2s infinite;"></div>',
+                iconSize: [20, 20]
+            })
+        }).addTo(predictionMap);
+        
+        impactMarker.bindPopup('<b>Impact Location</b><br>Lat: 40.7128°<br>Lon: -74.0060°');
+        
+        // Add impact circle
+        const impactCircle = L.circle([40.7128, -74.0060], {
+            color: '#ff0000',
+            fillColor: '#ff0000',
+            fillOpacity: 0.1,
+            radius: 50000 // 50km radius
+        }).addTo(predictionMap);
+        
+        console.log('Prediction map initialized');
+    } catch (error) {
+        console.error('Failed to initialize prediction map:', error);
+    }
+}
+
+function initializePredictionGlobe() {
+    const globeContainer = document.getElementById('globe-3d');
+    if (!globeContainer || predictionGlobe) return;
+    
+    try {
+        // Clear container
+        globeContainer.innerHTML = '';
+        
+        // Create Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        // Set up renderer
+        renderer.setSize(300, 300);
+        renderer.setClearColor(0x000000, 0);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        globeContainer.appendChild(renderer.domElement);
+        
+        // Create Earth geometry
+        const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
+        
+        // Create Earth material with realistic ocean color
+        const earthMaterial = new THREE.MeshPhongMaterial({
+            color: 0x1e3a8a, // Deep blue ocean
+            shininess: 100,
+            transparent: false
+        });
+        
+        // Create Earth mesh
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        earth.castShadow = true;
+        earth.receiveShadow = true;
+        scene.add(earth);
+        
+        // Create continents using a more detailed approach
+        const continentGeometry = new THREE.SphereGeometry(1.001, 64, 64);
+        
+        // Create a canvas texture for continents
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw continents on canvas
+        ctx.fillStyle = '#4a5d23';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw simplified continents
+        ctx.fillStyle = '#2d5016';
+        
+        // North America
+        ctx.beginPath();
+        ctx.ellipse(200, 150, 80, 60, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // South America
+        ctx.beginPath();
+        ctx.ellipse(180, 300, 40, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Europe
+        ctx.beginPath();
+        ctx.ellipse(400, 120, 60, 30, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Africa
+        ctx.beginPath();
+        ctx.ellipse(420, 250, 50, 100, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Asia
+        ctx.beginPath();
+        ctx.ellipse(600, 150, 120, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Australia
+        ctx.beginPath();
+        ctx.ellipse(700, 350, 40, 25, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        const continentTexture = new THREE.CanvasTexture(canvas);
+        const continentMaterial = new THREE.MeshPhongMaterial({
+            map: continentTexture,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const continents = new THREE.Mesh(continentGeometry, continentMaterial);
+        scene.add(continents);
+        
+        // Add atmosphere
+        const atmosphereGeometry = new THREE.SphereGeometry(1.1, 32, 32);
+        const atmosphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4facfe,
+            transparent: true,
+            opacity: 0.1
+        });
+        const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+        scene.add(atmosphere);
+        
+        // Add clouds
+        const cloudGeometry = new THREE.SphereGeometry(1.05, 32, 32);
+        const cloudMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.2
+        });
+        const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        scene.add(clouds);
+        
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 3, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Position camera
+        camera.position.z = 3;
+        
+        // Add impact point
+        const impactGeometry = new THREE.SphereGeometry(0.02, 8, 8);
+        const impactMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.5
+        });
+        const impactPoint = new THREE.Mesh(impactGeometry, impactMaterial);
+        impactPoint.position.set(0.7, 0.2, 0.7); // Position on Earth surface
+        scene.add(impactPoint);
+        
+        // Add interactive controls
+        let isMouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let rotationX = 0, rotationY = 0;
+        
+        // Mouse event handlers
+        renderer.domElement.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        renderer.domElement.addEventListener('mousemove', (event) => {
+            if (!isMouseDown) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+        
+        renderer.domElement.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        
+        renderer.domElement.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            camera.position.z += event.deltaY * 0.01;
+            camera.position.z = Math.max(2, Math.min(5, camera.position.z));
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth rotation interpolation
+            rotationX += (targetRotationX - rotationX) * 0.1;
+            rotationY += (targetRotationY - rotationY) * 0.1;
+            
+            // Apply rotations
+            earth.rotation.x = rotationX;
+            earth.rotation.y = rotationY;
+            continents.rotation.x = rotationX;
+            continents.rotation.y = rotationY;
+            clouds.rotation.x = rotationX;
+            clouds.rotation.y = rotationY + 0.1; // Slight offset for clouds
+            atmosphere.rotation.x = rotationX;
+            atmosphere.rotation.y = rotationY;
+            
+            // Rotate impact point with Earth
+            impactPoint.rotation.x = rotationX;
+            impactPoint.rotation.y = rotationY;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Store references
+        predictionGlobe = {
+            scene: scene,
+            camera: camera,
+            renderer: renderer,
+            earth: earth,
+            impactPoint: impactPoint,
+            animate: animate
+        };
+        
+        console.log('Three.js prediction globe initialized');
+    } catch (error) {
+        console.error('Failed to initialize Three.js globe:', error);
+        // Fallback to simple CSS globe
+        globeContainer.innerHTML = `
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+                <div style="text-align: center;">
+                    <div style="width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #4facfe, #1a1a2e); margin: 0 auto 10px; animation: spin 10s linear infinite;"></div>
+                    <div>3D Earth Globe</div>
+                    <div style="font-size: 12px; opacity: 0.7;">Loading...</div>
+                </div>
+            </div>
+        `;
+        
+        // Add fallback CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotateY(0deg); }
+                to { transform: rotateY(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function updatePredictionVisualizations(lat, lon, results) {
+    // Update map center and markers
+    if (predictionMap) {
+        predictionMap.setView([lat, lon], 8);
+        
+        // Update impact marker
+        const impactMarker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'impact-marker',
+                html: '<div style="background-color: #ff0000; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; animation: pulse 2s infinite;"></div>',
+                iconSize: [20, 20]
+            })
+        });
+        
+        // Clear existing markers
+        predictionMap.eachLayer(layer => {
+            if (layer instanceof L.Marker || layer instanceof L.Circle) {
+                predictionMap.removeLayer(layer);
+            }
+        });
+        
+        impactMarker.addTo(predictionMap);
+        impactMarker.bindPopup(`<b>Impact Location</b><br>Lat: ${lat.toFixed(4)}°<br>Lon: ${lon.toFixed(4)}°`);
+        
+        // Add impact circle based on crater diameter
+        if (results && results.crater_diameter_m) {
+            const radius = results.crater_diameter_m / 2; // Convert diameter to radius
+            L.circle([lat, lon], {
+                color: '#ff0000',
+                fillColor: '#ff0000',
+                fillOpacity: 0.1,
+                radius: radius
+            }).addTo(predictionMap);
+        }
     }
 }

@@ -30,6 +30,9 @@
             <button class="nav-tab active" data-tab="overview">
                 <i class="fas fa-chart-pie"></i> Overview
             </button>
+            <button class="nav-tab" data-tab="prediction">
+                <i class="fas fa-bullseye"></i> Prediction
+            </button>
             <button class="nav-tab" data-tab="close-approaches">
                 <i class="fas fa-satellite"></i> Close Approaches
             </button>
@@ -44,9 +47,6 @@
             </button>
             <button class="nav-tab" data-tab="simulation">
                 <i class="fas fa-calculator"></i> Simulation
-            </button>
-            <button class="nav-tab" data-tab="map">
-                <i class="fas fa-map"></i> Interactive Map
             </button>
         </nav>
 
@@ -160,6 +160,12 @@
 
         <!-- Close Approaches Tab -->
         <div id="close-approaches" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Close Approaches Map</h3>
+                <div id="close-approaches-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="date-range">Date Range:</label>
@@ -197,6 +203,12 @@
 
         <!-- Fireballs Tab -->
         <div id="fireballs" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Fireballs Map</h3>
+                <div id="fireballs-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="fireball-since">Since Date:</label>
@@ -229,6 +241,12 @@
 
         <!-- Near Earth Objects Tab -->
         <div id="near-earth" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Near Earth Objects Map</h3>
+                <div id="near-earth-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="neo-start">Start Date:</label>
@@ -547,26 +565,116 @@
             </div>
         </div>
 
-        <!-- Interactive Map Tab -->
-        <div id="map" class="tab-content">
-            <div class="map-controls">
-                <button id="show-natural-events-map" class="btn-secondary">
-                    <i class="fas fa-globe-americas"></i> Show Natural Events
-                </button>
-                <button id="show-fireballs-map" class="btn-secondary">
-                    <i class="fas fa-fire"></i> Show Fireballs
-                </button>
-                <button id="show-approaches-map" class="btn-secondary">
-                    <i class="fas fa-satellite"></i> Show Approaches
-                </button>
-                <button id="clear-map" class="btn-secondary">
-                    <i class="fas fa-trash"></i> Clear Map
-                </button>
+        <!-- Prediction Tab -->
+        <div id="prediction" class="tab-content">
+            <div class="prediction-header">
+                <h2><i class="fas fa-calculator"></i> Asteroid Impact Prediction</h2>
+                <p>Simulate asteroid impact scenarios and analyze potential effects</p>
             </div>
-            <div id="map-container" class="map-container"></div>
+
+            <div class="prediction-main">
+                <!-- Left side - Asteroid Settings -->
+                <div class="asteroid-settings">
+                    <h3><i class="fas fa-asterisk"></i> Asteroid Properties</h3>
+                    
+                    <div class="control-group">
+                        <label for="asteroid-select">Select Asteroid:</label>
+                        <select id="asteroid-select">
+                            <option value="">Choose an asteroid...</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="diameter">Diameter (m):</label>
+                        <input type="range" id="diameter" min="10" max="2000" value="500" />
+                        <span id="diameter-value">500 m</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="density-type">Density Type:</label>
+                        <select id="density-type">
+                            <option value="stony">Stony (3000 kg/m³)</option>
+                            <option value="iron">Iron (7800 kg/m³)</option>
+                            <option value="carbonaceous">Carbonaceous (2000 kg/m³)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="mass-display">Mass:</label>
+                        <div id="mass-display">Calculating...</div>
+                    </div>
+
+                    <h3><i class="fas fa-bullseye"></i> Impact Parameters</h3>
+                    
+                    <div class="control-group">
+                        <label for="impact-lat">Latitude:</label>
+                        <input type="number" id="impact-lat" min="-90" max="90" step="0.1" value="40.7128" />
+                    </div>
+
+                    <div class="control-group">
+                        <label for="impact-lon">Longitude:</label>
+                        <input type="number" id="impact-lon" min="-180" max="180" step="0.1" value="-74.0060" />
+                    </div>
+
+                    <div class="control-group">
+                        <label for="velocity">Velocity (m/s):</label>
+                        <input type="range" id="velocity" min="5000" max="50000" step="1000" value="15000" />
+                        <span id="velocity-value">15.0 km/s</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="angle">Impact Angle (degrees):</label>
+                        <input type="range" id="angle" min="10" max="90" step="5" value="45" />
+                        <span id="angle-value">45°</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="target-type">Target Type:</label>
+                        <select id="target-type">
+                            <option value="continental_crust">Continental Crust</option>
+                            <option value="oceanic_crust">Oceanic Crust</option>
+                            <option value="ocean">Ocean</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <button id="run-simulation" class="btn-primary">
+                            <i class="fas fa-play"></i> Run Simulation
+                        </button>
+                    </div>
+
+                    <div id="simulation-progress" class="simulation-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p>Calculating impact effects...</p>
+                    </div>
+                </div>
+
+                <!-- Right side - Map and Results -->
+                <div class="right-section">
+                    <!-- Top Right - Impact Map -->
+                    <div class="map-container">
+                        <h3><i class="fas fa-map"></i> Impact Map</h3>
+                        <div id="impact-map" class="impact-map"></div>
+                    </div>
+
+                    <!-- Bottom Right - Results -->
+                    <div class="results-section">
+                        <h3><i class="fas fa-chart-line"></i> Impact Analysis Results</h3>
+                        <div id="outcome-cards" class="outcome-cards">
+                            <div class="no-results">
+                                <p>Run a simulation to see impact analysis results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
