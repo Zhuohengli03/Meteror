@@ -7,6 +7,11 @@ let approachMarkers = [];
 let naturalEventMarkers = [];
 let isLoadingOverview = false;
 
+// Tab-specific maps
+let closeApproachesMap = null;
+let fireballsMap = null;
+let nearEarthMap = null;
+
 // Prediction tab variables
 let selectedAsteroid = null;
 let isSimulating = false;
@@ -24,91 +29,118 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Initialize Leaflet map
-    if (document.getElementById('map-container')) {
-        map = L.map('map-container', {
+    // Initialize tab maps when needed
+    initializeTabMaps();
+}
+
+function initializeTabMaps() {
+    // Initialize maps for each tab
+    initializeCloseApproachesMap();
+    initializeFireballsMap();
+    initializeNearEarthMap();
+}
+
+function initializeCloseApproachesMap() {
+    const mapContainer = document.getElementById('close-approaches-map');
+    if (!mapContainer || closeApproachesMap) return;
+    
+    try {
+        closeApproachesMap = L.map('close-approaches-map', {
             center: [20, 0],
             zoom: 2,
             zoomControl: true,
-            attributionControl: true,
-            preferCanvas: false,
-            renderer: L.canvas()
+            attributionControl: true
         });
         
-        // Create multiple tile layers with better error handling
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c'],
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
+            maxZoom: 19
+        }).addTo(closeApproachesMap);
         
-        const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c', 'd'],
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
-        
-        const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri',
-            maxZoom: 19,
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-            crossOrigin: true
-        });
-        
-        // Try to add the first layer, with fallbacks
-        let layerAdded = false;
-        
-        // Try OpenStreetMap first
-        osmLayer.on('tileerror', function() {
-            if (!layerAdded) {
-                console.log('OSM tiles failed, trying CartoDB...');
-                map.removeLayer(osmLayer);
-                cartoLayer.addTo(map);
-                layerAdded = true;
-            }
-        });
-        
-        osmLayer.on('load', function() {
-            layerAdded = true;
-        });
-        
-        // Add default layer
-        osmLayer.addTo(map);
-        
-        // Add layer control with multiple options
-        const baseMaps = {
-            "OpenStreetMap": osmLayer,
-            "CartoDB Light": cartoLayer,
-            "Esri Satellite": esriLayer
-        };
-        
-        L.control.layers(baseMaps).addTo(map);
-        
-        // Force a refresh after a short delay
-        setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-                map.setView([20, 0], 2);
-                
-                // If tiles still don't load, try a different approach
-                setTimeout(() => {
-                    if (map && !map.hasLayer(osmLayer) && !map.hasLayer(cartoLayer)) {
-                        console.log('Trying alternative tile source...');
-                        // Try a different tile source
-                        const altLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 19
-                        });
-                        altLayer.addTo(map);
-                    }
-                }, 3000);
-            }
-        }, 1000);
+        console.log('Close approaches map initialized');
+    } catch (error) {
+        console.error('Failed to initialize close approaches map:', error);
     }
+}
+
+function initializeFireballsMap() {
+    const mapContainer = document.getElementById('fireballs-map');
+    if (!mapContainer || fireballsMap) return;
+    
+    try {
+        fireballsMap = L.map('fireballs-map', {
+            center: [20, 0],
+            zoom: 2,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(fireballsMap);
+        
+        console.log('Fireballs map initialized');
+    } catch (error) {
+        console.error('Failed to initialize fireballs map:', error);
+    }
+}
+
+function initializeNearEarthMap() {
+    const mapContainer = document.getElementById('near-earth-map');
+    if (!mapContainer || nearEarthMap) return;
+    
+    try {
+        nearEarthMap = L.map('near-earth-map', {
+            center: [20, 0],
+            zoom: 2,
+            zoomControl: true,
+            attributionControl: true
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(nearEarthMap);
+        
+        console.log('Near Earth map initialized');
+    } catch (error) {
+        console.error('Failed to initialize near Earth map:', error);
+    }
+}
+
+
+function addHideLoadingButtonToTabs() {
+    // Add Hide Loading button to each tab that has controls
+    const tabsWithControls = [
+        'close-approaches',
+        'fireballs', 
+        'near-earth',
+        'natural-events',
+        'prediction'
+    ];
+    
+    tabsWithControls.forEach(tabId => {
+        const tabElement = document.getElementById(tabId);
+        if (tabElement) {
+            const controlsDiv = tabElement.querySelector('.controls');
+            if (controlsDiv) {
+                // Check if button already exists
+                if (!controlsDiv.querySelector('.hide-loading-btn')) {
+                    const hideLoadingButton = document.createElement('button');
+                    hideLoadingButton.className = 'btn-secondary hide-loading-btn';
+                    hideLoadingButton.innerHTML = '<i class="fas fa-stop"></i> Hide Loading (if any error occurs)';
+                    hideLoadingButton.style.marginLeft = '10px';
+                    hideLoadingButton.addEventListener('click', () => {
+                        console.log('Manually hiding loading indicator');
+                        hideLoading();
+                        isLoadingOverview = false;
+                    });
+                    controlsDiv.appendChild(hideLoadingButton);
+                }
+            }
+        }
+    });
 }
 
 function setupEventListeners() {
@@ -126,35 +158,8 @@ function setupEventListeners() {
     document.getElementById('fetch-neos')?.addEventListener('click', fetchNearEarthObjects);
     document.getElementById('fetch-natural-events')?.addEventListener('click', fetchNaturalEvents);
 
-    // Map controls
-    document.getElementById('show-natural-events-map')?.addEventListener('click', showNaturalEventsOnMap);
-    document.getElementById('show-fireballs-map')?.addEventListener('click', showFireballsOnMap);
-    document.getElementById('show-approaches-map')?.addEventListener('click', showApproachesOnMap);
-    document.getElementById('clear-map')?.addEventListener('click', clearMap);
-    
-    // Add debug button for map troubleshooting
-    const debugButton = document.createElement('button');
-    debugButton.className = 'btn-secondary';
-    debugButton.innerHTML = '<i class="fas fa-bug"></i> Debug Map';
-    debugButton.style.marginLeft = '10px';
-    debugButton.addEventListener('click', debugMap);
-    
-    const mapControls = document.querySelector('.map-controls');
-    if (mapControls) {
-        mapControls.appendChild(debugButton);
-        
-        // Add loading debug button
-        const loadingDebugButton = document.createElement('button');
-        loadingDebugButton.className = 'btn-secondary';
-        loadingDebugButton.innerHTML = '<i class="fas fa-stop"></i> Hide Loading';
-        loadingDebugButton.style.marginLeft = '10px';
-        loadingDebugButton.addEventListener('click', () => {
-            console.log('Manually hiding loading indicator');
-            hideLoading();
-            isLoadingOverview = false;
-        });
-        mapControls.appendChild(loadingDebugButton);
-    }
+    // Add loading debug button to each tab for troubleshooting
+    addHideLoadingButtonToTabs();
     
     // API key reset button
     document.getElementById('reset-api-key')?.addEventListener('click', resetApiKey);
@@ -262,12 +267,28 @@ function switchTab(tabName) {
         if (!isLoadingOverview) {
             loadOverviewData();
         }
-    } else if (tabName === 'map') {
-        // Refresh map when switching to map tab
+    } else if (tabName === 'close-approaches') {
+        // Initialize map if not already done
         setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-                map.setView([20, 0], 2);
+            initializeCloseApproachesMap();
+            if (closeApproachesMap) {
+                closeApproachesMap.invalidateSize();
+            }
+        }, 100);
+    } else if (tabName === 'fireballs') {
+        // Initialize map if not already done
+        setTimeout(() => {
+            initializeFireballsMap();
+            if (fireballsMap) {
+                fireballsMap.invalidateSize();
+            }
+        }, 100);
+    } else if (tabName === 'near-earth') {
+        // Initialize map if not already done
+        setTimeout(() => {
+            initializeNearEarthMap();
+            if (nearEarthMap) {
+                nearEarthMap.invalidateSize();
             }
         }, 100);
     }
@@ -297,6 +318,7 @@ async function fetchCloseApproaches() {
         
         displayApproachesTable(data);
         updateApproachesCount(data.length);
+        updateCloseApproachesMap(data);
     } catch (error) {
         console.error('Error fetching close approaches:', error);
         alert('Error fetching close approaches data');
@@ -316,6 +338,7 @@ async function fetchFireballs() {
         
         displayFireballsTable(data);
         updateFireballsCount(data.length);
+        updateFireballsMap(data);
     } catch (error) {
         console.error('Error fetching fireballs:', error);
         alert('Error fetching fireballs data');
@@ -335,6 +358,7 @@ async function fetchNearEarthObjects() {
         
         displayNeosTable(data);
         updateHazardousCount(data.filter(item => item.hazardous === 'yes').length);
+        updateNearEarthMap(data);
     } catch (error) {
         console.error('Error fetching NEOs:', error);
         alert('Error fetching near earth objects data');
@@ -1004,6 +1028,155 @@ function debugMap() {
     
     alert('Map debug info logged to console. Check browser developer tools.');
 }
+
+// Tab-specific map update functions
+function updateCloseApproachesMap(data) {
+    if (!closeApproachesMap) return;
+    
+    // Clear existing markers
+    closeApproachesMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            closeApproachesMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each approach
+    data.forEach(approach => {
+        // For approaches, we'll show them as orbital markers
+        // Since we don't have exact coordinates, we'll place them randomly around Earth
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        
+        const marker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'approach-marker',
+                html: '<div style="background-color: #4facfe; border-radius: 50%; width: 10px; height: 10px; border: 2px solid white;"></div>',
+                iconSize: [10, 10]
+            })
+        });
+        
+        const popupContent = `
+            <div style="font-family: Arial, sans-serif;">
+                <h4 style="margin: 0 0 8px 0; color: #4facfe;">🛰️ Close Approach</h4>
+                <p style="margin: 4px 0;"><strong>Object:</strong> ${approach.object || approach.fullname || approach.des || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Date:</strong> ${approach.cd || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Distance:</strong> ${approach.dist || 'Unknown'} AU</p>
+                <p style="margin: 4px 0;"><strong>Velocity:</strong> ${approach.v_rel || 'Unknown'} km/s</p>
+                <p style="margin: 4px 0;"><strong>Magnitude:</strong> ${approach.h || 'Unknown'}</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.addTo(closeApproachesMap);
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(closeApproachesMap._layers);
+        if (group.getBounds().isValid()) {
+            closeApproachesMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
+function updateFireballsMap(data) {
+    if (!fireballsMap) return;
+    
+    // Clear existing markers
+    fireballsMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            fireballsMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each fireball
+    data.forEach(fireball => {
+        if (fireball.lat && fireball.lon) {
+            const lat = parseFloat(fireball.lat);
+            const lon = parseFloat(fireball.lon);
+            
+            if (!isNaN(lat) && !isNaN(lon)) {
+                const marker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'fireball-marker',
+                        html: '<div style="background-color: #ff6b6b; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>',
+                        iconSize: [12, 12]
+                    })
+                });
+                
+                const popupContent = `
+                    <div style="font-family: Arial, sans-serif;">
+                        <h4 style="margin: 0 0 8px 0; color: #ff6b6b;">🔥 Fireball Event</h4>
+                        <p style="margin: 4px 0;"><strong>Date:</strong> ${fireball.date || 'Unknown'}</p>
+                        <p style="margin: 4px 0;"><strong>Energy:</strong> ${fireball.energy || 'Unknown'} J</p>
+                        <p style="margin: 4px 0;"><strong>Velocity:</strong> ${fireball.vel || 'Unknown'} km/s</p>
+                        <p style="margin: 4px 0;"><strong>Altitude:</strong> ${fireball.alt || 'Unknown'} km</p>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                marker.addTo(fireballsMap);
+            }
+        }
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(fireballsMap._layers);
+        if (group.getBounds().isValid()) {
+            fireballsMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
+function updateNearEarthMap(data) {
+    if (!nearEarthMap) return;
+    
+    // Clear existing markers
+    nearEarthMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            nearEarthMap.removeLayer(layer);
+        }
+    });
+    
+    // Add markers for each NEO (simplified - no exact coordinates available)
+    data.forEach(neo => {
+        // Place markers randomly around Earth
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        
+        const isHazardous = neo.hazardous === 'yes';
+        const marker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'neo-marker',
+                html: `<div style="background-color: ${isHazardous ? '#ff6b6b' : '#4facfe'}; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>`,
+                iconSize: [12, 12]
+            })
+        });
+        
+        const popupContent = `
+            <div style="font-family: Arial, sans-serif;">
+                <h4 style="margin: 0 0 8px 0; color: ${isHazardous ? '#ff6b6b' : '#4facfe'};">${isHazardous ? '⚠️' : '✅'} NEO</h4>
+                <p style="margin: 4px 0;"><strong>Name:</strong> ${neo.name || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Date:</strong> ${neo.date || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Hazardous:</strong> ${neo.hazardous || 'Unknown'}</p>
+                <p style="margin: 4px 0;"><strong>Size:</strong> ${neo.min || 'Unknown'} - ${neo.max || 'Unknown'} km</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.addTo(nearEarthMap);
+    });
+    
+    // Fit map to show all markers if there are any
+    if (data.length > 0) {
+        const group = new L.featureGroup(nearEarthMap._layers);
+        if (group.getBounds().isValid()) {
+            nearEarthMap.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+}
+
 
 function updateApiKeyStatus(status) {
     const statusElement = document.getElementById('api-status');

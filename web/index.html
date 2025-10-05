@@ -30,6 +30,9 @@
             <button class="nav-tab active" data-tab="overview">
                 <i class="fas fa-chart-pie"></i> Overview
             </button>
+            <button class="nav-tab" data-tab="prediction">
+                <i class="fas fa-bullseye"></i> Prediction
+            </button>
             <button class="nav-tab" data-tab="close-approaches">
                 <i class="fas fa-satellite"></i> Close Approaches
             </button>
@@ -42,11 +45,8 @@
             <button class="nav-tab" data-tab="natural-events">
                 <i class="fas fa-globe-americas"></i> Natural Events
             </button>
-            <button class="nav-tab" data-tab="prediction">
-                <i class="fas fa-calculator"></i> Prediction
-            </button>
-            <button class="nav-tab" data-tab="map">
-                <i class="fas fa-map"></i> Interactive Map
+            <button class="nav-tab" data-tab="simulation">
+                <i class="fas fa-calculator"></i> Simulation
             </button>
         </nav>
 
@@ -160,6 +160,12 @@
 
         <!-- Close Approaches Tab -->
         <div id="close-approaches" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Close Approaches Map</h3>
+                <div id="close-approaches-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="date-range">Date Range:</label>
@@ -197,6 +203,12 @@
 
         <!-- Fireballs Tab -->
         <div id="fireballs" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Fireballs Map</h3>
+                <div id="fireballs-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="fireball-since">Since Date:</label>
@@ -229,6 +241,12 @@
 
         <!-- Near Earth Objects Tab -->
         <div id="near-earth" class="tab-content">
+            <!-- Map Section -->
+            <div class="tab-map-section">
+                <h3><i class="fas fa-map"></i> Near Earth Objects Map</h3>
+                <div id="near-earth-map" class="tab-map"></div>
+            </div>
+            
             <div class="controls">
                 <div class="control-group">
                     <label for="neo-start">Start Date:</label>
@@ -654,24 +672,6 @@
             </div>
         </div>
 
-        <!-- Interactive Map Tab -->
-        <div id="map" class="tab-content">
-            <div class="map-controls">
-                <button id="show-natural-events-map" class="btn-secondary">
-                    <i class="fas fa-globe-americas"></i> Show Natural Events
-                </button>
-                <button id="show-fireballs-map" class="btn-secondary">
-                    <i class="fas fa-fire"></i> Show Fireballs
-                </button>
-                <button id="show-approaches-map" class="btn-secondary">
-                    <i class="fas fa-satellite"></i> Show Approaches
-                </button>
-                <button id="clear-map" class="btn-secondary">
-                    <i class="fas fa-trash"></i> Clear Map
-                </button>
-            </div>
-            <div id="map-container" class="map-container"></div>
-        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
