@@ -1,0 +1,52 @@
+文件整理总结
+================
+
+整理时间: 2025-10-05
+
+已删除的文件:
+-------------
+1. frontend/test-deflection-fix.md - 临时测试文档
+2. CLEANUP_SUMMARY.md - 旧的清理总结
+3. backend/simple_server.py - 简单测试服务器
+4. backend/test_simple.py - 简单测试文件
+5. backend/app/routers/simulate_simple.py - 简化版模拟路由
+6. 如何使用GeoNames.md - 已合并到使用指南.md
+7. 偏转策略修复说明.md - 已合并到使用指南.md
+8. GEONAMES_INTEGRATION.md - 已合并到 UPDATES_SUMMARY.md
+
+新增/整理的文件:
+-----------------
+1. 使用指南.md - 统一的中文使用指南（合并了多个文档）
+2. 文档索引.md - 文档导航和快速链接
+
+保留的核心文档:
+-----------------
+根目录:
+  - README.md - 项目总览（英文）
+  - UPDATES_SUMMARY.md - 技术更新总结
+  - 使用指南.md - 中文使用指南
+  - 文档索引.md - 文档索引
+  - env.example - 环境变量示例
+  - docker-compose.yml - Docker 配置
+
+docs/ 目录:
+  - api.md - API 文档
+  - formulas.md - 物理公式
+  - data-sources.md - 数据来源
+  - geonames-setup.md - GeoNames 设置（英文）
+
+整理效果:
+---------
+- 删除了 8 个冗余/临时文件
+- 合并了 3 个重复的中文文档
+- 创建了统一的使用指南和文档索引
+- 文档结构更清晰，更易于导航
+
+推荐阅读顺序:
+-------------
+1. 文档索引.md - 了解所有文档
+2. 使用指南.md - 学习如何使用
+3. UPDATES_SUMMARY.md - 了解最新更新
+4. docs/ - 深入技术细节
+
+项目现在更整洁了！✨

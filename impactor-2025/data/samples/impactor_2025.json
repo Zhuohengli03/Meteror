@@ -1,0 +1,123 @@
+{
+  "name": "Impactor-2025",
+  "description": "A hypothetical near-Earth asteroid impact scenario demonstrating the Defend Earth simulation system",
+  "scenario": {
+    "asteroid": {
+      "diameter": 500.0,
+      "density_type": "stony",
+      "density": 3000.0
+    },
+    "orbit": {
+      "semi_major_axis": 1.2,
+      "eccentricity": 0.3,
+      "inclination": 15.0,
+      "longitude_of_ascending_node": 45.0,
+      "argument_of_periapsis": 30.0,
+      "mean_anomaly": 180.0,
+      "epoch": 2460000.0
+    },
+    "impact_angle": 45.0,
+    "impact_velocity": 15000.0,
+    "target_type": "continental_crust",
+    "impact_latitude": 40.7128,
+    "impact_longitude": -74.0060,
+    "impact_time": 2460000.0
+  },
+  "deflection": {
+    "strategy_type": "kinetic_impactor",
+    "delta_v": 0.1,
+    "delta_v_direction": [1.0, 0.0, 0.0],
+    "application_time": 90.0,
+    "impactor_mass": 1000.0,
+    "impactor_velocity": 10000.0,
+    "impactor_angle": 0.0
+  },
+  "timeline": [
+    {
+      "time": -90,
+      "event": "Asteroid Discovery",
+      "description": "Near-Earth asteroid 2025-IMP detected by ground-based telescopes. Initial orbital calculations show potential Earth impact trajectory.",
+      "visualization": {
+        "camera_position": [0, 0, 5],
+        "focus": "asteroid",
+        "highlight": "orbit"
+      }
+    },
+    {
+      "time": -60,
+      "event": "Threat Assessment",
+      "description": "Detailed analysis confirms impact probability of 85%. Asteroid diameter estimated at 500m, mass approximately 200 million tons.",
+      "visualization": {
+        "camera_position": [2, 2, 3],
+        "focus": "earth",
+        "highlight": "impact_zone"
+      }
+    },
+    {
+      "time": -30,
+      "event": "Deflection Mission Launch",
+      "description": "Kinetic impactor spacecraft launched to intercept asteroid. Mission designed to apply 0.1 m/s delta-v 90 days before impact.",
+      "visualization": {
+        "camera_position": [1, 1, 2],
+        "focus": "impactor",
+        "highlight": "trajectory"
+      }
+    },
+    {
+      "time": -7,
+      "event": "Final Approach",
+      "description": "Asteroid approaches Earth, deflection mission in final phase. Ground-based tracking shows successful trajectory modification.",
+      "visualization": {
+        "camera_position": [0.5, 0.5, 1.5],
+        "focus": "both",
+        "highlight": "deflection"
+      }
+    },
+    {
+      "time": 0,
+      "event": "Deflection Success",
+      "description": "Kinetic impactor successfully deflects asteroid. Miss distance increased from 0km to 15,000km. Earth impact avoided.",
+      "visualization": {
+        "camera_position": [0, 0, 1],
+        "focus": "earth",
+        "highlight": "success"
+      }
+    },
+    {
+      "time": 1,
+      "event": "Mission Assessment",
+      "description": "Post-deflection analysis confirms successful mission. Asteroid continues on modified orbit, no longer a threat to Earth.",
+      "visualization": {
+        "camera_position": [2, 2, 4],
+        "focus": "asteroid",
+        "highlight": "new_orbit"
+      }
+    }
+  ],
+  "educational_notes": [
+    "This scenario demonstrates the importance of early detection and deflection capabilities for planetary defense.",
+    "The kinetic impactor method is one of the most feasible deflection strategies, requiring years of lead time.",
+    "Success depends on precise targeting, sufficient impactor mass, and accurate orbital predictions.",
+    "Real deflection missions would require international cooperation and significant resources.",
+    "The 0.1 m/s delta-v applied 90 days before impact is sufficient to change the miss distance by thousands of kilometers.",
+    "This simulation uses simplified physics models; real deflection missions would require more complex calculations."
+  ],
+  "physics_parameters": {
+    "asteroid_mass_kg": 196349540849.0,
+    "impact_energy_joules": 2.208e19,
+    "tnt_equivalent_megatons": 5278.0,
+    "crater_diameter_m": 6450.0,
+    "seismic_magnitude": 9.3,
+    "tsunami_height_m": 0.0,
+    "exposed_population": 6450778
+  },
+  "deflection_parameters": {
+    "miss_distance_km": 15000.0,
+    "deflection_angle_deg": 0.57,
+    "impact_probability": 0.0,
+    "energy_reduction_percent": 100.0,
+    "population_exposure_reduction": 6450778,
+    "strategy_efficiency": 0.1,
+    "required_lead_time_days": 90.0
+  }
+}

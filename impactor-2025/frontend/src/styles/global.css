@@ -1,0 +1,1057 @@
+/**
+ * Global styles for Defend Earth application
+ */
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+}
+
+/* App layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-nav {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-brand h2 {
+  color: #4A90E2;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #4A90E2;
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.app-footer {
+  background: rgba(0, 0, 0, 0.8);
+  color: #666;
+  text-align: center;
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #357ABD 0%, #2E6BA8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Home page */
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 4rem 0;
+  color: white;
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #4A90E2 0%, #FF6B6B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-section p {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.demo-info {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-info h2 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.demo-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.features-section {
+  margin: 4rem 0;
+}
+
+.features-section h2 {
+  text-align: center;
+  color: white;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-card h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.feature-card p {
+  color: #ccc;
+}
+
+/* Scenario page */
+.scenario-page {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.scenario-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.scenario-header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+/* Main content area */
+.scenario-main {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  min-height: 600px;
+}
+
+/* Left side - Asteroid Settings */
+.asteroid-settings {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+}
+
+/* Right side - Maps Section */
+.maps-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  min-height: 600px;
+}
+
+.globe-container {
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.globe-container h3 {
+  color: white;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.map-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1;
+  min-height: 0;
+}
+
+.map-container h3 {
+  color: white;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* Bottom section - Impact Analysis */
+.analysis-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+}
+
+.analysis-section h2 {
+  color: white;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.results-container {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+/* Impact marker styles */
+.impact-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.impact-marker div {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  }
+}
+
+/* Asteroid info styles */
+.asteroid-info {
+  background: rgba(76, 144, 226, 0.1);
+  border: 1px solid rgba(76, 144, 226, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.asteroid-info strong {
+  color: #4A90E2;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.asteroid-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.info-text {
+  color: #FFA500;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .scenario-main {
+    grid-template-columns: 300px 1fr;
+  }
+  
+  .maps-section {
+    min-height: 500px;
+  }
+  
+  .maps-section.custom-collapsed .globe-container {
+    min-height: 500px;
+  }
+  
+  .maps-section.custom-collapsed .map-container {
+    min-height: 200px;
+  }
+  
+  .maps-section.custom-expanded .globe-container {
+    min-height: 240px;
+  }
+  
+  .maps-section.custom-expanded .map-container {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .scenario-main {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .asteroid-settings {
+    position: static;
+    order: 2;
+  }
+  
+  .maps-section {
+    order: 1;
+    min-height: 400px;
+  }
+  
+  .maps-section.custom-collapsed .globe-container {
+    min-height: 300px;
+  }
+  
+  .maps-section.custom-collapsed .map-container {
+    min-height: 150px;
+  }
+  
+  .maps-section.custom-expanded .globe-container {
+    min-height: 180px;
+  }
+  
+  .maps-section.custom-expanded .map-container {
+    min-height: 180px;
+  }
+  
+  .scenario-page {
+    padding: 0 0.5rem;
+  }
+}
+
+/* Hide Leaflet attribution */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Custom settings styling */
+.custom-settings {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-settings .control-group {
+  margin-bottom: 1rem;
+}
+
+.custom-settings .control-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Dynamic map sizing based on custom settings state */
+.maps-section.custom-collapsed {
+  /* When custom settings are collapsed, 3D is larger, 2D is smaller */
+}
+
+.maps-section.custom-collapsed .globe-container {
+  flex: 2; /* 3D globe takes more space */
+  min-height: 700px;
+}
+
+.maps-section.custom-collapsed .map-container {
+  flex: 1; /* 2D map takes less space */
+  min-height: 300px;
+}
+
+.maps-section.custom-expanded {
+  /* When custom settings are expanded, both maps are equal size */
+}
+
+.maps-section.custom-expanded .globe-container {
+  flex: 1; /* Equal space */
+  min-height: 500px;
+}
+
+.maps-section.custom-expanded .map-container {
+  flex: 1; /* Equal space */
+  min-height: 500px;
+}
+
+/* Controls panel */
+.controls-panel {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  color: white;
+}
+
+.panel-section {
+  margin-bottom: 1.5rem;
+}
+
+.panel-section h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.control-group {
+  margin-bottom: 0.8rem;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.control-group input,
+.control-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.control-group span {
+  margin-left: 0.5rem;
+  color: #ccc;
+}
+
+.strategy-info {
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+.strategy-info h4 {
+  color: #4A90E2;
+  margin-bottom: 0.5rem;
+}
+
+.strategy-info p {
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.simulation-progress {
+  margin-top: 1rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4A90E2, #FF6B6B);
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  color: #FF6B6B;
+}
+
+/* Outcome cards */
+.outcome-cards {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.outcome-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-icon {
+  font-size: 2rem;
+}
+
+.card-content h3 {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 0.25rem;
+}
+
+.card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.deflection-results {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.deflection-results h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.deflection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.deflection-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.deflection-card h4 {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.deflection-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.success {
+  color: #4CAF50;
+}
+
+.warning {
+  color: #FF9800;
+}
+
+/* Affected cities */
+.affected-cities {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.affected-cities h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.cities-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.city-item {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.city-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.city-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.city-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.city-distance {
+  color: var(--text-secondary);
+}
+
+.city-exposure {
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.city-exposure.high {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.city-exposure.medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.city-exposure.low {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.city-population {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.uncertainty-bounds {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.uncertainty-bounds h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.uncertainty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.uncertainty-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.uncertainty-item h4 {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.uncertainty-range {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+/* Demo page */
+.demo-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+}
+
+.demo-header .demo-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.demo-visualization {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.demo-pulse-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6);
+  animation: demo-pulse 900ms ease-out forwards;
+}
+
+@keyframes demo-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6); opacity: 1; }
+  100% { box-shadow: 0 0 0 40px rgba(66, 133, 244, 0); opacity: 0; }
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.demo-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #4A90E2;
+}
+
+.demo-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.demo-timeline h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.timeline-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.timeline-step {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.timeline-step.active {
+  border-color: #4A90E2;
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.timeline-step.completed {
+  opacity: 0.7;
+}
+
+.step-time {
+  font-weight: 600;
+  color: #4A90E2;
+  margin-bottom: 0.25rem;
+}
+
+.step-event {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.step-description {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.demo-visualization {
+  text-align: center;
+}
+
+.demo-visualization h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.demo-globe {
+  margin-top: 1rem;
+}
+
+.demo-educational {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-educational h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.demo-educational ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.demo-educational li {
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.demo-educational li::before {
+  content: "•";
+  color: #4A90E2;
+  position: absolute;
+  left: 0;
+}
+
+/* About page */
+.about-page {
+  max-width: 800px;
+  margin: 0 auto;
+  color: white;
+}
+
+.about-page h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #4A90E2;
+  text-align: center;
+}
+
+.about-content section {
+  margin-bottom: 3rem;
+}
+
+.about-content h2 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+.about-content p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.about-content ul {
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.about-content li {
+  margin-bottom: 0.5rem;
+}
+
+/* Simulation overlay */
+.simulation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.simulation-modal {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.simulation-modal h3 {
+  color: #4A90E2;
+  margin-bottom: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .scenario-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .demo-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+}
+
+/* Loading states */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #666;
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+.p-4 { padding: 2rem; }
