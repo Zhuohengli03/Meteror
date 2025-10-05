@@ -7,6 +7,10 @@ let approachMarkers = [];
 let naturalEventMarkers = [];
 let isLoadingOverview = false;
 
+// Prediction tab variables
+let selectedAsteroid = null;
+let isSimulating = false;
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -152,6 +156,9 @@ function setupEventListeners() {
     
     // API key reset button
     document.getElementById('reset-api-key')?.addEventListener('click', resetApiKey);
+    
+    // Prediction tab event listeners
+    setupPredictionEventListeners();
 }
 
 function setDefaultDates() {
@@ -1037,4 +1044,412 @@ async function resetApiKey() {
         console.error('Error resetting API key:', error);
         alert('Error resetting API key');
     }
+}
+
+// ===== PREDICTION TAB FUNCTIONALITY =====
+
+function setupPredictionEventListeners() {
+    // Asteroid selection
+    document.getElementById('asteroid-select')?.addEventListener('change', handleAsteroidSelect);
+    
+    // Parameter controls
+    document.getElementById('diameter')?.addEventListener('input', updateDiameter);
+    document.getElementById('density-type')?.addEventListener('change', updateDensity);
+    document.getElementById('velocity')?.addEventListener('input', updateVelocity);
+    document.getElementById('angle')?.addEventListener('input', updateAngle);
+    document.getElementById('impact-lat')?.addEventListener('input', updateImpactLocation);
+    document.getElementById('impact-lon')?.addEventListener('input', updateImpactLocation);
+    document.getElementById('target-type')?.addEventListener('change', updateTargetType);
+    
+    // Simulation button
+    document.getElementById('run-simulation')?.addEventListener('click', runSimulation);
+    
+    // Load asteroids on tab switch
+    document.querySelector('[data-tab="prediction"]')?.addEventListener('click', loadAsteroids);
+}
+
+// Physics calculation functions
+const ASTEROID_DENSITIES = {
+    stony: 3000,
+    iron: 7800,
+    carbonaceous: 2000
+};
+
+const TNT_TO_JOULES = 4.184e15; // 1 megaton TNT in joules
+const EARTH_GRAVITY = 9.81; // m/s²
+const EARTH_RADIUS = 6371000; // meters
+const WATER_DENSITY = 1000; // kg/m³
+const ROCK_DENSITY = 2500; // kg/m³
+
+function calculateMass(diameter, density) {
+    const radius = diameter / 2;
+    const volume = (4/3) * Math.PI * radius * radius * radius;
+    return density * volume;
+}
+
+function calculateKineticEnergy(mass, velocity) {
+    return 0.5 * mass * velocity * velocity;
+}
+
+function calculateTntEquivalent(energy) {
+    return energy / TNT_TO_JOULES;
+}
+
+function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
+    const angleRad = angle * Math.PI / 180;
+    const energyDensity = energy / (targetDensity * EARTH_GRAVITY);
+    const diameter = 1.25 * Math.pow(energyDensity, 1/4) * Math.pow(Math.sin(angleRad), 1/3);
+    const depth = diameter / 4;
+    return { diameter, depth };
+}
+
+function calculateSeismicMagnitude(energy) {
+    const seismicMoment = energy * 0.01; // 1% efficiency
+    const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
+    return magnitude;
+}
+
+function calculateTsunamiHeight(energy, waterDepth, distanceToShore) {
+    const tsunamiEnergy = energy * 0.1; // 10% efficiency
+    const impactArea = Math.PI * 1000 * 1000; // 1km radius
+    const energyDensity = tsunamiEnergy / impactArea;
+    const initialHeight = 0.1 * Math.sqrt(energyDensity / (WATER_DENSITY * EARTH_GRAVITY));
+    
+    if (distanceToShore > 0) {
+        const geometricFactor = 1 / Math.sqrt(distanceToShore / 1000);
+        const dissipationFactor = Math.exp(-distanceToShore / (100 * 1000));
+        const shoreAmplification = 1 / Math.sqrt(0.01);
+        return Math.max(0, initialHeight * geometricFactor * dissipationFactor * shoreAmplification);
+    }
+    
+    return initialHeight;
+}
+
+function calculatePeakGroundAcceleration(magnitude, distance) {
+    const pga = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
+    return pga;
+}
+
+// Event handlers
+function handleAsteroidSelect(event) {
+    const asteroidId = event.target.value;
+    if (asteroidId) {
+        // Find asteroid in loaded data
+        const asteroid = loadedAsteroids.find(a => a.id === asteroidId);
+        if (asteroid) {
+            selectedAsteroid = asteroid;
+            updateAsteroidParameters(asteroid);
+        }
+    } else {
+        selectedAsteroid = null;
+        resetAsteroidParameters();
+    }
+}
+
+function updateAsteroidParameters(asteroid) {
+    if (asteroid.estimated_diameter) {
+        const avgDiameter = (asteroid.estimated_diameter.meters.estimated_diameter_min + 
+                            asteroid.estimated_diameter.meters.estimated_diameter_max) / 2;
+        document.getElementById('diameter').value = Math.round(avgDiameter);
+        updateDiameter();
+    }
+    
+    if (asteroid.close_approach_data && asteroid.close_approach_data.length > 0) {
+        const approach = asteroid.close_approach_data[0];
+        if (approach.relative_velocity && approach.relative_velocity.kilometers_per_second) {
+            const velocityKmS = parseFloat(approach.relative_velocity.kilometers_per_second);
+            document.getElementById('velocity').value = Math.round(velocityKmS * 1000);
+            updateVelocity();
+        }
+    }
+    
+    if (asteroid.orbital_data && asteroid.orbital_data.inclination) {
+        const inclination = parseFloat(asteroid.orbital_data.inclination);
+        const estimatedAngle = Math.min(90, Math.abs(inclination) + 15);
+        document.getElementById('angle').value = Math.round(estimatedAngle);
+        updateAngle();
+    }
+}
+
+function resetAsteroidParameters() {
+    document.getElementById('diameter').value = 500;
+    document.getElementById('velocity').value = 15000;
+    document.getElementById('angle').value = 45;
+    updateDiameter();
+    updateVelocity();
+    updateAngle();
+}
+
+function updateDiameter() {
+    const diameter = document.getElementById('diameter').value;
+    document.getElementById('diameter-value').textContent = diameter + ' m';
+    updateMass();
+}
+
+function updateDensity() {
+    updateMass();
+}
+
+function updateMass() {
+    const diameter = parseFloat(document.getElementById('diameter').value);
+    const densityType = document.getElementById('density-type').value;
+    const density = ASTEROID_DENSITIES[densityType];
+    const mass = calculateMass(diameter, density);
+    
+    document.getElementById('mass-display').innerHTML = 
+        `<strong>${(mass / 1e9).toFixed(1)} billion kg</strong><br>
+         <small>Raw: ${mass.toExponential(2)} kg</small>`;
+}
+
+function updateVelocity() {
+    const velocity = document.getElementById('velocity').value;
+    document.getElementById('velocity-value').textContent = (velocity / 1000).toFixed(1) + ' km/s';
+}
+
+function updateAngle() {
+    const angle = document.getElementById('angle').value;
+    document.getElementById('angle-value').textContent = angle + '°';
+}
+
+function updateImpactLocation() {
+    // Could add map interaction here
+}
+
+function updateTargetType() {
+    // Target type changed
+}
+
+// Load asteroids for prediction tab
+let loadedAsteroids = [];
+
+async function loadAsteroids() {
+    if (loadedAsteroids.length > 0) return; // Already loaded
+    
+    try {
+        const response = await fetch('/api/neo-feed?startDate=2024-01-01&endDate=2024-01-07');
+        if (response.ok) {
+            const data = await response.json();
+            loadedAsteroids = data;
+            populateAsteroidSelect(data);
+        } else {
+            // Fallback to sample data
+            loadedAsteroids = getSampleAsteroids();
+            populateAsteroidSelect(loadedAsteroids);
+        }
+    } catch (error) {
+        console.error('Failed to load asteroids:', error);
+        loadedAsteroids = getSampleAsteroids();
+        populateAsteroidSelect(loadedAsteroids);
+    }
+}
+
+function getSampleAsteroids() {
+    return [
+        {
+            id: '2000433',
+            name: '2000433 (2006 QQ23)',
+            is_potentially_hazardous_asteroid: true,
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 250,
+                    estimated_diameter_max: 560
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-11-15',
+                relative_velocity: {
+                    kilometers_per_second: '15.2'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.2',
+                eccentricity: '0.3',
+                inclination: '15.5'
+            }
+        },
+        {
+            id: '2001620',
+            name: '2001620 (2007 DB)',
+            is_potentially_hazardous_asteroid: false,
+            estimated_diameter: {
+                meters: {
+                    estimated_diameter_min: 100,
+                    estimated_diameter_max: 220
+                }
+            },
+            close_approach_data: [{
+                close_approach_date: '2024-12-01',
+                relative_velocity: {
+                    kilometers_per_second: '12.8'
+                }
+            }],
+            orbital_data: {
+                semi_major_axis: '1.5',
+                eccentricity: '0.25',
+                inclination: '8.2'
+            }
+        }
+    ];
+}
+
+function populateAsteroidSelect(asteroids) {
+    const select = document.getElementById('asteroid-select');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Choose an asteroid...</option>';
+    
+    asteroids.forEach(asteroid => {
+        const option = document.createElement('option');
+        option.value = asteroid.id;
+        option.textContent = `${asteroid.name} - ${asteroid.is_potentially_hazardous_asteroid ? '⚠️' : '✅'}`;
+        select.appendChild(option);
+    });
+}
+
+// Run simulation
+async function runSimulation() {
+    if (isSimulating) return;
+    
+    isSimulating = true;
+    document.getElementById('simulation-progress').style.display = 'block';
+    document.getElementById('run-simulation').disabled = true;
+    
+    try {
+        // Get parameters
+        const diameter = parseFloat(document.getElementById('diameter').value);
+        const densityType = document.getElementById('density-type').value;
+        const density = ASTEROID_DENSITIES[densityType];
+        const velocity = parseFloat(document.getElementById('velocity').value);
+        const angle = parseFloat(document.getElementById('angle').value);
+        const targetType = document.getElementById('target-type').value;
+        const impactLat = parseFloat(document.getElementById('impact-lat').value);
+        const impactLon = parseFloat(document.getElementById('impact-lon').value);
+        
+        // Create simulation request
+        const simulationRequest = {
+            scenario: {
+                asteroid: {
+                    diameter: diameter,
+                    density_type: densityType,
+                    density: density
+                },
+                orbit: {
+                    semi_major_axis: 1.2,
+                    eccentricity: 0.3,
+                    inclination: 15,
+                    longitude_of_ascending_node: 45,
+                    argument_of_periapsis: 30,
+                    mean_anomaly: 180,
+                    epoch: 2460000
+                },
+                impact_angle: angle,
+                impact_velocity: velocity,
+                target_type: targetType,
+                impact_latitude: impactLat,
+                impact_longitude: impactLon
+            },
+            include_tsunami: true,
+            include_seismic: true,
+            include_population: true,
+            resolution_km: 10.0
+        };
+        
+        // Call backend API
+        const response = await fetch('/api/simulate-impact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(simulationRequest)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Display results
+        if (data.baseline) {
+            displayOutcomeCards(data.baseline);
+        } else {
+            throw new Error('No simulation results received');
+        }
+        
+    } catch (error) {
+        console.error('Simulation failed:', error);
+        alert('Simulation failed: ' + error.message);
+    } finally {
+        isSimulating = false;
+        document.getElementById('simulation-progress').style.display = 'none';
+        document.getElementById('run-simulation').disabled = false;
+    }
+}
+
+function displayOutcomeCards(results) {
+    const container = document.getElementById('outcome-cards');
+    if (!container) return;
+    
+    const formatNumber = (num, decimals = 1) => {
+        if (num === undefined || num === null || isNaN(num)) return 'N/A';
+        if (num >= 1e12) return `${(num / 1e12).toFixed(decimals)}T`;
+        if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
+        if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+        if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+        return num.toFixed(decimals);
+    };
+    
+    const formatDistance = (meters) => {
+        if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+        return `${meters.toFixed(0)} m`;
+    };
+    
+    const formatEnergy = (joules) => {
+        if (joules >= 1e21) return `${(joules / 1e21).toFixed(1)} ZJ`;
+        if (joules >= 1e18) return `${(joules / 1e18).toFixed(1)} EJ`;
+        if (joules >= 1e15) return `${(joules / 1e15).toFixed(1)} PJ`;
+        return `${(joules / 1e12).toFixed(1)} TJ`;
+    };
+    
+    container.innerHTML = `
+        <div class="cards-grid">
+            <div class="outcome-card energy">
+                <div class="card-icon">💥</div>
+                <div class="card-content">
+                    <h3>Impact Energy</h3>
+                    <div class="card-value">${formatEnergy(results.impact_energy_joules)}</div>
+                    <div class="card-subtitle">${formatNumber(results.tnt_equivalent_megatons)} MT TNT</div>
+                </div>
+            </div>
+            
+            <div class="outcome-card crater">
+                <div class="card-icon">🕳️</div>
+                <div class="card-content">
+                    <h3>Crater Diameter</h3>
+                    <div class="card-value">${formatDistance(results.crater_diameter_m)}</div>
+                    <div class="card-subtitle">Depth: ${formatDistance(results.crater_depth_m)}</div>
+                </div>
+            </div>
+            
+            <div class="outcome-card seismic">
+                <div class="card-icon">🌍</div>
+                <div class="card-content">
+                    <h3>Seismic Magnitude</h3>
+                    <div class="card-value">${results.seismic_magnitude.toFixed(1)}</div>
+                    <div class="card-subtitle">PGA: ${results.peak_ground_acceleration.toFixed(2)} m/s²</div>
+                </div>
+            </div>
+            
+            ${results.tsunami_height_m ? `
+            <div class="outcome-card tsunami">
+                <div class="card-icon">🌊</div>
+                <div class="card-content">
+                    <h3>Tsunami Height</h3>
+                    <div class="card-value">${results.tsunami_height_m.toFixed(1)} m</div>
+                    <div class="card-subtitle">Maximum wave height</div>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
 }
