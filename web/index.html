@@ -667,6 +667,69 @@
                                 <p>Run a simulation to see impact analysis results</p>
                             </div>
                         </div>
+                        
+                        <!-- Detailed Impact Metrics -->
+                        <div id="detailed-impact-metrics" class="detailed-impact-metrics" style="display: none;">
+                            <h3><i class="fas fa-chart-bar"></i> Detailed Impact Analysis</h3>
+                            <div class="impact-cards-grid">
+                                <!-- Impact Energy Card -->
+                                <div class="impact-card energy">
+                                    <div class="card-icon">💥</div>
+                                    <div class="card-content">
+                                        <h3>Impact Energy</h3>
+                                        <div class="card-value" id="impact-energy-value">-</div>
+                                        <div class="card-subtitle" id="impact-energy-subtitle">-</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Crater Diameter Card -->
+                                <div class="impact-card crater">
+                                    <div class="card-icon">🕳️</div>
+                                    <div class="card-content">
+                                        <h3>Crater Diameter</h3>
+                                        <div class="card-value" id="crater-diameter-value">-</div>
+                                        <div class="card-subtitle" id="crater-diameter-subtitle">-</div>
+                                    </div>
+                                </div>
+                                
+                                
+                                <!-- Exposed Population Card -->
+                                <div class="impact-card population">
+                                    <div class="card-icon">👥</div>
+                                    <div class="card-content">
+                                        <h3>Exposed Population</h3>
+                                        <div class="card-value" id="exposed-population-value">-</div>
+                                        <div class="card-subtitle" id="exposed-population-subtitle">-</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Economic Loss Card -->
+                                <div class="impact-card economic">
+                                    <div class="card-icon">💰</div>
+                                    <div class="card-content">
+                                        <h3>Economic Loss</h3>
+                                        <div class="card-value" id="economic-loss-value">-</div>
+                                        <div class="card-subtitle" id="economic-loss-subtitle">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Affected Cities Section -->
+                            <div id="affected-cities-section" class="affected-cities-section" style="display: none;">
+                                <h3><i class="fas fa-city"></i> Affected Cities</h3>
+                                <div id="affected-cities-list" class="affected-cities-list">
+                                    <!-- Cities will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Uncertainty Bounds Section -->
+                            <div id="uncertainty-bounds-section" class="uncertainty-bounds-section" style="display: none;">
+                                <h3><i class="fas fa-chart-line"></i> Uncertainty Bounds</h3>
+                                <div id="uncertainty-bounds-grid" class="uncertainty-bounds-grid">
+                                    <!-- Uncertainty bounds will be populated here -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
