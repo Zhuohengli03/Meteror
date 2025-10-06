@@ -1241,9 +1241,37 @@ function setupPredictionEventListeners() {
     
     // Load asteroids on tab switch
     document.querySelector('[data-tab="prediction"]')?.addEventListener('click', () => {
+        console.log('Prediction tab clicked, loading asteroids...');
         loadAsteroids();
         initializePredictionMap();
     });
+    
+    // Also load asteroids immediately for debugging
+    console.log('Loading asteroids on page load...');
+    loadAsteroids();
+    
+    // Ensure asteroids are loaded after a short delay
+    setTimeout(() => {
+        if (loadedAsteroids.length === 0) {
+            console.log('No asteroids loaded, using sample data...');
+            loadedAsteroids = getSampleAsteroids();
+            populateAsteroidSelect(loadedAsteroids);
+        }
+    }, 1000);
+    
+    // Add manual button to populate dropdown (for debugging)
+    const asteroidSelect = document.getElementById('asteroid-select');
+    if (asteroidSelect) {
+        const debugButton = document.createElement('button');
+        debugButton.textContent = 'Load Sample Asteroids';
+        debugButton.style.marginTop = '10px';
+        debugButton.onclick = () => {
+            console.log('Manually loading sample asteroids...');
+            loadedAsteroids = getSampleAsteroids();
+            populateAsteroidSelect(loadedAsteroids);
+        };
+        asteroidSelect.parentNode.appendChild(debugButton);
+    }
 }
 
 // Physics calculation functions
@@ -1318,17 +1346,257 @@ function calculatePeakGroundAcceleration(magnitude, distance) {
     return pga;
 }
 
+function generateAffectedCities(impactLat, impactLon, energy) {
+    // Get region-specific cities based on impact location
+    const cities = getRegionalCities(impactLat, impactLon);
+    
+    // Calculate impact radius based on energy (same as map circle)
+    const impactRadius = calculateImpactRadius(energy);
+    
+    // Calculate distance from impact point to each city
+    const affectedCities = cities.map(city => {
+        const distance = calculateDistance(impactLat, impactLon, city.lat, city.lon);
+        const exposureLevel = calculateExposureLevel(distance, energy);
+        return {
+            name: city.name,
+            distance_from_impact: distance,
+            distance: distance,
+            population: city.population,
+            exposure_level: exposureLevel,
+            exposureLevel: exposureLevel
+        };
+    });
+    
+    // Filter cities within impact radius and sort by distance
+    return affectedCities
+        .filter(city => city.distance < impactRadius) // Within impact radius
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 12); // Show top 12 cities to avoid overflow
+}
+
+function calculateImpactRadius(energy) {
+    // Calculate impact radius based on energy
+    // This should match the radius used in the 2D map circle
+    const energyFactor = Math.log10(energy / 1e15); // Scale energy
+    const baseRadius = 1000; // Base radius in km
+    const energyMultiplier = Math.max(1, energyFactor);
+    
+    // Calculate radius that scales with energy but has reasonable bounds
+    const radius = baseRadius * energyMultiplier;
+    
+    // Set reasonable bounds (100km to 5000km)
+    return Math.max(100, Math.min(5000, radius));
+}
+
+function getRegionalCities(impactLat, impactLon) {
+    // Determine region based on impact location
+    const isNorthAmerica = impactLat > 15 && impactLat < 70 && impactLon > -170 && impactLon < -50;
+    const isEurope = impactLat > 35 && impactLat < 70 && impactLon > -25 && impactLon < 40;
+    const isAsia = impactLat > 5 && impactLat < 55 && impactLon > 60 && impactLon < 180;
+    const isSouthAmerica = impactLat > -60 && impactLat < 15 && impactLon > -90 && impactLon < -30;
+    const isAfrica = impactLat > -35 && impactLat < 40 && impactLon > -20 && impactLon < 60;
+    const isOceania = impactLat > -50 && impactLat < 0 && impactLon > 110 && impactLon < 180;
+    
+    let cities = [];
+    
+    if (isNorthAmerica) {
+        cities = [
+            // North American cities
+            { name: 'New York', lat: 40.7128, lon: -74.0060, population: 8e6 },
+            { name: 'Boston', lat: 42.3601, lon: -71.0589, population: 4e6 },
+            { name: 'Philadelphia', lat: 39.9526, lon: -75.1652, population: 6e6 },
+            { name: 'Washington DC', lat: 38.9072, lon: -77.0369, population: 5e6 },
+            { name: 'Toronto', lat: 43.6532, lon: -79.3832, population: 6e6 },
+            { name: 'Montreal', lat: 45.5017, lon: -73.5673, population: 4e6 },
+            { name: 'Chicago', lat: 41.8781, lon: -87.6298, population: 9e6 },
+            { name: 'Detroit', lat: 42.3314, lon: -83.0458, population: 4e6 },
+            { name: 'Atlanta', lat: 33.7490, lon: -84.3880, population: 5e6 },
+            { name: 'Miami', lat: 25.7617, lon: -80.1918, population: 6e6 },
+            { name: 'Houston', lat: 29.7604, lon: -95.3698, population: 7e6 },
+            { name: 'Los Angeles', lat: 34.0522, lon: -118.2437, population: 12e6 },
+            { name: 'San Francisco', lat: 37.7749, lon: -122.4194, population: 8e6 },
+            { name: 'Seattle', lat: 47.6062, lon: -122.3321, population: 4e6 },
+            { name: 'Vancouver', lat: 49.2827, lon: -123.1207, population: 3e6 },
+            { name: 'Mexico City', lat: 19.4326, lon: -99.1332, population: 22e6 }
+        ];
+    } else if (isEurope) {
+        cities = [
+            // European cities
+            { name: 'London', lat: 51.5074, lon: -0.1278, population: 9e6 },
+            { name: 'Paris', lat: 48.8566, lon: 2.3522, population: 2e6 },
+            { name: 'Berlin', lat: 52.5200, lon: 13.4050, population: 4e6 },
+            { name: 'Madrid', lat: 40.4168, lon: -3.7038, population: 6e6 },
+            { name: 'Rome', lat: 41.9028, lon: 12.4964, population: 3e6 },
+            { name: 'Amsterdam', lat: 52.3676, lon: 4.9041, population: 1e6 },
+            { name: 'Brussels', lat: 50.8503, lon: 4.3517, population: 1e6 },
+            { name: 'Vienna', lat: 48.2082, lon: 16.3738, population: 2e6 },
+            { name: 'Prague', lat: 50.0755, lon: 14.4378, population: 1e6 },
+            { name: 'Warsaw', lat: 52.2297, lon: 21.0122, population: 2e6 },
+            { name: 'Moscow', lat: 55.7558, lon: 37.6176, population: 13e6 },
+            { name: 'Istanbul', lat: 41.0082, lon: 28.9784, population: 16e6 }
+        ];
+    } else if (isAsia) {
+        cities = [
+            // Asian cities
+            { name: 'Tokyo', lat: 35.6762, lon: 139.6503, population: 14e6 },
+            { name: 'Shanghai', lat: 31.2304, lon: 121.4737, population: 25e6 },
+            { name: 'Beijing', lat: 39.9042, lon: 116.4074, population: 22e6 },
+            { name: 'Hong Kong', lat: 22.3193, lon: 114.1694, population: 7e6 },
+            { name: 'Seoul', lat: 37.5665, lon: 126.9780, population: 10e6 },
+            { name: 'Mumbai', lat: 19.0760, lon: 72.8777, population: 12e6 },
+            { name: 'Delhi', lat: 28.7041, lon: 77.1025, population: 33e6 },
+            { name: 'Bangkok', lat: 13.7563, lon: 100.5018, population: 11e6 },
+            { name: 'Jakarta', lat: -6.2088, lon: 106.8456, population: 11e6 },
+            { name: 'Manila', lat: 14.5995, lon: 120.9842, population: 13e6 },
+            { name: 'Singapore', lat: 1.3521, lon: 103.8198, population: 6e6 },
+            { name: 'Kuala Lumpur', lat: 3.1390, lon: 101.6869, population: 8e6 }
+        ];
+    } else if (isSouthAmerica) {
+        cities = [
+            // South American cities
+            { name: 'São Paulo', lat: -23.5505, lon: -46.6333, population: 12e6 },
+            { name: 'Rio de Janeiro', lat: -22.9068, lon: -43.1729, population: 6e6 },
+            { name: 'Buenos Aires', lat: -34.6118, lon: -58.3960, population: 3e6 },
+            { name: 'Lima', lat: -12.0464, lon: -77.0428, population: 10e6 },
+            { name: 'Bogotá', lat: 4.7110, lon: -74.0721, population: 8e6 },
+            { name: 'Caracas', lat: 10.4806, lon: -66.9036, population: 3e6 },
+            { name: 'Santiago', lat: -33.4489, lon: -70.6693, population: 6e6 },
+            { name: 'Montevideo', lat: -34.9011, lon: -56.1645, population: 1e6 },
+            { name: 'La Paz', lat: -16.2902, lon: -68.1341, population: 1e6 },
+            { name: 'Quito', lat: -0.1807, lon: -78.4678, population: 2e6 }
+        ];
+    } else if (isAfrica) {
+        cities = [
+            // African cities
+            { name: 'Cairo', lat: 30.0444, lon: 31.2357, population: 20e6 },
+            { name: 'Lagos', lat: 6.5244, lon: 3.3792, population: 15e6 },
+            { name: 'Johannesburg', lat: -26.2041, lon: 28.0473, population: 5e6 },
+            { name: 'Cape Town', lat: -33.9249, lon: 18.4241, population: 4e6 },
+            { name: 'Nairobi', lat: -1.2921, lon: 36.8219, population: 4e6 },
+            { name: 'Addis Ababa', lat: 9.1450, lon: 38.7667, population: 3e6 },
+            { name: 'Casablanca', lat: 33.5731, lon: -7.5898, population: 3e6 },
+            { name: 'Algiers', lat: 36.7372, lon: 3.0869, population: 2e6 },
+            { name: 'Tunis', lat: 36.8065, lon: 10.1815, population: 1e6 },
+            { name: 'Tripoli', lat: 32.8872, lon: 13.1913, population: 1e6 }
+        ];
+    } else if (isOceania) {
+        cities = [
+            // Oceanian cities
+            { name: 'Sydney', lat: -33.8688, lon: 151.2093, population: 5e6 },
+            { name: 'Melbourne', lat: -37.8136, lon: 144.9631, population: 5e6 },
+            { name: 'Brisbane', lat: -27.4698, lon: 153.0251, population: 2e6 },
+            { name: 'Perth', lat: -31.9505, lon: 115.8605, population: 2e6 },
+            { name: 'Adelaide', lat: -34.9285, lon: 138.6007, population: 1e6 },
+            { name: 'Auckland', lat: -36.8485, lon: 174.7633, population: 1e6 },
+            { name: 'Wellington', lat: -41.2924, lon: 174.7787, population: 0.4e6 },
+            { name: 'Christchurch', lat: -43.5321, lon: 172.6362, population: 0.4e6 }
+        ];
+    } else {
+        // Default global cities for other locations
+        cities = [
+            { name: 'New York', lat: 40.7128, lon: -74.0060, population: 8e6 },
+            { name: 'London', lat: 51.5074, lon: -0.1278, population: 9e6 },
+            { name: 'Tokyo', lat: 35.6762, lon: 139.6503, population: 14e6 },
+            { name: 'Shanghai', lat: 31.2304, lon: 121.4737, population: 25e6 },
+            { name: 'Mumbai', lat: 19.0760, lon: 72.8777, population: 12e6 },
+            { name: 'Delhi', lat: 28.7041, lon: 77.1025, population: 33e6 },
+            { name: 'São Paulo', lat: -23.5505, lon: -46.6333, population: 12e6 },
+            { name: 'Cairo', lat: 30.0444, lon: 31.2357, population: 20e6 },
+            { name: 'Lagos', lat: 6.5244, lon: 3.3792, population: 15e6 },
+            { name: 'Sydney', lat: -33.8688, lon: 151.2093, population: 5e6 },
+            { name: 'Paris', lat: 48.8566, lon: 2.3522, population: 2e6 },
+            { name: 'Moscow', lat: 55.7558, lon: 37.6176, population: 13e6 }
+        ];
+    }
+    
+    return cities;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function calculateExposureLevel(distance, energy) {
+    // Calculate exposure level based on distance relative to impact radius
+    const impactRadius = calculateImpactRadius(energy);
+    const relativeDistance = distance / impactRadius;
+    
+    // Exposure levels based on distance relative to impact radius
+    if (relativeDistance < 0.5) return 'Extreme';      // Within 50% of impact radius
+    if (relativeDistance < 1.0) return 'High';       // Within impact radius
+    if (relativeDistance < 2.0) return 'Medium';      // Within 2x impact radius
+    return 'Low';                                      // Beyond 2x impact radius
+}
+
+function calculateExposedPopulation(energy, impactLat, impactLon) {
+    // Simplified population exposure calculation
+    const energyFactor = Math.log10(energy / 1e15);
+    const basePopulation = 100e6; // Base population in impact region
+    
+    // Adjust based on energy and location (urban areas have higher population)
+    const urbanFactor = isUrbanArea(impactLat, impactLon) ? 2 : 1;
+    const energyMultiplier = Math.max(1, energyFactor);
+    
+    return Math.round(basePopulation * urbanFactor * energyMultiplier);
+}
+
+function isUrbanArea(lat, lon) {
+    // Simple check for urban areas (major cities and their regions)
+    const urbanRegions = [
+        { lat: 40.7128, lon: -74.0060, radius: 100 }, // New York
+        { lat: 35.6762, lon: 139.6503, radius: 100 }, // Tokyo
+        { lat: 51.5074, lon: -0.1278, radius: 100 }, // London
+        { lat: 28.7041, lon: 77.1025, radius: 100 }, // Delhi
+        { lat: 19.0760, lon: 72.8777, radius: 100 }, // Mumbai
+        { lat: 31.2304, lon: 121.4737, radius: 100 }, // Shanghai
+    ];
+    
+    return urbanRegions.some(region => 
+        calculateDistance(lat, lon, region.lat, region.lon) < region.radius
+    );
+}
+
+function calculateEconomicLoss(energy, population) {
+    // Simplified economic loss calculation
+    const energyFactor = Math.log10(energy / 1e15);
+    const populationFactor = Math.log10(population / 1e6);
+    
+    // Base economic loss in USD
+    const baseLoss = 1e12; // 1 trillion USD base
+    const energyMultiplier = Math.max(1, energyFactor);
+    const populationMultiplier = Math.max(1, populationFactor);
+    
+    return Math.round(baseLoss * energyMultiplier * populationMultiplier);
+}
+
 // Event handlers
 function handleAsteroidSelect(event) {
+    console.log('Asteroid selection changed:', event.target.value);
+    console.log('Event target:', event.target);
+    console.log('Available options:', Array.from(event.target.options).map(opt => ({ value: opt.value, text: opt.text })));
+    
     const asteroidId = event.target.value;
-    if (asteroidId) {
+    if (asteroidId && asteroidId !== '') {
         // Find asteroid in loaded data
+        console.log('Looking for asteroid ID:', asteroidId);
+        console.log('Available asteroids:', loadedAsteroids.map(a => ({ id: a.id, name: a.name })));
         const asteroid = loadedAsteroids.find(a => a.id === asteroidId);
         if (asteroid) {
+            console.log('Found asteroid:', asteroid);
             selectedAsteroid = asteroid;
             updateAsteroidParameters(asteroid);
+        } else {
+            console.error('Asteroid not found with ID:', asteroidId);
         }
     } else {
+        console.log('No asteroid selected, resetting parameters');
         selectedAsteroid = null;
         resetAsteroidParameters();
     }
@@ -1341,12 +1609,24 @@ function updateAsteroidParameters(asteroid) {
     if (asteroid.estimated_diameter && asteroid.estimated_diameter.meters) {
         const avgDiameter = (asteroid.estimated_diameter.meters.estimated_diameter_min + 
                             asteroid.estimated_diameter.meters.estimated_diameter_max) / 2;
+        console.log('Calculated average diameter:', avgDiameter);
         const diameterInput = document.getElementById('diameter');
-        diameterInput.value = Math.round(avgDiameter);
-        diameterInput.min = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_min);
-        diameterInput.max = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_max);
-        updateDiameter();
-        console.log('Updated diameter to:', avgDiameter);
+        console.log('Diameter input element:', diameterInput);
+        
+        if (diameterInput) {
+            diameterInput.value = Math.round(avgDiameter);
+            diameterInput.min = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_min);
+            diameterInput.max = Math.round(asteroid.estimated_diameter.meters.estimated_diameter_max);
+            
+            // Trigger input event to update visual elements
+            diameterInput.dispatchEvent(new Event('input', { bubbles: true }));
+            updateDiameter();
+            console.log('Updated diameter to:', avgDiameter);
+        } else {
+            console.error('Diameter input element not found!');
+        }
+    } else {
+        console.log('No diameter data available for asteroid');
     }
     
     // Update velocity
@@ -1355,7 +1635,11 @@ function updateAsteroidParameters(asteroid) {
         if (approach.relative_velocity && approach.relative_velocity.kilometers_per_second) {
             const velocityKmS = parseFloat(approach.relative_velocity.kilometers_per_second);
             const velocityMs = velocityKmS * 1000;
-            document.getElementById('velocity').value = Math.round(velocityMs);
+            const velocityInput = document.getElementById('velocity');
+            velocityInput.value = Math.round(velocityMs);
+            
+            // Trigger input event to update visual elements
+            velocityInput.dispatchEvent(new Event('input', { bubbles: true }));
             updateVelocity();
             console.log('Updated velocity to:', velocityMs);
         }
@@ -1366,7 +1650,11 @@ function updateAsteroidParameters(asteroid) {
         const inclination = parseFloat(asteroid.orbital_data.inclination);
         // Convert orbital inclination to impact angle (simplified)
         const estimatedAngle = Math.min(90, Math.max(10, Math.abs(inclination) + 15));
-        document.getElementById('angle').value = Math.round(estimatedAngle);
+        const angleInput = document.getElementById('angle');
+        angleInput.value = Math.round(estimatedAngle);
+        
+        // Trigger input event to update visual elements
+        angleInput.dispatchEvent(new Event('input', { bubbles: true }));
         updateAngle();
         console.log('Updated angle to:', estimatedAngle);
     }
@@ -1381,6 +1669,9 @@ function updateAsteroidParameters(asteroid) {
         } else {
             densitySelect.value = 'stony';
         }
+        
+        // Trigger change event to update visual elements
+        densitySelect.dispatchEvent(new Event('change', { bubbles: true }));
         updateDensity();
         console.log('Updated density type to:', densitySelect.value);
     }
@@ -1441,22 +1732,31 @@ function updateTargetType() {
 let loadedAsteroids = [];
 
 async function loadAsteroids() {
-    if (loadedAsteroids.length > 0) return; // Already loaded
+    console.log('Loading asteroids...');
+    if (loadedAsteroids.length > 0) {
+        console.log('Asteroids already loaded:', loadedAsteroids.length);
+        return; // Already loaded
+    }
     
     try {
+        console.log('Fetching asteroids from API...');
         const response = await fetch('/api/neo-feed?startDate=2024-01-01&endDate=2024-01-07');
         if (response.ok) {
             const data = await response.json();
+            console.log('API response:', data);
             loadedAsteroids = data;
             populateAsteroidSelect(data);
         } else {
+            console.log('API failed, using sample data');
             // Fallback to sample data
             loadedAsteroids = getSampleAsteroids();
+            console.log('Sample asteroids:', loadedAsteroids);
             populateAsteroidSelect(loadedAsteroids);
         }
     } catch (error) {
         console.error('Failed to load asteroids:', error);
         loadedAsteroids = getSampleAsteroids();
+        console.log('Using sample asteroids after error:', loadedAsteroids);
         populateAsteroidSelect(loadedAsteroids);
     }
 }
@@ -1536,8 +1836,13 @@ function getSampleAsteroids() {
 }
 
 function populateAsteroidSelect(asteroids) {
+    console.log('Populating asteroid select with:', asteroids);
     const select = document.getElementById('asteroid-select');
-    if (!select) return;
+    console.log('Asteroid select element:', select);
+    if (!select) {
+        console.error('Asteroid select element not found!');
+        return;
+    }
     
     select.innerHTML = '<option value="">Choose an asteroid...</option>';
     
@@ -1546,7 +1851,10 @@ function populateAsteroidSelect(asteroids) {
         option.value = asteroid.id;
         option.textContent = `${asteroid.name} - ${asteroid.is_potentially_hazardous_asteroid ? '⚠️' : '✅'}`;
         select.appendChild(option);
+        console.log('Added asteroid option:', asteroid.id, asteroid.name);
     });
+    
+    console.log('Asteroid select populated with', asteroids.length, 'options');
 }
 
 // Run simulation
@@ -1638,6 +1946,14 @@ async function runSimulation() {
         
         const peakGroundAcceleration = calculatePeakGroundAcceleration(seismicMagnitude, 10);
         
+        // Create sample affected cities based on impact location
+        const sampleCities = generateAffectedCities(impactLat, impactLon, energy);
+        
+        // Calculate more realistic population and economic impact
+        const exposedPopulation = calculateExposedPopulation(energy, impactLat, impactLon);
+        const economicLoss = calculateEconomicLoss(energy, exposedPopulation);
+        const gdpPercentage = (economicLoss / 100e12) * 100; // World GDP ~100 trillion
+        
         // Create results object with calculated values
         const results = {
             impact_energy_joules: energy,
@@ -1647,13 +1963,17 @@ async function runSimulation() {
             seismic_magnitude: seismicMagnitude,
             tsunami_height_m: tsunamiHeight,
             peak_ground_acceleration: peakGroundAcceleration,
-            exposed_population: Math.round(energy / 1e15), // Simplified population estimate
-            affected_cities: [], // Simplified
-            estimated_damage_usd: Math.round(energy / 1e12), // Simplified damage estimate
+            exposed_population: exposedPopulation,
+            affected_cities: sampleCities,
+            estimated_damage_usd: economicLoss,
+            total_economic_loss_usd: economicLoss,
+            gdp_impact_percentage: gdpPercentage,
             uncertainty_bounds: {
                 crater_diameter: [crater.diameter * 0.8, crater.diameter * 1.2],
                 seismic_magnitude: [seismicMagnitude - 0.5, seismicMagnitude + 0.5],
-                tsunami_height: tsunamiHeight ? [tsunamiHeight * 0.5, tsunamiHeight * 2.0] : [0, 0]
+                tsunami_height: tsunamiHeight ? [tsunamiHeight * 0.5, tsunamiHeight * 2.0] : [0, 0],
+                exposed_population: [exposedPopulation * 0.7, exposedPopulation * 1.3],
+                economic_damage: [economicLoss * 0.6, economicLoss * 1.4]
             }
         };
         
@@ -1741,6 +2061,138 @@ function displayOutcomeCards(results) {
             ` : ''}
         </div>
     `;
+    
+    // Display detailed impact metrics
+    displayDetailedImpactMetrics(results);
+}
+
+function displayDetailedImpactMetrics(results) {
+    const detailedMetricsContainer = document.getElementById('detailed-impact-metrics');
+    if (!detailedMetricsContainer) return;
+    
+    const formatNumber = (num, decimals = 1) => {
+        if (num === undefined || num === null || isNaN(num)) return 'N/A';
+        if (num >= 1e12) return `${(num / 1e12).toFixed(decimals)}T`;
+        if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
+        if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+        if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+        return num.toFixed(decimals);
+    };
+    
+    const formatDistance = (meters) => {
+        if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+        return `${meters.toFixed(0)} m`;
+    };
+    
+    const formatEnergy = (joules) => {
+        if (joules >= 1e21) return `${(joules / 1e21).toFixed(1)} ZJ`;
+        if (joules >= 1e18) return `${(joules / 1e18).toFixed(1)} EJ`;
+        if (joules >= 1e15) return `${(joules / 1e15).toFixed(1)} PJ`;
+        return `${(joules / 1e12).toFixed(1)} TJ`;
+    };
+    
+    // Update impact energy card
+    document.getElementById('impact-energy-value').textContent = formatEnergy(results.impact_energy_joules);
+    document.getElementById('impact-energy-subtitle').textContent = `${formatNumber(results.tnt_equivalent_megatons)} MT TNT`;
+    
+    // Update crater diameter card
+    document.getElementById('crater-diameter-value').textContent = formatDistance(results.crater_diameter_m);
+    document.getElementById('crater-diameter-subtitle').textContent = `Depth: ${formatDistance(results.crater_depth_m)}`;
+    
+    // Update seismic magnitude card
+    document.getElementById('seismic-magnitude-value').textContent = results.seismic_magnitude.toFixed(1);
+    document.getElementById('seismic-magnitude-subtitle').textContent = `PGA: ${results.peak_ground_acceleration.toFixed(2)} m/s²`;
+    
+    // Update exposed population card
+    const exposedPopulation = results.exposed_population || 0;
+    document.getElementById('exposed-population-value').textContent = exposedPopulation > 0 ? formatNumber(exposedPopulation, 0) : '—';
+    const affectedCitiesCount = results.affected_cities ? results.affected_cities.length : 0;
+    document.getElementById('exposed-population-subtitle').textContent = exposedPopulation > 0 ? 
+        `${affectedCitiesCount} cities affected` : 'No populated areas affected';
+    
+    // Update economic loss card
+    const economicLoss = results.estimated_damage_usd || results.total_economic_loss_usd || 0;
+    document.getElementById('economic-loss-value').textContent = economicLoss > 0 ? `$${formatNumber(economicLoss, 0)}` : '—';
+    const gdpPercentage = results.gdp_impact_percentage || 0;
+    document.getElementById('economic-loss-subtitle').textContent = economicLoss > 0 ? 
+        (gdpPercentage > 0 ? `${gdpPercentage.toFixed(2)}% of world GDP` : 'USD') : 'No significant damage expected';
+    
+    // Show the detailed metrics section
+    detailedMetricsContainer.style.display = 'block';
+    
+    // Display affected cities if available
+    displayAffectedCities(results.affected_cities);
+    
+    // Display uncertainty bounds if available
+    displayUncertaintyBounds(results.uncertainty_bounds);
+}
+
+function displayAffectedCities(affectedCities) {
+    const citiesSection = document.getElementById('affected-cities-section');
+    const citiesList = document.getElementById('affected-cities-list');
+    
+    if (!citiesSection || !citiesList) return;
+    
+    if (!affectedCities || affectedCities.length === 0) {
+        citiesSection.style.display = 'none';
+        return;
+    }
+    
+    const formatNumber = (num, decimals = 0) => {
+        if (num === undefined || num === null || isNaN(num)) return 'N/A';
+        if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+        if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+        return num.toFixed(decimals);
+    };
+    
+    citiesList.innerHTML = affectedCities.map(city => `
+        <div class="city-item">
+            <div class="city-name">${city.name || 'Unknown City'}</div>
+            <div class="city-details">
+                <div class="city-distance">${(city.distance_from_impact || city.distance || 0).toFixed(1)} km away</div>
+                <div class="city-exposure ${(city.exposure_level || city.exposureLevel || 'low').toLowerCase()}">
+                    ${city.exposure_level || city.exposureLevel || 'Low'} exposure
+                </div>
+                <div class="city-population">${formatNumber(city.population, 0)} people</div>
+            </div>
+        </div>
+    `).join('');
+    
+    citiesSection.style.display = 'block';
+}
+
+function displayUncertaintyBounds(uncertaintyBounds) {
+    const boundsSection = document.getElementById('uncertainty-bounds-section');
+    const boundsGrid = document.getElementById('uncertainty-bounds-grid');
+    
+    if (!boundsSection || !boundsGrid) return;
+    
+    if (!uncertaintyBounds || Object.keys(uncertaintyBounds).length === 0) {
+        boundsSection.style.display = 'none';
+        return;
+    }
+    
+    const formatNumber = (num, decimals = 1) => {
+        if (num === undefined || num === null || isNaN(num)) return 'N/A';
+        if (num >= 1e12) return `${(num / 1e12).toFixed(decimals)}T`;
+        if (num >= 1e9) return `${(num / 1e9).toFixed(decimals)}B`;
+        if (num >= 1e6) return `${(num / 1e6).toFixed(decimals)}M`;
+        if (num >= 1e3) return `${(num / 1e3).toFixed(decimals)}K`;
+        return num.toFixed(decimals);
+    };
+    
+    const formatLabel = (key) => {
+        return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    };
+    
+    boundsGrid.innerHTML = Object.entries(uncertaintyBounds).map(([key, bounds]) => `
+        <div class="uncertainty-item">
+            <h4>${formatLabel(key)}</h4>
+            <div class="uncertainty-range">${formatNumber(bounds[0])} - ${formatNumber(bounds[1])}</div>
+        </div>
+    `).join('');
+    
+    boundsSection.style.display = 'block';
 }
 
 // ===== PREDICTION VISUALIZATION FUNCTIONS =====
@@ -1779,12 +2231,12 @@ function initializePredictionMap() {
         
         impactMarker.bindPopup('<b>Impact Location</b><br>Lat: 40.7128°<br>Lon: -74.0060°');
         
-        // Add impact circle
+        // Add impact circle (will be updated when simulation runs)
         const impactCircle = L.circle([40.7128, -74.0060], {
             color: '#ff0000',
             fillColor: '#ff0000',
             fillOpacity: 0.1,
-            radius: 50000 // 50km radius
+            radius: 100000 // Default 100km radius, will be updated during simulation
         }).addTo(predictionMap);
         
         console.log('Prediction map initialized');
@@ -2054,14 +2506,14 @@ function updatePredictionVisualizations(lat, lon, results) {
         impactMarker.addTo(predictionMap);
         impactMarker.bindPopup(`<b>Impact Location</b><br>Lat: ${lat.toFixed(4)}°<br>Lon: ${lon.toFixed(4)}°`);
         
-        // Add impact circle based on crater diameter
-        if (results && results.crater_diameter_m) {
-            const radius = results.crater_diameter_m / 2; // Convert diameter to radius
+        // Add impact circle based on energy (same calculation as affected cities)
+        if (results && results.impact_energy_joules) {
+            const radius = calculateImpactRadius(results.impact_energy_joules);
             L.circle([lat, lon], {
                 color: '#ff0000',
                 fillColor: '#ff0000',
                 fillOpacity: 0.1,
-                radius: radius
+                radius: radius * 1000 // Convert km to meters for Leaflet
             }).addTo(predictionMap);
         }
     }
