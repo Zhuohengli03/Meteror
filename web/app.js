@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     testAPI();
     loadOverviewData();
     setupCustomSettingsListener();
+    
+    // Validate updated physics formulas
+    validatePhysicsFormulas();
 });
 
 function initializeApp() {
@@ -1269,6 +1272,15 @@ function setupPredictionEventListeners() {
         loadAsteroids();
         initializePredictionMap();
         initializePredictionGlobe();
+        
+        // Clear any existing analysis results
+        const outcomeCards = document.getElementById('outcome-cards');
+        if (outcomeCards) {
+            outcomeCards.innerHTML = '<div class="no-results"><p>Please select asteroid parameters and run simulation to see impact analysis results</p></div>';
+        }
+        
+        // Initialize choice reminder highlighting
+        updateChoiceReminder();
     });
 }
 
@@ -1305,27 +1317,36 @@ function calculateTntEquivalent(energy) {
 
 function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
     const angleRad = angle * Math.PI / 180;
-    // Pi-scaling law for crater diameter
-    const energyDensity = energy / (targetDensity * EARTH_GRAVITY);
+    const effectiveEnergy = energy * Math.sin(angleRad);
+    
+    // Updated crater formula based on effective energy
+    const energyDensity = effectiveEnergy / (targetDensity * EARTH_GRAVITY);
     const diameter = 1.25 * Math.pow(energyDensity, 1/4) * Math.pow(Math.sin(angleRad), 1/3);
     const depth = diameter / 4;
+    
     return { 
-        diameter: Math.max(10, diameter), // Minimum 10m diameter
+        diameter: Math.min(100000, Math.max(10, diameter)), // Cap at 100 km, minimum 10m
         depth: Math.max(2, depth) // Minimum 2m depth
     };
 }
 
-function calculateSeismicMagnitude(energy) {
-    // Convert energy to seismic moment (Nm)
-    const seismicMoment = energy * 0.01; // 1% efficiency
+function calculateSeismicMagnitude(energy, angle) {
+    const angleRad = angle * Math.PI / 180;
+    const effectiveEnergy = energy * Math.sin(angleRad);
+    
+    // Allocate 1% of effective energy to seismic
+    const seismicMoment = effectiveEnergy * 0.01;
     // Calculate moment magnitude
     const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
     return Math.max(0, Math.min(10, magnitude)); // Clamp between 0-10
 }
 
-function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100000) {
-    // Energy efficiency for tsunami generation
-    const tsunamiEnergy = energy * 0.1; // 10% efficiency
+function calculateTsunamiHeight(energy, angle, waterDepth = 4000, distanceToShore = 100000) {
+    const angleRad = angle * Math.PI / 180;
+    const effectiveEnergy = energy * Math.sin(angleRad);
+    
+    // Allocate 5% of effective energy to tsunami
+    const tsunamiEnergy = effectiveEnergy * 0.05;
     
     // Initial wave height (simplified)
     const impactArea = Math.PI * 1000 * 1000; // 1km radius
@@ -1347,18 +1368,146 @@ function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100
 function calculatePeakGroundAcceleration(magnitude, distance) {
     // Simplified attenuation relationship
     const pga = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
-    return pga;
+    return Math.min(9.81, pga); // Cap at 9.81 m/s² (1g)
+}
+
+// Calculate blast radius using updated formula
+function calculateBlastRadius(energy, angle) {
+    const angleRad = angle * Math.PI / 180;
+    const effectiveEnergy = energy * Math.sin(angleRad);
+    
+    // Allocate 20% of effective energy to blast
+    const blastEnergy = effectiveEnergy * 0.2;
+    const tntEquivalent = blastEnergy / TNT_TO_JOULES; // Convert to megatons TNT
+    
+    // Updated blast radius formula: 15 * (TNT_megatons)^(1/3)
+    const blastRadius = 15 * Math.pow(tntEquivalent, 1/3);
+    
+    // Clamp between 1-700 km
+    return Math.max(1, Math.min(700, blastRadius));
+}
+
+// Calculate tsunami radius with updated limits
+function calculateTsunamiRadius(blastRadius) {
+    // Limit tsunami radius: clamp(blast_radius*2, 50, 400)
+    return Math.max(50, Math.min(400, blastRadius * 2));
+}
+
+// Calculate seismic radius with updated limits
+function calculateSeismicRadius(blastRadius) {
+    // Limit seismic radius: clamp(blast_radius*3, 30, 500)
+    return Math.max(30, Math.min(500, blastRadius * 3));
+}
+
+// Validation function for updated formulas
+function validatePhysicsFormulas() {
+    console.log('🔬 Validating updated physics formulas...');
+    
+    // Test case 1: 160m diameter asteroid
+    const diameter160 = 160; // meters
+    const density160 = 3000; // kg/m³
+    const velocity160 = 20000; // m/s
+    const angle160 = 45; // degrees
+    
+    const mass160 = calculateMass(diameter160, density160);
+    const energy160 = calculateKineticEnergy(mass160, velocity160);
+    const blastRadius160 = calculateBlastRadius(energy160, angle160);
+    
+    console.log(`160m asteroid: blast radius = ${blastRadius160.toFixed(1)} km (expected ~70 km)`);
+    
+    // Test case 2: 500m diameter asteroid
+    const diameter500 = 500; // meters
+    const density500 = 3000; // kg/m³
+    const velocity500 = 20000; // m/s
+    const angle500 = 45; // degrees
+    
+    const mass500 = calculateMass(diameter500, density500);
+    const energy500 = calculateKineticEnergy(mass500, velocity500);
+    const blastRadius500 = calculateBlastRadius(energy500, angle500);
+    
+    console.log(`500m asteroid: blast radius = ${blastRadius500.toFixed(1)} km (expected ~300 km)`);
+    
+    // Test exposure thresholds
+    const testBlastRadius = 100; // km
+    const extremeThreshold = testBlastRadius * 0.3;
+    const highThreshold = testBlastRadius * 0.6;
+    const mediumThreshold = testBlastRadius * 1.0;
+    const lowThreshold = testBlastRadius * 1.5;
+    
+    console.log(`Exposure thresholds for 100km blast radius:`);
+    console.log(`  Extreme: ${extremeThreshold} km`);
+    console.log(`  High: ${highThreshold} km`);
+    console.log(`  Medium: ${mediumThreshold} km`);
+    console.log(`  Low: ${lowThreshold} km`);
+    
+    // Test coordinate conversion consistency
+    console.log('🌍 Testing coordinate conversion consistency...');
+    const testCoords = [
+        { lat: 0, lng: 0 },      // Equator, Prime Meridian
+        { lat: 90, lng: 0 },     // North Pole
+        { lat: -90, lng: 0 },    // South Pole
+        { lat: 40.7128, lng: -74.0060 }, // New York
+        { lat: 51.5074, lng: -0.1278 }   // London
+    ];
+    
+    testCoords.forEach(coord => {
+        // Convert lat/lng to 3D
+        const phi = coord.lat * Math.PI / 180;
+        const theta = coord.lng * Math.PI / 180;
+        const x = Math.cos(phi) * Math.cos(theta);
+        const y = Math.sin(phi);
+        const z = Math.cos(phi) * Math.sin(theta);
+        
+        // Convert back to lat/lng
+        const backLat = Math.asin(y) * (180 / Math.PI);
+        const backLng = Math.atan2(z, x) * (180 / Math.PI);
+        
+        const latDiff = Math.abs(coord.lat - backLat);
+        const lngDiff = Math.abs(coord.lng - backLng);
+        
+        console.log(`${coord.lat.toFixed(4)}, ${coord.lng.toFixed(4)} → ${backLat.toFixed(4)}, ${backLng.toFixed(4)} (diff: ${latDiff.toFixed(6)}, ${lngDiff.toFixed(6)})`);
+    });
+    
+    // Test New York specifically
+    console.log('🗽 Testing New York coordinates specifically...');
+    const nyLat = 40.7128;
+    const nyLng = -74.0060;
+    
+    // Convert to 3D
+    const nyPhi = nyLat * Math.PI / 180;
+    const nyTheta = nyLng * Math.PI / 180;
+    const nyX = Math.cos(nyPhi) * Math.cos(nyTheta);
+    const nyY = Math.sin(nyPhi);
+    const nyZ = Math.cos(nyPhi) * Math.sin(nyTheta);
+    
+    console.log(`New York 3D coordinates: x=${nyX.toFixed(4)}, y=${nyY.toFixed(4)}, z=${nyZ.toFixed(4)}`);
+    
+    // Convert back
+    const nyBackLat = Math.asin(nyY) * (180 / Math.PI);
+    const nyBackLng = Math.atan2(nyZ, nyX) * (180 / Math.PI);
+    
+    console.log(`New York back conversion: lat=${nyBackLat.toFixed(4)}, lng=${nyBackLng.toFixed(4)}`);
+    console.log(`Difference: lat=${Math.abs(nyLat - nyBackLat).toFixed(6)}, lng=${Math.abs(nyLng - nyBackLng).toFixed(6)}`);
+    
+    return {
+        blastRadius160: blastRadius160,
+        blastRadius500: blastRadius500,
+        extremeThreshold: extremeThreshold,
+        highThreshold: highThreshold,
+        mediumThreshold: mediumThreshold,
+        lowThreshold: lowThreshold
+    };
 }
 
 // Calculate exposed population based on affected cities (impactor-2025 style)
-function calculateExposedPopulation(lat, lon, craterDiameter, energy) {
-    // Calculate blast and tsunami radius based on energy
-    const blastRadius = Math.sqrt(energy / (Math.PI * 1e12)); // km
-    const tsunamiRadius = Math.max(blastRadius * 2, 200); // km
-    const seismicRadius = Math.min(1000, blastRadius * 10);
+function calculateExposedPopulation(lat, lon, craterDiameter, energy, angle) {
+    // Calculate blast radius using updated formula
+    const blastRadius = calculateBlastRadius(energy, angle);
+    const tsunamiRadius = calculateTsunamiRadius(blastRadius);
+    const seismicRadius = calculateSeismicRadius(blastRadius);
     
     // Get affected cities for population calculation
-    const affectedCities = calculateAffectedCities(lat, lon, craterDiameter, Math.log10(energy) / 3);
+    const affectedCities = calculateAffectedCities(lat, lon, craterDiameter, blastRadius);
     
     let totalPopulationAffected = 0;
     let highExposurePopulation = 0;
@@ -1395,7 +1544,7 @@ function calculateExposedPopulation(lat, lon, craterDiameter, energy) {
 }
 
 // Calculate affected cities (impactor-2025 style)
-function calculateAffectedCities(lat, lon, craterDiameter, magnitude) {
+function calculateAffectedCities(lat, lon, craterDiameter, blastRadius) {
     // Major cities database (expanded from impactor-2025)
     const cities = [
         { name: "New York", lat: 40.7128, lon: -74.0060, population: 8336817, gdp_per_capita: 65000 },
@@ -1424,29 +1573,37 @@ function calculateAffectedCities(lat, lon, craterDiameter, magnitude) {
     ];
     
     const affectedCities = [];
-    // Calculate blast and tsunami radius based on magnitude
-    const blastRadius = Math.pow(10, (magnitude - 4) / 2) * 10; // km
-    const tsunamiRadius = Math.max(blastRadius * 2, 200); // km
+    
+    // Calculate tsunami radius
+    const tsunamiRadius = calculateTsunamiRadius(blastRadius);
     const totalImpactRadius = Math.max(blastRadius, tsunamiRadius, craterDiameter * 2);
+    
+    // Define exposure thresholds based on blast radius
+    const extremeThreshold = blastRadius * 0.3;  // 0.3× blast radius
+    const highThreshold = blastRadius * 0.6;     // 0.6× blast radius
+    const mediumThreshold = blastRadius * 1.0;   // 1.0× blast radius
+    const lowThreshold = blastRadius * 1.5;      // 1.5× blast radius
     
     cities.forEach(city => {
         const distance = calculateDistance(lat, lon, city.lat, city.lon);
         
         if (distance <= totalImpactRadius) {
-            // Determine exposure level based on distance (impactor-2025 style)
+            // Determine exposure level based on updated thresholds
             let exposureLevel = "Low";
-            if (distance <= craterDiameter) {
+            if (distance <= extremeThreshold) {
                 exposureLevel = "Extreme";
-            } else if (distance <= blastRadius) {
+            } else if (distance <= highThreshold) {
                 exposureLevel = "High";
-            } else if (distance <= tsunamiRadius) {
+            } else if (distance <= mediumThreshold) {
                 exposureLevel = "Medium";
-            } else {
+            } else if (distance <= lowThreshold) {
                 exposureLevel = "Low";
             }
             
             affectedCities.push({
                 name: city.name,
+                lat: city.lat,
+                lon: city.lon,
                 distance: distance,
                 population: city.population,
                 exposure_level: exposureLevel,
@@ -1459,14 +1616,14 @@ function calculateAffectedCities(lat, lon, craterDiameter, magnitude) {
 }
 
 // Calculate economic impact (impactor-2025 style)
-function calculateEconomicImpact(lat, lon, craterDiameter, energy) {
-    // Calculate blast and tsunami radius based on energy
-    const blastRadius = Math.sqrt(energy / (Math.PI * 1e12)); // km
-    const tsunamiRadius = Math.max(blastRadius * 2, 200); // km
-    const seismicRadius = Math.min(1000, blastRadius * 10);
+function calculateEconomicImpact(lat, lon, craterDiameter, energy, angle) {
+    // Calculate blast radius using updated formula
+    const blastRadius = calculateBlastRadius(energy, angle);
+    const tsunamiRadius = calculateTsunamiRadius(blastRadius);
+    const seismicRadius = calculateSeismicRadius(blastRadius);
     
     // Get affected cities for economic calculation
-    const affectedCities = calculateAffectedCities(lat, lon, craterDiameter, Math.log10(energy) / 3);
+    const affectedCities = calculateAffectedCities(lat, lon, craterDiameter, blastRadius);
     
     let totalEconomicLoss = 0;
     let totalPopulationAffected = 0;
@@ -1479,9 +1636,10 @@ function calculateEconomicImpact(lat, lon, craterDiameter, energy) {
         const cityGDP = city.population * city.gdp_per_capita;
         let lossMultiplier = 0;
         
+        // Updated loss multipliers
         switch (city.exposure_level) {
             case 'Extreme':
-                lossMultiplier = 0.95; // 95% loss - total destruction
+                lossMultiplier = 0.9; // 90% loss - total destruction
                 break;
             case 'High':
                 lossMultiplier = 0.5; // 50% loss - severe damage
@@ -1608,6 +1766,9 @@ function generateCircleCoordinates(centerLat, centerLon, radiusKm) {
 function handleAsteroidSelect(event) {
     const asteroidId = event.target.value;
     if (asteroidId) {
+        // Switch to API method when asteroid is selected
+        selectInputMethod('api');
+        
         // Find asteroid in loaded data
         const asteroid = loadedAsteroids.find(a => a.id === asteroidId);
         if (asteroid) {
@@ -1618,6 +1779,9 @@ function handleAsteroidSelect(event) {
         selectedAsteroid = null;
         resetAsteroidParameters();
     }
+    
+    // Update choice reminder
+    updateChoiceReminder();
 }
 
 function updateAsteroidParameters(asteroid) {
@@ -1754,18 +1918,83 @@ function displayAsteroidInfo(asteroid) {
 }
 
 function resetAsteroidParameters() {
-    document.getElementById('diameter').value = 500;
-    document.getElementById('velocity').value = 15000;
-    document.getElementById('angle').value = 45;
-    updateDiameter();
-    updateVelocity();
-    updateAngle();
+    // Clear all parameter values
+    document.getElementById('diameter').value = '';
+    document.getElementById('velocity').value = '';
+    document.getElementById('angle').value = '';
+    
+    // Update display to show selection prompts
+    document.getElementById('diameter-value').textContent = 'Select diameter';
+    document.getElementById('velocity-value').textContent = 'Select velocity';
+    document.getElementById('angle-value').textContent = 'Select angle';
+    document.getElementById('mass-display').innerHTML = 'Please select diameter';
+    
+    // Clear any existing analysis results
+    const outcomeCards = document.getElementById('outcome-cards');
+    if (outcomeCards) {
+        outcomeCards.innerHTML = '<div class="no-results"><p>Please select asteroid parameters and run simulation to see impact analysis results</p></div>';
+    }
+    
+    // Update choice reminder
+    updateChoiceReminder();
+}
+
+// Global variable to track current input method
+let currentInputMethod = null;
+
+// Select input method and show corresponding section
+function selectInputMethod(method) {
+    currentInputMethod = method;
+    
+    // Hide all input sections
+    document.getElementById('api-input-section').style.display = 'none';
+    document.getElementById('custom-input-section').style.display = 'none';
+    
+    // Show selected section
+    if (method === 'api') {
+        document.getElementById('api-input-section').style.display = 'block';
+    } else if (method === 'custom') {
+        document.getElementById('custom-input-section').style.display = 'block';
+    }
+    
+    // Update choice reminder highlighting
+    updateChoiceReminder();
+    
+    // Clear any existing analysis results when switching methods
+    const outcomeCards = document.getElementById('outcome-cards');
+    if (outcomeCards) {
+        outcomeCards.innerHTML = '<div class="no-results"><p>Please set parameters and run simulation to see impact analysis results</p></div>';
+    }
+}
+
+// Update choice reminder highlighting based on user actions
+function updateChoiceReminder() {
+    const apiOption = document.querySelector('.choice-option[data-method="api"]');
+    const customOption = document.querySelector('.choice-option[data-method="custom"]');
+    
+    if (!apiOption || !customOption) return;
+    
+    // Reset all options
+    apiOption.classList.remove('active');
+    customOption.classList.remove('active');
+    
+    // Highlight current method
+    if (currentInputMethod === 'api') {
+        apiOption.classList.add('active');
+    } else if (currentInputMethod === 'custom') {
+        customOption.classList.add('active');
+    }
 }
 
 function updateDiameter() {
     const diameter = document.getElementById('diameter').value;
     document.getElementById('diameter-value').textContent = diameter + ' m';
     updateMass();
+    
+    // Switch to custom method when manually adjusting parameters
+    if (diameter) {
+        selectInputMethod('custom');
+    }
     
     // Mark as manually adjusted if asteroid is selected
     if (selectedAsteroid) {
@@ -1774,6 +2003,9 @@ function updateDiameter() {
             displayAsteroidInfo(selectedAsteroid);
         }, 50);
     }
+    
+    // Update choice reminder
+    updateChoiceReminder();
 }
 
 function updateDensity() {
@@ -1783,6 +2015,13 @@ function updateDensity() {
 function updateMass() {
     const diameter = parseFloat(document.getElementById('diameter').value);
     const densityType = document.getElementById('density-type').value;
+    
+    // Check if diameter is valid
+    if (isNaN(diameter) || diameter <= 0) {
+        document.getElementById('mass-display').innerHTML = 'Please select diameter';
+        return;
+    }
+    
     const density = ASTEROID_DENSITIES[densityType];
     const mass = calculateMass(diameter, density);
     
@@ -1795,18 +2034,10 @@ function updateVelocity() {
     const velocity = document.getElementById('velocity').value;
     document.getElementById('velocity-value').textContent = (velocity / 1000).toFixed(1) + ' km/s';
     
-    // Mark as manually adjusted if asteroid is selected
-    if (selectedAsteroid) {
-        parametersManuallyAdjusted = true;
-        setTimeout(() => {
-            displayAsteroidInfo(selectedAsteroid);
-        }, 50);
+    // Switch to custom method when manually adjusting parameters
+    if (velocity) {
+        selectInputMethod('custom');
     }
-}
-
-function updateAngle() {
-    const angle = document.getElementById('angle').value;
-    document.getElementById('angle-value').textContent = angle + '°';
     
     // Mark as manually adjusted if asteroid is selected
     if (selectedAsteroid) {
@@ -1815,6 +2046,30 @@ function updateAngle() {
             displayAsteroidInfo(selectedAsteroid);
         }, 50);
     }
+    
+    // Update choice reminder
+    updateChoiceReminder();
+}
+
+function updateAngle() {
+    const angle = document.getElementById('angle').value;
+    document.getElementById('angle-value').textContent = angle + '°';
+    
+    // Switch to custom method when manually adjusting parameters
+    if (angle) {
+        selectInputMethod('custom');
+    }
+    
+    // Mark as manually adjusted if asteroid is selected
+    if (selectedAsteroid) {
+        parametersManuallyAdjusted = true;
+        setTimeout(() => {
+            displayAsteroidInfo(selectedAsteroid);
+        }, 50);
+    }
+    
+    // Update choice reminder
+    updateChoiceReminder();
 }
 
 function updateImpactLocation() {
@@ -1997,13 +2252,13 @@ async function runSimulation() {
         
         // Validate parameters
         if (isNaN(diameter) || diameter <= 0) {
-            throw new Error('Invalid diameter value');
+            throw new Error('Please select a diameter value');
         }
         if (isNaN(velocity) || velocity <= 0) {
-            throw new Error('Invalid velocity value');
+            throw new Error('Please select a velocity value');
         }
         if (isNaN(angle) || angle < 0 || angle > 90) {
-            throw new Error('Invalid impact angle (must be 0-90 degrees)');
+            throw new Error('Please select an impact angle (0-90 degrees)');
         }
         if (isNaN(impactLat) || impactLat < -90 || impactLat > 90) {
             throw new Error('Please select an impact location by clicking on the map or 3D globe');
@@ -2052,23 +2307,24 @@ async function runSimulation() {
         const mass = calculateMass(diameter, density);
         console.log('Calculated mass:', mass, 'kg');
         
-        // Calculate impact effects using improved physics
+        // Calculate impact effects using updated physics formulas
         const energy = calculateKineticEnergy(mass, velocity);
         const tntEquivalent = calculateTntEquivalent(energy);
         const crater = calculateCraterDiameter(energy, angle);
-        const seismicMagnitude = calculateSeismicMagnitude(energy);
+        const seismicMagnitude = calculateSeismicMagnitude(energy, angle);
         
         let tsunamiHeight = null;
         if (targetType === 'ocean' || targetType === 'oceanic_crust') {
-            tsunamiHeight = calculateTsunamiHeight(energy);
+            tsunamiHeight = calculateTsunamiHeight(energy, angle);
         }
         
         const peakGroundAcceleration = calculatePeakGroundAcceleration(seismicMagnitude, 10);
         
-        // Calculate additional impact effects
-        const exposedPopulation = calculateExposedPopulation(impactLat, impactLon, crater.diameter, energy);
-        const affectedCities = calculateAffectedCities(impactLat, impactLon, crater.diameter, seismicMagnitude);
-        const economicImpact = calculateEconomicImpact(impactLat, impactLon, crater.diameter, energy);
+        // Calculate additional impact effects using updated formulas
+        const exposedPopulation = calculateExposedPopulation(impactLat, impactLon, crater.diameter, energy, angle);
+        const blastRadius = calculateBlastRadius(energy, angle);
+        const affectedCities = calculateAffectedCities(impactLat, impactLon, crater.diameter, blastRadius);
+        const economicImpact = calculateEconomicImpact(impactLat, impactLon, crater.diameter, energy, angle);
         const gdpImpactPercentage = calculateGDPImpactPercentage(economicImpact);
         
         // Create results object with all impactor-2025 fields
@@ -2289,21 +2545,27 @@ function initializePredictionMap() {
             maxZoom: 19
         }).addTo(predictionMap);
         
-        // Add click event listener for impact point selection
-        predictionMap.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            console.log('=== 2D MAP CLICK DEBUG ===');
-            console.log('2D Map clicked at:', lat, lng);
-            console.log('==========================');
-            
-            // Update impact coordinates
-            updateImpactCoordinates(lat, lng);
-            
-            // Update 3D globe impact point
-            update3DGlobeImpactPoint(lat, lng);
-        });
+        // Add click event listener for impact point selection (prevent duplicate listeners)
+        if (!predictionMap._impactClickAdded) {
+            predictionMap.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                console.log('=== 2D MAP CLICK DEBUG ===');
+                console.log('2D Map clicked at:', lat, lng);
+                console.log('==========================');
+                
+                // Update impact coordinates
+                updateImpactCoordinates(lat, lng);
+                
+                // Update 3D globe impact point
+                update3DGlobeImpactPoint(lat, lng);
+                
+                // Update 2D map impact point
+                update2DMapImpactPoint(lat, lng);
+            });
+            predictionMap._impactClickAdded = true;
+        }
         
         console.log('Prediction map initialized');
     } catch (error) {
@@ -2358,7 +2620,8 @@ function initializePredictionGlobe() {
         const earthMaterial = new THREE.MeshPhongMaterial({
             map: earthTexture,
             shininess: 100,
-            transparent: false
+            transparent: false,
+            side: THREE.DoubleSide
         });
         
         // Create Earth mesh
@@ -2379,7 +2642,8 @@ function initializePredictionGlobe() {
         const nightMaterial = new THREE.MeshBasicMaterial({
             map: nightTexture,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.8,
+            side: THREE.DoubleSide
         });
         
         const nightEarth = new THREE.Mesh(earthGeometry, nightMaterial);
@@ -2400,7 +2664,8 @@ function initializePredictionGlobe() {
         const cloudMaterial = new THREE.MeshBasicMaterial({
             map: cloudTexture,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.3,
+            side: THREE.DoubleSide
         });
         const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
         scene.add(clouds);
@@ -2510,19 +2775,57 @@ function initializePredictionGlobe() {
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-            // Create raycaster
+            // Create raycaster with proper range for Earth sphere
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(mouse, camera);
+            raycaster.far = 10; // Earth radius is 1, so 10 should be enough
+            raycaster.near = 0.1;
 
-            // Find intersection with Earth sphere
-            const intersects = raycaster.intersectObject(earth);
+            // Collect all Earth objects for intersection testing
+            const earthObjects = [earth, nightEarth, clouds].filter(obj => obj);
+            console.log('Testing intersection with', earthObjects.length, 'Earth objects');
+
+            // Test intersection with all Earth objects
+            let intersects = [];
+            for (const obj of earthObjects) {
+                const objIntersects = raycaster.intersectObject(obj);
+                if (objIntersects.length > 0) {
+                    intersects = objIntersects;
+                    console.log('Found intersection with', obj.geometry?.type || 'unknown object');
+                    break;
+                }
+            }
             
             if (intersects.length > 0) {
                 const point = intersects[0].point;
                 
-                // Convert 3D point to lat/lng (consistent with update3DGlobeImpactPoint)
-                const lat = Math.asin(point.y) * (180 / Math.PI);
-                const lng = Math.atan2(point.z, point.x) * (180 / Math.PI);
+                // Convert 3D point to lat/lng (accounting for Earth rotation)
+                // First, apply inverse rotation to get world coordinates
+                const inverseRotationX = -earth.rotation.x;
+                const inverseRotationY = -earth.rotation.y;
+                
+                // Rotate point back to original position
+                const rotatedPoint = point.clone();
+                
+                // Apply inverse Y rotation
+                const cosY = Math.cos(inverseRotationY);
+                const sinY = Math.sin(inverseRotationY);
+                const newX = rotatedPoint.x * cosY - rotatedPoint.z * sinY;
+                const newZ = rotatedPoint.x * sinY + rotatedPoint.z * cosY;
+                rotatedPoint.x = newX;
+                rotatedPoint.z = newZ;
+                
+                // Apply inverse X rotation
+                const cosX = Math.cos(inverseRotationX);
+                const sinX = Math.sin(inverseRotationX);
+                const newY = rotatedPoint.y * cosX - rotatedPoint.z * sinX;
+                const newZ2 = rotatedPoint.y * sinX + rotatedPoint.z * cosX;
+                rotatedPoint.y = newY;
+                rotatedPoint.z = newZ2;
+                
+                // Now convert to lat/lng
+                const lat = Math.asin(rotatedPoint.y) * (180 / Math.PI);
+                const lng = Math.atan2(rotatedPoint.z, rotatedPoint.x) * (180 / Math.PI);
                 
                 console.log('=== 3D EARTH CLICK DEBUG ===');
                 console.log('3D Earth clicked at:', lat, lng);
@@ -2550,6 +2853,60 @@ function initializePredictionGlobe() {
                 
                 console.log('Impact group visible set to:', impactGroup.visible);
                 console.log('Impact group children count:', impactGroup.children.length);
+                
+                // Update 2D map marker
+                update2DMapImpactPoint(lat, lng);
+            } else {
+                // Fallback: calculate lat/lng from screen coordinates using equirectangular projection
+                console.log('No intersection found, using fallback calculation');
+                
+                // Convert screen coordinates to lat/lng using equirectangular projection
+                const lat = (mouse.y + 1) * 90 - 90; // -90 to 90
+                const lng = (mouse.x + 1) * 180 - 180; // -180 to 180
+                
+                console.log('Fallback coordinates:', lat, lng);
+                
+                // Update impact coordinates
+                updateImpactCoordinates(lat, lng);
+                
+                // Convert lat/lng to 3D point on Earth surface (correct formula)
+                const phi = lat * Math.PI / 180;  // latitude in radians
+                const theta = lng * Math.PI / 180; // longitude in radians
+                
+                let x = Math.cos(phi) * Math.cos(theta);
+                let y = Math.sin(phi);
+                let z = Math.cos(phi) * Math.sin(theta);
+                
+                // Apply Earth rotation to match current orientation
+                const rotationX = earth.rotation.x;
+                const rotationY = earth.rotation.y;
+                
+                // Apply Y rotation
+                const cosY = Math.cos(rotationY);
+                const sinY = Math.sin(rotationY);
+                const newX = x * cosY - z * sinY;
+                const newZ = x * sinY + z * cosY;
+                x = newX;
+                z = newZ;
+                
+                // Apply X rotation
+                const cosX = Math.cos(rotationX);
+                const sinX = Math.sin(rotationX);
+                const newY = y * cosX - z * sinX;
+                const newZ2 = y * sinX + z * cosX;
+                y = newY;
+                z = newZ2;
+                
+                // Update 3D impact marker position
+                impactGroup.position.set(x, y, z);
+                impactGroup.visible = true;
+                
+                // Position ring at the same location as the sphere
+                ring.position.set(0, 0, 0);
+                
+                // Make ring face outward from Earth surface
+                const surfaceNormal = impactGroup.position.clone();
+                ring.lookAt(ring.position.clone().add(surfaceNormal));
                 
                 // Update 2D map marker
                 update2DMapImpactPoint(lat, lng);
@@ -2606,11 +2963,20 @@ function initializePredictionGlobe() {
             }
             cloudMaterial.opacity = cloudOpacity;
             
-            // Impact point should NOT rotate with Earth - it stays fixed on the surface
-            // The impact point position is already set relative to Earth's surface
-            
-            // Animate impact marker pulse effect
+            // Update impact marker position to stay on Earth surface
             if (impactGroup.visible) {
+                // Ensure the impact point stays on the Earth surface
+                const currentPosition = impactGroup.position.clone();
+                currentPosition.normalize();
+                currentPosition.multiplyScalar(1.0); // Exactly on Earth surface
+                impactGroup.position.copy(currentPosition);
+                
+                // Update ring position and orientation
+                ring.position.set(0, 0, 0);
+                const surfaceNormal = impactGroup.position.clone();
+                ring.lookAt(ring.position.clone().add(surfaceNormal));
+                
+                // Animate impact marker pulse effect
                 impactPulseTime += 0.05;
                 const pulseScale = 1 + Math.sin(impactPulseTime) * 0.03; // Very small pulse scale
                 
@@ -2686,13 +3052,36 @@ function updateImpactCoordinates(lat, lng) {
 function update3DGlobeImpactPoint(lat, lng) {
     if (!predictionGlobe || !predictionGlobe.scene) return;
     
-    // Convert lat/lng to 3D coordinates (consistent with click conversion)
-    const phi = (90 - lat) * Math.PI / 180;
-    const theta = lng * Math.PI / 180;
+    // Convert lat/lng to 3D coordinates (correct spherical coordinates)
+    const phi = lat * Math.PI / 180;  // latitude in radians
+    const theta = lng * Math.PI / 180; // longitude in radians
     
-    const x = Math.sin(phi) * Math.cos(theta);
-    const y = Math.cos(phi);
-    const z = Math.sin(phi) * Math.sin(theta);
+    let x = Math.cos(phi) * Math.cos(theta);
+    let y = Math.sin(phi);
+    let z = Math.cos(phi) * Math.sin(theta);
+    
+    // Apply Earth rotation to match current orientation
+    const earth = predictionGlobe.scene.children.find(child => child.geometry && child.geometry.type === 'SphereGeometry');
+    if (earth) {
+        const rotationX = earth.rotation.x;
+        const rotationY = earth.rotation.y;
+        
+        // Apply Y rotation
+        const cosY = Math.cos(rotationY);
+        const sinY = Math.sin(rotationY);
+        const newX = x * cosY - z * sinY;
+        const newZ = x * sinY + z * cosY;
+        x = newX;
+        z = newZ;
+        
+        // Apply X rotation
+        const cosX = Math.cos(rotationX);
+        const sinX = Math.sin(rotationX);
+        const newY = y * cosX - z * sinX;
+        const newZ2 = y * sinX + z * cosX;
+        y = newY;
+        z = newZ2;
+    }
     
     console.log('update3DGlobeImpactPoint called with:', lat, lng);
     console.log('3D coordinates:', x, y, z);

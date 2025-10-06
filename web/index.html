@@ -577,59 +577,71 @@
                 <div class="asteroid-settings">
                     <h3><i class="fas fa-asterisk"></i> Asteroid Properties</h3>
                     
-                    <div class="control-group">
-                        <label for="asteroid-select">Select Asteroid:</label>
-                        <select id="asteroid-select">
-                            <option value="">Choose an asteroid...</option>
-                        </select>
+                    <!-- User Choice Reminder -->
+                    <div class="choice-reminder">
+                        <div class="reminder-card">
+                            <h4><i class="fas fa-info-circle"></i> Choose Your Input Method</h4>
+                            <div class="choice-options">
+                                <div class="choice-option" data-method="api" onclick="selectInputMethod('api')">
+                                    <i class="fas fa-database"></i>
+                                    <span><strong>API Data:</strong> Select from real asteroid data</span>
+                                </div>
+                                <div class="choice-option" data-method="custom" onclick="selectInputMethod('custom')">
+                                    <i class="fas fa-sliders-h"></i>
+                                    <span><strong>Custom:</strong> Set your own parameters</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Data Input Section -->
+                    <div id="api-input-section" class="input-section" style="display: none;">
+                        <div class="control-group">
+                            <label for="asteroid-select">Select Asteroid (API Data):</label>
+                            <select id="asteroid-select">
+                                <option value="">Choose an asteroid from API data...</option>
+                            </select>
+                            
+                            <!-- Asteroid API Data Display -->
+                            <div id="asteroid-info" class="asteroid-info"></div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Input Section -->
+                    <div id="custom-input-section" class="input-section" style="display: none;">
+                        <h4><i class="fas fa-sliders-h"></i> Custom Parameters</h4>
                         
-                        <!-- Asteroid API Data Display -->
-                        <div id="asteroid-info" class="asteroid-info"></div>
-                    </div>
+                        <div class="control-group">
+                            <label for="diameter">Diameter (m):</label>
+                            <input type="range" id="diameter" min="10" max="2000" />
+                            <span id="diameter-value">Select diameter</span>
+                        </div>
 
-                    <div class="control-group">
-                        <label for="diameter">Diameter (m):</label>
-                        <input type="range" id="diameter" min="10" max="2000" value="500" />
-                        <span id="diameter-value">500 m</span>
-                    </div>
+                        <div class="control-group">
+                            <label for="density-type">Density Type:</label>
+                            <select id="density-type">
+                                <option value="stony">Stony (3000 kg/m³)</option>
+                                <option value="iron">Iron (7800 kg/m³)</option>
+                                <option value="carbonaceous">Carbonaceous (2000 kg/m³)</option>
+                            </select>
+                        </div>
 
-                    <div class="control-group">
-                        <label for="density-type">Density Type:</label>
-                        <select id="density-type">
-                            <option value="stony">Stony (3000 kg/m³)</option>
-                            <option value="iron">Iron (7800 kg/m³)</option>
-                            <option value="carbonaceous">Carbonaceous (2000 kg/m³)</option>
-                        </select>
-                    </div>
+                        <div class="control-group">
+                            <label for="mass-display">Mass:</label>
+                            <div id="mass-display">Please select diameter</div>
+                        </div>
 
-                    <div class="control-group">
-                        <label for="mass-display">Mass:</label>
-                        <div id="mass-display">Calculating...</div>
-                    </div>
+                        <div class="control-group">
+                            <label for="velocity">Velocity (m/s):</label>
+                            <input type="range" id="velocity" min="5000" max="50000" step="1000" />
+                            <span id="velocity-value">Select velocity</span>
+                        </div>
 
-                    <h3><i class="fas fa-bullseye"></i> Impact Parameters</h3>
-                    
-                    <div class="control-group">
-                        <label for="impact-lat">Latitude:</label>
-                        <input type="number" id="impact-lat" min="-90" max="90" step="0.1" placeholder="Click on map to select" />
-                    </div>
-
-                    <div class="control-group">
-                        <label for="impact-lon">Longitude:</label>
-                        <input type="number" id="impact-lon" min="-180" max="180" step="0.1" placeholder="Click on map to select" />
-                    </div>
-
-                    <div class="control-group">
-                        <label for="velocity">Velocity (m/s):</label>
-                        <input type="range" id="velocity" min="5000" max="50000" step="1000" value="15000" />
-                        <span id="velocity-value">15.0 km/s</span>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="angle">Impact Angle (degrees):</label>
-                        <input type="range" id="angle" min="10" max="90" step="5" value="45" />
-                        <span id="angle-value">45°</span>
-                    </div>
+                        <div class="control-group">
+                            <label for="angle">Impact Angle (degrees):</label>
+                            <input type="range" id="angle" min="10" max="90" step="5" />
+                            <span id="angle-value">Select angle</span>
+                        </div>
 
                         <div class="control-group">
                             <label for="target-type">Target Type:</label>
@@ -639,6 +651,22 @@
                                 <option value="ocean">Ocean</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Impact Location Section (Common to both methods) -->
+                    <div class="impact-location-section">
+                        <h3><i class="fas fa-bullseye"></i> Impact Location</h3>
+                        
+                        <div class="control-group">
+                            <label for="impact-lat">Latitude:</label>
+                            <input type="number" id="impact-lat" min="-90" max="90" step="0.1" placeholder="Click on map to select" />
+                        </div>
+
+                        <div class="control-group">
+                            <label for="impact-lon">Longitude:</label>
+                            <input type="number" id="impact-lon" min="-180" max="180" step="0.1" placeholder="Click on map to select" />
+                        </div>
+                    </div>
 
                     <div class="control-group">
                         <button id="run-simulation" class="btn-primary">

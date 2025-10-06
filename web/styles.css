@@ -1382,6 +1382,133 @@ i.fas, i.fa {
     }
 }
 
+/* User Choice Reminder */
+.choice-reminder {
+    margin-bottom: 1.5rem;
+}
+
+.reminder-card {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(52, 152, 219, 0.1) 100%);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.reminder-card h4 {
+    color: #4A90E2;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.choice-options {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.choice-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1;
+    min-width: 200px;
+}
+
+.choice-option i {
+    color: #4A90E2;
+    font-size: 1.2rem;
+}
+
+.choice-option span {
+    color: white;
+    font-size: 0.9rem;
+}
+
+.choice-option.active {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.2) 0%, rgba(52, 152, 219, 0.2) 100%);
+    border-color: rgba(74, 144, 226, 0.5);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.choice-option.active i {
+    color: #4A90E2;
+    animation: pulse 2s infinite;
+}
+
+.choice-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.choice-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Input Sections */
+.input-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.input-section h4 {
+    color: #4A90E2;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.impact-location-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.impact-location-section h3 {
+    color: #4A90E2;
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Asteroid API Data Display */
 .asteroid-info {
     margin-top: 1rem;
