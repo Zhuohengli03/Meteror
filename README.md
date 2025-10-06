@@ -1,177 +1,237 @@
-# Meteor Madness — Interactive Web Dashboard
+# 🌍 Meteor Madness - Asteroid Impact Simulation
 
-This repository hosts a comprehensive solution for the NASA Space Apps **Meteor Madness** challenge. It includes both a Java console application and a modern web-based dashboard for visualizing meteor and asteroid data from NASA APIs.
+A comprehensive web application for simulating asteroid impacts and analyzing their potential effects on Earth. Built for NASA Space Apps Challenge 2025.
 
-## Features
+## 🚀 Features
 
-### 🌐 Web Dashboard
-- **Interactive Dashboard**: Modern, responsive web interface with real-time data visualization
-- **Multiple Data Views**: Close approaches, fireballs, and near-earth objects
-- **Interactive Charts**: Line charts, doughnut charts, and statistical visualizations
-- **Interactive Map**: Leaflet-based map showing fireball locations and approach trajectories
-- **Real-time Updates**: Live data fetching with customizable date ranges and filters
+### 🌐 Interactive 3D Earth Globe
+- **Real-time 3D visualization** using Three.js
+- **NASA Blue Marble textures** for realistic Earth appearance
+- **Dynamic cloud animation** with independent rotation
+- **Full surface click detection** for impact point selection
+- **Synchronized 2D/3D maps** with accurate coordinate conversion
 
-### 📊 Data Sources
-- **CNEOS Close Approach Data (CAD)**: <https://ssd-api.jpl.nasa.gov/cad.api>
-- **CNEOS Fireball API**: <https://ssd-api.jpl.nasa.gov/fireball.api>
-- **NeoWs (Near-Earth Object Web Service) Feed**: <https://api.nasa.gov/neo/rest/v1/feed>
-- **EONET Natural Events API**: <https://eonet.gsfc.nasa.gov/api/v3/events>
+### 📊 Impact Analysis
+- **Physics-based calculations** using updated impactor-2025 formulas
+- **Comprehensive impact effects**:
+  - Crater diameter and depth
+  - Seismic magnitude and ground acceleration
+  - Tsunami height and radius
+  - Blast radius and affected areas
+- **Population exposure analysis** with multiple threat levels
+- **Economic impact assessment** including GDP impact percentage
+- **Affected cities database** with distance calculations
 
-## Requirements
-- JDK 17 or later
-- Maven 3.9+
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Set an environment variable `NASA_API_KEY` for the NeoWs feed.
-    - If not set, the app falls back to the limited `DEMO_KEY`.
+### 🛰️ NASA API Integration
+- **Near Earth Objects (NEO) data** from NASA's NEO API
+- **Fireball data** from NASA's Fireball API
+- **CAD (Close Approach Data)** for orbital information
+- **EONET (Earth Observatory Natural Event Tracker)** for natural events
 
-## Quick Start
+### 🎯 Deflection Simulation
+- **Kinetic impactor deflection** calculations
+- **Delta-v requirements** for deflection missions
+- **Miss distance analysis** and impact probability
+- **Deflection angle optimization**
 
-### Option 1: Web Dashboard (Recommended)
+## 🏗️ Architecture
+
+### Backend (Java)
+- **Java 17** with Maven build system
+- **HTTP Server** using `com.sun.net.httpserver.HttpServer`
+- **RESTful API** endpoints for data fetching and simulation
+- **NASA API clients** for real-time data integration
+- **JSON processing** with Jackson library
+
+### Frontend (Web)
+- **Vanilla JavaScript** for maximum compatibility
+- **Three.js** for 3D Earth visualization
+- **Leaflet.js** for 2D interactive maps
+- **Responsive CSS** with modern design
+- **Real-time data visualization**
+
+## 📁 Project Structure
+
+```
+NASA_Challenge/
+├── src/main/java/org/spaceapps/meteormadness/
+│   ├── WebServer.java              # Main HTTP server
+│   ├── Main.java                   # Application entry point
+│   ├── clients/                    # NASA API clients
+│   │   ├── NeoWsClient.java        # Near Earth Objects API
+│   │   ├── FireballClient.java     # Fireball data API
+│   │   ├── CadClient.java          # Close Approach Data API
+│   │   └── EonetClient.java        # Natural events API
+│   ├── service/
+│   │   └── MeteorDataService.java  # Data processing service
+│   └── util/                       # Utility classes
+│       ├── Config.java             # Configuration management
+│       ├── HttpUtil.java           # HTTP utilities
+│       ├── JsonUtil.java           # JSON processing
+│       └── TablePrinter.java       # Data formatting
+├── src/main/resources/
+│   └── nasa-api.properties         # API configuration
+├── web/                            # Frontend files
+│   ├── index.html                  # Main web interface
+│   ├── app.js                      # JavaScript application
+│   └── styles.css                  # Styling and animations
+├── ai_usage/                       # AI usage tracking
+│   └── usage.txt                   # Usage statistics
+├── pom.xml                         # Maven configuration
+├── start-web-server.sh             # Server startup script
+└── README.md                       # This file
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Java 17** or higher
+- **Maven 3.6+**
+- **Modern web browser** (Chrome, Firefox, Safari, Edge)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Zhuohengli03/Hackthon-Meteror.git
+   cd Hackthon-Meteror
+   ```
+
+2. **Set up Java environment** (macOS with Homebrew)
+   ```bash
+   brew install openjdk@17
+   export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+   export PATH=$JAVA_HOME/bin:$PATH
+   ```
+
+3. **Start the server**
+   ```bash
+   ./start-web-server.sh
+   ```
+
+4. **Open your browser**
+   Navigate to `http://localhost:8080`
+
+### Alternative: Manual Setup
+
+1. **Compile the project**
+   ```bash
+   mvn clean compile
+   ```
+
+2. **Run the server**
+   ```bash
+   mvn exec:java -Dexec.mainClass="org.spaceapps.meteormadness.WebServer"
+   ```
+
+## 🔧 Configuration
+
+### NASA API Keys
+The application uses NASA's public APIs with rate-limited demo keys. For production use:
+
+1. **Get API keys** from [NASA API Portal](https://api.nasa.gov/)
+2. **Set environment variable**:
+   ```bash
+   export NASA_API_KEY=your_api_key_here
+   ```
+
+### Server Configuration
+- **Default port**: 8080
+- **CORS enabled**: All origins allowed
+- **API rate limiting**: Built-in with fallback keys
+
+## 📊 API Endpoints
+
+### Data Endpoints
+- `GET /api/asteroids` - Get near Earth objects
+- `GET /api/fireballs` - Get fireball data
+- `GET /api/cad` - Get close approach data
+- `GET /api/eonet` - Get natural events
+
+### Simulation Endpoints
+- `POST /api/simulate-impact` - Run impact simulation
+- `GET /api/health` - Health check
+
+## 🧮 Physics Models
+
+### Impact Calculations
+- **Crater diameter**: Pi-scaling law with energy density
+- **Seismic magnitude**: Based on seismic moment
+- **Tsunami height**: Energy efficiency and attenuation
+- **Blast radius**: TNT equivalent calculations
+- **Ground acceleration**: Distance-based attenuation
+
+### Deflection Physics
+- **Kinetic impactor**: Delta-v calculations
+- **Deflection angle**: Orbital mechanics
+- **Miss distance**: Probability analysis
+
+## 🎨 User Interface
+
+### Main Dashboard
+- **Overview tab**: Real-time meteor data
+- **Prediction tab**: Impact simulation interface
+- **Deflection tab**: Deflection mission planning
+
+### Interactive Features
+- **3D Earth globe**: Click to select impact points
+- **2D world map**: Synchronized with 3D globe
+- **Parameter controls**: Asteroid properties and impact conditions
+- **Real-time results**: Dynamic analysis updates
+
+## 🔬 Scientific Accuracy
+
+The application uses peer-reviewed scientific models:
+- **Impact cratering** based on Pi-scaling law
+- **Seismic wave propagation** using standard attenuation relationships
+- **Tsunami generation** with realistic energy transfer
+- **Population exposure** using geographic databases
+
+## 🛠️ Development
+
+### Building from Source
 ```bash
-# Start the web server
+# Clone repository
+git clone https://github.com/Zhuohengli03/Hackthon-Meteror.git
+cd Hackthon-Meteror
+
+# Install dependencies
+mvn clean install
+
+# Run tests
+mvn test
+
+# Start development server
 ./start-web-server.sh
 ```
 
-Then open your browser and navigate to: **http://localhost:8080**
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-### Option 2: Console Application
-```bash
-# Build and run console version
-mvn compile exec:java -Dexec.mainClass="org.spaceapps.meteormadness.Main"
-```
+## 📄 License
 
-### Option 3: Run with Demo Mode
-```bash
-# Run with demo flag for additional features
-mvn compile exec:java -Dexec.mainClass="org.spaceapps.meteormadness.Main" -Dexec.args="--demo"
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Web Dashboard Features
+## 🙏 Acknowledgments
 
-### 📈 Overview Tab
-- Real-time statistics dashboard
-- Interactive charts showing data trends
-- Energy distribution analysis for fireballs
-- Close approach timeline visualization
+- **NASA** for providing comprehensive APIs and data
+- **Three.js** community for 3D visualization tools
+- **Leaflet** for interactive mapping capabilities
+- **NASA Space Apps Challenge** for inspiration and support
 
-### 🛰️ Close Approaches Tab
-- Customizable date range filtering
-- Distance and velocity filtering
-- Sortable data table with detailed information
-- Real-time data fetching
+## 📞 Support
 
-### 🔥 Fireballs Tab
-- Historical fireball event data
-- Energy and velocity analysis
-- Geographic location data
-- Customizable time range queries
+For questions, issues, or contributions:
+- **GitHub Issues**: [Create an issue](https://github.com/Zhuohengli03/Hackthon-Meteror/issues)
+- **Documentation**: See `demo.md` for detailed usage examples
+- **AI Usage**: Check `ai_usage/usage.txt` for development statistics
 
-### 🌍 Near Earth Objects Tab
-- Potentially hazardous asteroid tracking
-- Size estimation data
-- Temporal analysis of NEOs
-- Hazard assessment information
+---
 
-### 🗺️ Interactive Map Tab
-- Visual representation of fireball locations
-- Approach trajectory mapping
-- Interactive markers with detailed information
-- Geographic data visualization
-
-## API Endpoints
-
-The web server exposes the following REST API endpoints:
-
-- `GET /api/close-approaches` - Close approach data
-- `GET /api/fireballs` - Fireball event data  
-- `GET /api/neo-feed` - Near-earth object feed
-- `GET /api/natural-events` - EONET natural events data
-- `GET /api/event-categories` - Natural event categories
-- `GET /api/test` - API connectivity test
-- `GET /api/reset-key` - Reset NASA API key
-
-## Development
-
-### Project Structure
-```
-├── src/main/java/org/spaceapps/meteormadness/
-│   ├── WebServer.java          # HTTP server and API endpoints
-│   ├── Main.java               # Console application entry point
-│   ├── service/              # Data service layer
-│   │   └── MeteorDataService.java
-│   ├── clients/              # NASA API clients
-│   │   ├── CadClient.java    # Close Approach Data API
-│   │   ├── FireballClient.java # Fireball API
-│   │   ├── NeoWsClient.java  # Near-Earth Object Web Service
-│   │   └── EonetClient.java  # EONET Natural Events API
-│   └── util/                 # Utility classes
-│       ├── HttpUtil.java     # HTTP client with SSL fixes
-│       ├── JsonUtil.java     # JSON processing utilities
-│       ├── TablePrinter.java # Console table formatting
-│       └── Config.java       # Configuration management
-├── web/                      # Web dashboard files
-│   ├── index.html           # Main dashboard page
-│   ├── map-test.html        # Map testing page
-│   ├── styles.css           # Modern CSS styling
-│   └── app.js               # Interactive JavaScript
-├── start-web-server.sh       # Quick start script
-└── pom.xml                  # Maven project configuration
-```
-
-### Customization
-- Modify `web/app.js` to customize dashboard behavior
-- Update `web/styles.css` for styling changes
-- Extend `WebServer.java` for additional API endpoints
-- Modify data service classes for different data processing
-
-## Troubleshooting
-
-### Common Issues
-1. **Port 8080 already in use**: Change the port in `WebServer.java` and restart
-2. **NASA API rate limits**: Set `NASA_API_KEY` environment variable for higher limits
-3. **Browser compatibility**: Ensure you're using a modern browser with JavaScript enabled
-4. **SSL Certificate Errors**: Fixed in latest version - HttpUtil now handles SSL certificates properly
-5. **Null Pointer Exceptions**: Fixed null value handling in fireball data processing
-
-### Environment Variables
-```bash
-export NASA_API_KEY="your-nasa-api-key-here"
-```
-
-## Recent Fixes & Improvements
-
-### SSL Certificate Handling
-- **Issue**: SSL handshake exceptions when connecting to NASA APIs
-- **Solution**: Implemented custom SSL context in `HttpUtil.java` with permissive certificate validation
-- **Impact**: Eliminates connection failures to NASA endpoints
-
-### Null Value Handling
-- **Issue**: NullPointerException when processing fireball data with missing fields
-- **Solution**: Added null checks and default empty string values in `Main.java`
-- **Impact**: Robust handling of incomplete data records
-
-### Enhanced Error Handling
-- **Improvement**: Better error handling throughout the application
-- **Benefit**: More reliable data fetching and processing
-
-## Console Application Output
-
-The console application now successfully displays:
-
-1. **Close Approach Data**: Upcoming asteroid close approaches with distance, velocity, and magnitude
-2. **Fireball Events**: Historical fireball data with location, energy, and velocity information
-3. **Near-Earth Objects**: NEO feed data with hazard assessment and size estimates
-
-## Contributing
-
-This project is designed for the NASA Space Apps Challenge. Feel free to extend the functionality, improve the visualizations, or add new data sources.
-
-## AI Usage
-
-This project was developed with assistance from AI tools to accelerate development and solve technical challenges. The AI usage details (chat history) are documented in the `ai_usage/usage.txt` file.
-
-All final code has been reviewed and extensively tested/enhanced by human developers to ensure quality and functionality.
-
-## License
-
-See LICENSE file for details.
+**Version**: 2.2.2  
+**Last Updated**: October 5, 2025  
+**Built for**: NASA Space Apps Challenge 2025
