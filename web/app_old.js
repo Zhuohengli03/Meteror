@@ -1221,117 +1221,89 @@ async function resetApiKey() {
     }
 }
 
-// ===== PREDICTION TAB FUNCTIONALITY =====
+// ===== SIMULATION TAB FUNCTIONALITY =====
 
-function setupPredictionEventListeners() {
-    // Asteroid selection
-    document.getElementById('asteroid-select')?.addEventListener('change', handleAsteroidSelect);
-    
-    // Parameter controls
-    document.getElementById('diameter')?.addEventListener('input', updateDiameter);
-    document.getElementById('density-type')?.addEventListener('change', updateDensity);
-    document.getElementById('velocity')?.addEventListener('input', updateVelocity);
-    document.getElementById('angle')?.addEventListener('input', updateAngle);
-    document.getElementById('impact-lat')?.addEventListener('input', updateImpactLocation);
-    document.getElementById('impact-lon')?.addEventListener('input', updateImpactLocation);
-    document.getElementById('target-type')?.addEventListener('change', updateTargetType);
+function setupSimulationEventListeners() {
+    // Simulation controls
+    document.getElementById('sim-diameter')?.addEventListener('input', updateSimDiameter);
+    document.getElementById('sim-velocity')?.addEventListener('input', updateSimVelocity);
+    document.getElementById('sim-delta-v')?.addEventListener('input', updateSimDeltaV);
+    document.getElementById('sim-lead-time')?.addEventListener('input', updateSimLeadTime);
+    document.getElementById('sim-runs')?.addEventListener('change', updateSimRuns);
     
     // Simulation button
-    document.getElementById('run-simulation')?.addEventListener('click', runSimulation);
-    
-    // Load asteroids on tab switch
-    document.querySelector('[data-tab="prediction"]')?.addEventListener('click', () => {
-        loadAsteroids();
-        initializePredictionMap();
-        initializePredictionGlobe();
-    });
+    document.getElementById('run-simulation-analysis')?.addEventListener('click', runSimulationAnalysis);
 }
 
-// Physics calculation functions
-const ASTEROID_DENSITIES = {
-    stony: 3000,
-    iron: 7800,
-    carbonaceous: 2000
-};
-
-const TNT_TO_JOULES = 4.184e15; // 1 megaton TNT in joules
-const EARTH_GRAVITY = 9.81; // m/s²
-const EARTH_RADIUS = 6371000; // meters
-const WATER_DENSITY = 1000; // kg/m³
-const ROCK_DENSITY = 2500; // kg/m³
-
-function calculateMass(diameter, density) {
-    const radius = diameter / 2;
-    const volume = (4/3) * Math.PI * radius * radius * radius;
-    const mass = density * volume;
-    console.log('Mass calculation:', {
-        diameter, radius, volume, density, mass
-    });
-    return mass;
-}
-
-function calculateKineticEnergy(mass, velocity) {
-    return 0.5 * mass * velocity * velocity;
-}
-
-function calculateTntEquivalent(energy) {
-    return energy / TNT_TO_JOULES;
-}
-
-function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
-    const angleRad = angle * Math.PI / 180;
-    // Pi-scaling law for crater diameter
-    const energyDensity = energy / (targetDensity * EARTH_GRAVITY);
-    const diameter = 1.25 * Math.pow(energyDensity, 1/4) * Math.pow(Math.sin(angleRad), 1/3);
-    const depth = diameter / 4;
-    return { 
-        diameter: Math.max(10, diameter), // Minimum 10m diameter
-        depth: Math.max(2, depth) // Minimum 2m depth
-    };
-}
-
-function calculateSeismicMagnitude(energy) {
-    // Convert energy to seismic moment (Nm)
-    const seismicMoment = energy * 0.01; // 1% efficiency
-    // Calculate moment magnitude
-    const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
-    return Math.max(0, Math.min(10, magnitude)); // Clamp between 0-10
-}
-
-function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100000) {
-    const tsunamiEnergy = energy * 0.1; // 10% efficiency
-    const impactArea = Math.PI * 1000 * 1000; // 1km radius
-    const energyDensity = tsunamiEnergy / impactArea;
-    const initialHeight = 0.1 * Math.sqrt(energyDensity / (WATER_DENSITY * EARTH_GRAVITY));
-    
-    if (distanceToShore > 0) {
-        const geometricFactor = 1 / Math.sqrt(distanceToShore / 1000);
-        const dissipationFactor = Math.exp(-distanceToShore / (100 * 1000));
-        const shoreAmplification = 1 / Math.sqrt(0.01);
-        return Math.max(0, initialHeight * geometricFactor * dissipationFactor * shoreAmplification);
+// Simulation control update functions
+function updateSimDiameter() {
+    const slider = document.getElementById('sim-diameter');
+    const display = document.getElementById('sim-diameter-value');
+    if (slider && display) {
+        const value = parseInt(slider.value);
+        display.textContent = `${value} m`;
     }
-    
-    return Math.max(0, initialHeight);
 }
 
-function calculatePeakGroundAcceleration(magnitude, distance) {
-    const pga = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
-    return pga;
+function updateSimVelocity() {
+    const slider = document.getElementById('sim-velocity');
+    const display = document.getElementById('sim-velocity-value');
+    if (slider && display) {
+        const value = parseInt(slider.value);
+        display.textContent = `${(value / 1000).toFixed(1)} km/s`;
+    }
 }
 
-// Event handlers
-function handleAsteroidSelect(event) {
-    const asteroidId = event.target.value;
-    if (asteroidId) {
-        // Find asteroid in loaded data
-        const asteroid = loadedAsteroids.find(a => a.id === asteroidId);
-        if (asteroid) {
-            selectedAsteroid = asteroid;
-            updateAsteroidParameters(asteroid);
-        }
-    } else {
-        selectedAsteroid = null;
-        resetAsteroidParameters();
+function updateSimDeltaV() {
+    const slider = document.getElementById('sim-delta-v');
+    const display = document.getElementById('sim-delta-v-value');
+    if (slider && display) {
+        const value = parseFloat(slider.value);
+        display.textContent = `${(value * 1000).toFixed(1)} mm/s`;
+    }
+}
+
+function updateSimLeadTime() {
+    const slider = document.getElementById('sim-lead-time');
+    const display = document.getElementById('sim-lead-time-value');
+    if (slider && display) {
+        const value = parseFloat(slider.value);
+        display.textContent = `${value} years`;
+    }
+}
+
+function updateSimRuns() {
+    const select = document.getElementById('sim-runs');
+    if (select) {
+        console.log('Simulation runs updated to:', select.value);
+    }
+}
+
+// Simulation analysis function
+async function runSimulationAnalysis() {
+    try {
+        // Get parameters
+        const diameter = parseInt(document.getElementById('sim-diameter').value);
+        const velocity = parseInt(document.getElementById('sim-velocity').value);
+        const deltaV = parseFloat(document.getElementById('sim-delta-v').value);
+        const leadTime = parseFloat(document.getElementById('sim-lead-time').value);
+        const runs = parseInt(document.getElementById('sim-runs').value);
+        
+        console.log('Running simulation analysis with parameters:', {
+            diameter, velocity, deltaV, leadTime, runs
+        });
+        
+        // Run Monte Carlo simulation
+        const results = await runMonteCarloSimulation({
+            diameter, velocity, deltaV, leadTime, runs
+        });
+        
+        // Display results
+        displaySimulationResults(results);
+        
+    } catch (error) {
+        console.error('Simulation analysis failed:', error);
+        alert('Simulation analysis failed: ' + error.message);
     }
 }
 
@@ -1807,22 +1779,19 @@ function initializePredictionGlobe() {
         const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         
-        // Set up renderer with enhanced quality
+        // Set up renderer
         renderer.setSize(300, 300);
         renderer.setClearColor(0x000000, 0);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.antialias = true;
-        renderer.pixelRatio = window.devicePixelRatio;
         globeContainer.appendChild(renderer.domElement);
         
-        // Create Earth geometry with higher resolution
-        const earthGeometry = new THREE.SphereGeometry(1, 128, 128);
+        // Create Earth geometry
+        const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
         
-        // Create Earth material with NASA Blue Marble texture
-        const earthTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg');
+        // Create Earth material with realistic ocean color
         const earthMaterial = new THREE.MeshPhongMaterial({
-            map: earthTexture,
+            color: 0x1e3a8a, // Deep blue ocean
             shininess: 100,
             transparent: false
         });
@@ -1833,16 +1802,61 @@ function initializePredictionGlobe() {
         earth.receiveShadow = true;
         scene.add(earth);
         
-        // Add night lights texture for realistic night side
-        const nightTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.jpg');
-        const nightMaterial = new THREE.MeshBasicMaterial({
-            map: nightTexture,
+        // Create continents using a more detailed approach
+        const continentGeometry = new THREE.SphereGeometry(1.001, 64, 64);
+        
+        // Create a canvas texture for continents
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw continents on canvas
+        ctx.fillStyle = '#4a5d23';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw simplified continents
+        ctx.fillStyle = '#2d5016';
+        
+        // North America
+        ctx.beginPath();
+        ctx.ellipse(200, 150, 80, 60, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // South America
+        ctx.beginPath();
+        ctx.ellipse(180, 300, 40, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Europe
+        ctx.beginPath();
+        ctx.ellipse(400, 120, 60, 30, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Africa
+        ctx.beginPath();
+        ctx.ellipse(420, 250, 50, 100, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Asia
+        ctx.beginPath();
+        ctx.ellipse(600, 150, 120, 80, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Australia
+        ctx.beginPath();
+        ctx.ellipse(700, 350, 40, 25, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        const continentTexture = new THREE.CanvasTexture(canvas);
+        const continentMaterial = new THREE.MeshPhongMaterial({
+            map: continentTexture,
             transparent: true,
             opacity: 0.8
         });
         
-        const nightEarth = new THREE.Mesh(earthGeometry, nightMaterial);
-        scene.add(nightEarth);
+        const continents = new THREE.Mesh(continentGeometry, continentMaterial);
+        scene.add(continents);
         
         // Add atmosphere
         const atmosphereGeometry = new THREE.SphereGeometry(1.1, 32, 32);
@@ -1854,13 +1868,12 @@ function initializePredictionGlobe() {
         const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
         scene.add(atmosphere);
         
-        // Add clouds with NASA cloud texture
+        // Add clouds
         const cloudGeometry = new THREE.SphereGeometry(1.05, 32, 32);
-        const cloudTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png');
         const cloudMaterial = new THREE.MeshBasicMaterial({
-            map: cloudTexture,
+            color: 0xffffff,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.2
         });
         const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
         scene.add(clouds);
@@ -1925,46 +1938,6 @@ function initializePredictionGlobe() {
             camera.position.z += event.deltaY * 0.01;
             camera.position.z = Math.max(2, Math.min(5, camera.position.z));
         });
-
-        // Add click event listener for impact point selection
-        renderer.domElement.addEventListener('click', (event) => {
-            // Only handle click if not dragging
-            if (isMouseDown) return;
-            
-            // Get mouse position in normalized device coordinates
-            const rect = renderer.domElement.getBoundingClientRect();
-            const mouse = new THREE.Vector2();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            // Create raycaster
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            // Find intersection with Earth sphere
-            const intersects = raycaster.intersectObject(earth);
-            
-            if (intersects.length > 0) {
-                const point = intersects[0].point;
-                
-                // Convert 3D point to lat/lng
-                const lat = Math.asin(point.y) * (180 / Math.PI);
-                const lng = Math.atan2(point.z, point.x) * (180 / Math.PI);
-                
-                console.log('=== 3D EARTH CLICK DEBUG ===');
-                console.log('3D Earth clicked at:', lat, lng);
-                console.log('3D point:', point.x, point.y, point.z);
-                console.log('=============================');
-                
-                // Update impact coordinates
-                updateImpactCoordinates(lat, lng);
-                
-                // Update 3D impact marker position
-                impactPoint.position.copy(point);
-                impactPoint.position.normalize();
-                impactPoint.position.multiplyScalar(1.01); // Slightly above surface
-            }
-        });
         
         // Animation loop
         function animate() {
@@ -1977,8 +1950,8 @@ function initializePredictionGlobe() {
             // Apply rotations
             earth.rotation.x = rotationX;
             earth.rotation.y = rotationY;
-            nightEarth.rotation.x = rotationX;
-            nightEarth.rotation.y = rotationY;
+            continents.rotation.x = rotationX;
+            continents.rotation.y = rotationY;
             clouds.rotation.x = rotationX;
             clouds.rotation.y = rotationY + 0.1; // Slight offset for clouds
             atmosphere.rotation.x = rotationX;
@@ -2030,23 +2003,6 @@ function initializePredictionGlobe() {
     }
 }
 
-// Update impact coordinates in UI
-function updateImpactCoordinates(lat, lng) {
-    // Update latitude input
-    const latInput = document.getElementById('impact-lat');
-    if (latInput) {
-        latInput.value = lat.toFixed(4);
-    }
-    
-    // Update longitude input
-    const lngInput = document.getElementById('impact-lon');
-    if (lngInput) {
-        lngInput.value = lng.toFixed(4);
-    }
-    
-    console.log('Updated impact coordinates:', lat, lng);
-}
-
 function updatePredictionVisualizations(lat, lon, results) {
     // Update map center and markers
     if (predictionMap) {
@@ -2081,5 +2037,205 @@ function updatePredictionVisualizations(lat, lon, results) {
                 radius: radius
             }).addTo(predictionMap);
         }
+    }
+}
+
+// ===== MONTE CARLO SIMULATION =====
+
+// Update simulation parameter displays
+function updateSimulationRuns() {
+    const select = document.getElementById('simulation-runs');
+    if (select) {
+        console.log('Monte Carlo runs updated to:', select.value);
+    }
+}
+
+// Monte Carlo analysis
+async function runMonteCarloAnalysis() {
+    if (isSimulating) return;
+    
+    isSimulating = true;
+    document.getElementById('simulation-progress').style.display = 'block';
+    document.getElementById('run-monte-carlo').disabled = true;
+    
+    try {
+        // Get parameters
+        const diameter = parseFloat(document.getElementById('diameter').value);
+        const densityType = document.getElementById('density-type').value;
+        const density = ASTEROID_DENSITIES[densityType];
+        const velocity = parseFloat(document.getElementById('velocity').value);
+        const angle = parseFloat(document.getElementById('angle').value);
+        const impactLat = parseFloat(document.getElementById('impact-lat').value);
+        const impactLon = parseFloat(document.getElementById('impact-lon').value);
+        const simulationRuns = parseInt(document.getElementById('simulation-runs').value);
+        
+        // Calculate baseline mass and energy
+        const mass = calculateMass(diameter, density);
+        const energy = calculateKineticEnergy(mass, velocity);
+        
+        // Run Monte Carlo simulation
+        const results = await runMonteCarloSimulation({
+            diameter, density, velocity, angle, impactLat, impactLon,
+            simulationRuns, mass, energy
+        });
+        
+        // Display results
+        displayMonteCarloResults(results);
+        
+        // Show Monte Carlo section
+        document.getElementById('monte-carlo-section').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Monte Carlo analysis failed:', error);
+        alert('Monte Carlo analysis failed: ' + error.message);
+    } finally {
+        isSimulating = false;
+        document.getElementById('simulation-progress').style.display = 'none';
+        document.getElementById('run-monte-carlo').disabled = false;
+    }
+}
+
+async function runMonteCarloSimulation(params) {
+    const { diameter, density, velocity, angle, impactLat, impactLon, 
+            simulationRuns, mass, energy } = params;
+    
+    const results = {
+        impactEnergies: [],
+        craterDiameters: [],
+        seismicMagnitudes: [],
+        tsunamiHeights: [],
+        impactProbabilities: [],
+        statisticalSummary: {}
+    };
+    
+    // Run simulations in batches to avoid blocking the UI
+    const batchSize = 100;
+    const totalBatches = Math.ceil(simulationRuns / batchSize);
+    
+    for (let batch = 0; batch < totalBatches; batch++) {
+        const batchStart = batch * batchSize;
+        const batchEnd = Math.min(batchStart + batchSize, simulationRuns);
+        
+        for (let i = batchStart; i < batchEnd; i++) {
+            // Generate random variations based on impactor-2025 simulation parameters
+            const diameterVariation = diameter * (0.8 + Math.random() * 0.4); // ±20%
+            const velocityVariation = velocity * (0.9 + Math.random() * 0.2); // ±10%
+            const angleVariation = angle * (0.8 + Math.random() * 0.4); // ±20%
+            
+            // Add random noise for observation and orbital perturbations
+            const noiseX = (Math.random() - 0.5) * 6; // ±3 km noise
+            const noiseY = (Math.random() - 0.5) * 4; // ±2 km noise
+            
+            // Calculate impact effects with variations
+            const variedMass = calculateMass(diameterVariation, density);
+            const variedEnergy = calculateKineticEnergy(variedMass, velocityVariation);
+            const crater = calculateCraterDiameter(variedEnergy, angleVariation);
+            const seismicMagnitude = calculateSeismicMagnitude(variedEnergy);
+            
+            // Calculate tsunami height if ocean impact
+            const targetType = document.getElementById('target-type').value;
+            let tsunamiHeight = 0;
+            if (targetType === 'ocean' || targetType === 'oceanic_crust') {
+                tsunamiHeight = calculateTsunamiHeight(variedEnergy, 4000, 100000);
+            }
+            
+            // Simplified impact probability calculation
+            // Based on distance from Earth center with noise
+            const distanceFromEarth = Math.sqrt(noiseX**2 + noiseY**2);
+            const impactProbability = distanceFromEarth < 6371 ? 1 : 0; // Earth radius ~6371 km
+            
+            results.impactEnergies.push(variedEnergy);
+            results.craterDiameters.push(crater.diameter);
+            results.seismicMagnitudes.push(seismicMagnitude);
+            results.tsunamiHeights.push(tsunamiHeight);
+            results.impactProbabilities.push(impactProbability);
+        }
+        
+        // Update progress
+        const progress = ((batch + 1) / totalBatches) * 100;
+        const progressBar = document.querySelector('.progress-fill');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        // Allow UI to update
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    
+    // Calculate statistical summary
+    results.statisticalSummary = calculateStatisticalSummary(results);
+    
+    return results;
+}
+
+function calculateStatisticalSummary(results) {
+    const { impactEnergies, craterDiameters, seismicMagnitudes, 
+            tsunamiHeights, impactProbabilities } = results;
+    
+    const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const std = arr => {
+        const m = mean(arr);
+        return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length);
+    };
+    
+    return {
+        impactEnergy: {
+            mean: mean(impactEnergies),
+            std: std(impactEnergies),
+            min: Math.min(...impactEnergies),
+            max: Math.max(...impactEnergies)
+        },
+        craterDiameter: {
+            mean: mean(craterDiameters),
+            std: std(craterDiameters),
+            min: Math.min(...craterDiameters),
+            max: Math.max(...craterDiameters)
+        },
+        seismicMagnitude: {
+            mean: mean(seismicMagnitudes),
+            std: std(seismicMagnitudes),
+            min: Math.min(...seismicMagnitudes),
+            max: Math.max(...seismicMagnitudes)
+        },
+        tsunamiHeight: {
+            mean: mean(tsunamiHeights),
+            std: std(tsunamiHeights),
+            min: Math.min(...tsunamiHeights),
+            max: Math.max(...tsunamiHeights)
+        },
+        impactProbability: {
+            mean: mean(impactProbabilities),
+            std: std(impactProbabilities),
+            min: Math.min(...impactProbabilities),
+            max: Math.max(...impactProbabilities)
+        }
+    };
+}
+
+function displayMonteCarloResults(results) {
+    const { impactProbabilities, statisticalSummary } = results;
+    
+    // Impact Probability Distribution
+    const impactProbabilityDiv = document.getElementById('impact-probability');
+    if (impactProbabilityDiv) {
+        const impactRate = statisticalSummary.impactProbability.mean * 100;
+        impactProbabilityDiv.innerHTML = `
+            <p><strong>Impact Probability:</strong> ${impactRate.toFixed(1)}%</p>
+            <p><strong>Standard Deviation:</strong> ±${(statisticalSummary.impactProbability.std * 100).toFixed(1)}%</p>
+            <p><strong>Range:</strong> ${(statisticalSummary.impactProbability.min * 100).toFixed(1)}% - ${(statisticalSummary.impactProbability.max * 100).toFixed(1)}%</p>
+            <p><strong>Mean Impact Energy:</strong> ${(statisticalSummary.impactEnergy.mean / 1e18).toFixed(2)} EJ</p>
+        `;
+    }
+    
+    // Statistical Summary
+    const statisticalDiv = document.getElementById('statistical-summary');
+    if (statisticalDiv) {
+        statisticalDiv.innerHTML = `
+            <p><strong>Total Simulations:</strong> ${impactProbabilities.length}</p>
+            <p><strong>Mean Crater Diameter:</strong> ${(statisticalSummary.craterDiameter.mean / 1000).toFixed(1)} km</p>
+            <p><strong>Mean Seismic Magnitude:</strong> ${statisticalSummary.seismicMagnitude.mean.toFixed(1)}</p>
+            <p><strong>Mean Tsunami Height:</strong> ${statisticalSummary.tsunamiHeight.mean.toFixed(1)} m</p>
+            <p><strong>Energy Range:</strong> ${(statisticalSummary.impactEnergy.min / 1e18).toFixed(2)} - ${(statisticalSummary.impactEnergy.max / 1e18).toFixed(2)} EJ</p>
+        `;
     }
 }
