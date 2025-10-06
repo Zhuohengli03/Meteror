@@ -1318,11 +1318,29 @@ function calculateCraterDiameter(energy, angle, targetDensity = ROCK_DENSITY) {
 }
 
 function calculateSeismicMagnitude(energy) {
-    // Convert energy to seismic moment (Nm)
-    const seismicMoment = energy * 0.01; // 1% efficiency
-    // Calculate moment magnitude
+    // For impact events, seismic efficiency is much higher than tectonic earthquakes
+    // Impact events can have 10-50% seismic efficiency depending on target material
+    // Reference values:
+    // - 1 MT TNT (4.2e15 J) → ~M4.5 earthquake
+    // - 10 MT TNT (4.2e16 J) → ~M5.5 earthquake  
+    // - 100 MT TNT (4.2e17 J) → ~M6.5 earthquake
+    // - 1000 MT TNT (4.2e18 J) → ~M7.5 earthquake
+    
+    const seismicEfficiency = 0.15; // 15% efficiency for impact events
+    const seismicMoment = energy * seismicEfficiency;
+    
+    // Use the moment magnitude scale: Mw = (2/3) * log10(M0) - 10.7
+    // But adjust for impact events which are more efficient at generating seismic waves
     const magnitude = (2/3) * Math.log10(seismicMoment) - 10.7;
-    return Math.max(0, Math.min(10, magnitude)); // Clamp between 0-10
+    
+    // For very large impacts, add a scaling factor to account for surface wave generation
+    const energyJoules = energy;
+    if (energyJoules > 1e18) { // For impacts > 1 EJ
+        const scalingFactor = Math.log10(energyJoules / 1e18) * 0.3;
+        return Math.max(0, Math.min(10, magnitude + scalingFactor));
+    }
+    
+    return Math.max(0, Math.min(10, magnitude));
 }
 
 function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100000) {
@@ -1342,8 +1360,18 @@ function calculateTsunamiHeight(energy, waterDepth = 4000, distanceToShore = 100
 }
 
 function calculatePeakGroundAcceleration(magnitude, distance) {
-    const pga = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
-    return pga;
+    // For impact events, PGA is typically higher than tectonic earthquakes
+    // Use a modified attenuation relationship for impact events
+    const basePGA = Math.pow(10, magnitude - 1.5 * Math.log10(distance) - 0.01 * distance);
+    
+    // For impact events, add a factor to account for the impulsive nature
+    const impactFactor = 1.5; // Impact events generate higher peak accelerations
+    
+    // Apply distance attenuation (PGA decreases with distance)
+    const distanceKm = distance / 1000; // Convert to km
+    const attenuationFactor = Math.exp(-distanceKm / 50); // Exponential decay over 50km
+    
+    return Math.max(0.01, basePGA * impactFactor * attenuationFactor);
 }
 
 function generateAffectedCities(impactLat, impactLon, energy) {
@@ -1960,7 +1988,6 @@ async function runSimulation() {
             tnt_equivalent_megatons: tntEquivalent,
             crater_diameter_m: crater.diameter,
             crater_depth_m: crater.depth,
-            seismic_magnitude: seismicMagnitude,
             tsunami_height_m: tsunamiHeight,
             peak_ground_acceleration: peakGroundAcceleration,
             exposed_population: exposedPopulation,
@@ -1970,7 +1997,6 @@ async function runSimulation() {
             gdp_impact_percentage: gdpPercentage,
             uncertainty_bounds: {
                 crater_diameter: [crater.diameter * 0.8, crater.diameter * 1.2],
-                seismic_magnitude: [seismicMagnitude - 0.5, seismicMagnitude + 0.5],
                 tsunami_height: tsunamiHeight ? [tsunamiHeight * 0.5, tsunamiHeight * 2.0] : [0, 0],
                 exposed_population: [exposedPopulation * 0.7, exposedPopulation * 1.3],
                 economic_damage: [economicLoss * 0.6, economicLoss * 1.4]
@@ -2040,14 +2066,6 @@ function displayOutcomeCards(results) {
                 </div>
             </div>
             
-            <div class="outcome-card seismic">
-                <div class="card-icon">🌍</div>
-                <div class="card-content">
-                    <h3>Seismic Magnitude</h3>
-                    <div class="card-value">${results.seismic_magnitude.toFixed(1)}</div>
-                    <div class="card-subtitle">PGA: ${results.peak_ground_acceleration.toFixed(2)} m/s²</div>
-                </div>
-            </div>
             
             ${results.tsunami_height_m ? `
             <div class="outcome-card tsunami">
@@ -2099,9 +2117,6 @@ function displayDetailedImpactMetrics(results) {
     document.getElementById('crater-diameter-value').textContent = formatDistance(results.crater_diameter_m);
     document.getElementById('crater-diameter-subtitle').textContent = `Depth: ${formatDistance(results.crater_depth_m)}`;
     
-    // Update seismic magnitude card
-    document.getElementById('seismic-magnitude-value').textContent = results.seismic_magnitude.toFixed(1);
-    document.getElementById('seismic-magnitude-subtitle').textContent = `PGA: ${results.peak_ground_acceleration.toFixed(2)} m/s²`;
     
     // Update exposed population card
     const exposedPopulation = results.exposed_population || 0;
